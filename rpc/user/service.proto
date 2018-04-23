@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package resonate.toyapi.user;
+option go_package = "user";
+
+service ToyUser {
+  rpc CreateUser(User) returns (User);
+  rpc GetUsers(Empty) returns (Users);
+}
+
+message User {
+  string name = 1;
+  string email = 2;
+  string address = 3;
+}
+
+message Users {
+  repeated User users = 1;
+}
+
+message Empty {}
