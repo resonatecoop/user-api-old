@@ -1,6 +1,3 @@
-https://twitchtv.github.io/twirp/docs/install.html
-
-
 # Toy User API
 
 This is a simple User API that uses Twirp. It allows to list and create users with name and email fields. Learn more about
@@ -28,6 +25,7 @@ go run ./cmd/client/main.go
 ## Example curl requests
 
 ### CreateUser
+```sh
 curl --request "POST" \
      --location "http://localhost:8080/twirp/resonate.toyapi.user.ToyUser/CreateUser" \
      --header "Content-Type:application/json" \
@@ -35,8 +33,10 @@ curl --request "POST" \
      --verbose
 
 {"name":"john","email":"john@doe.com"}
+```
 
 ### GetUsers
+```sh
 curl --request "POST" \
      --location "http://localhost:8080/twirp/resonate.toyapi.user.ToyUser/GetUsers" \
      --header "Content-Type:application/json" \
@@ -44,6 +44,7 @@ curl --request "POST" \
      --verbose
 
 {"users":[{"name":"john","email":"john@doe.com"}]}
+```
 
 ## Code structure
 
