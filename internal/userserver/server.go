@@ -3,7 +3,7 @@ package userserver
 import (
 	"context"
 
-	pb "toy-api/rpc/user"
+	pb "user-api/rpc/user"
 )
 
 // Server implements the ToyUser service

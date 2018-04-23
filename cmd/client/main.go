@@ -6,7 +6,7 @@ import (
     "os"
     "fmt"
 
-    pb "toy-api/rpc/user"
+    pb "user-api/rpc/user"
 )
 
 func main() {

@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"toy-api/internal/userserver"
-	"toy-api/rpc/user"
+	"user-api/internal/userserver"
+	"user-api/rpc/user"
 )
 
 func main() {
