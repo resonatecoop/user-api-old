@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"net/http"
-
+	"github.com/rs/cors"
 	"user-api/internal/userserver"
 	"user-api/rpc/user"
 )
@@ -15,5 +15,12 @@ func main() {
 	server := userserver.NewServer()
 	twirpHandler := user.NewToyUserServer(server, nil)
 
-	log.Fatal(http.ListenAndServe(":8080", twirpHandler))
+	mux := http.NewServeMux()
+	mux.Handle(user.ToyUserPathPrefix, twirpHandler)
+
+	// cors.Default() setup the middleware with default options being
+	// all origins accepted with simple methods (GET, POST).
+	handler := cors.Default().Handler(mux)
+
+	http.ListenAndServe(":8080", handler)
 }

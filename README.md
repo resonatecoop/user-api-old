@@ -6,7 +6,12 @@ Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html) or
 
 ## Installation
 
-Follow Twirp [installation guide](https://twitchtv.github.io/twirp/docs/install.html) in order to install the protobuf compiler `protoc` and Go and Twirp protoc plugins `protoc-gen-go` and `protoc-gen-twirp`
+* Follow Twirp [installation guide](https://twitchtv.github.io/twirp/docs/install.html) in order to install the protobuf compiler `protoc` and Go and Twirp protoc plugins `protoc-gen-go` and `protoc-gen-twirp`
+
+* Install `cors`:
+```
+go get github.com/rs/cors
+```
 
 ## Try it out
 
