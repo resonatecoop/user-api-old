@@ -20,6 +20,11 @@ $ brew install protobuf
 * Install [retool](https://github.com/twitchtv/retool). It helps manage go tools like commands and linters.
 protoc-gen-go and protoc-gen-twirp plugins were installed into `_tools` folder using retool.
 
+Build the generators and tool dependencies:
+```sh
+retool build
+```
+
 Then, to run the `protoc` command, make sure to prefix with `retool do`, for example:
 ```sh
 $ retool do protoc --proto_path=$GOPATH/src:. --twirp_out=. --go_out=. ./rpc/user/service.proto
@@ -30,12 +35,12 @@ $ retool do protoc --proto_path=$GOPATH/src:. --twirp_out=. --go_out=. ./rpc/use
 First, download and put this repo into `$GOPATH/src`
 
 Then, run the server
-```
+```sh
 go run ./cmd/server/main.go
 ```
 
 Run the client
-```
+```sh
 go run ./cmd/client/main.go
 ```
 
