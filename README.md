@@ -6,11 +6,23 @@ Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html) or
 
 ## Installation
 
-* Follow Twirp [installation guide](https://twitchtv.github.io/twirp/docs/install.html) in order to install the protobuf compiler `protoc` and Go and Twirp protoc plugins `protoc-gen-go` and `protoc-gen-twirp`
+* [Install Protocol Buffers v3](https://developers.google.com/protocol-buffers/docs/gotutorial),
+the `protoc` compiler that is used to auto-generate code. The simplest way to do
+this is to download pre-compiled binaries for your platform from here:
+https://github.com/google/protobuf/releases
 
-* Install `cors`:
+It is also available in MacOS through Homebrew:
+
+```sh
+$ brew install protobuf
 ```
-go get github.com/rs/cors
+
+* Install [retool](https://github.com/twitchtv/retool). It helps manage go tools like commands and linters.
+protoc-gen-go and protoc-gen-twirp plugins were installed into `_tools` folder using retool.
+
+Then, to run the `protoc` command, make sure to prefix with `retool do`, for example:
+```sh
+$ retool do protoc --proto_path=$GOPATH/src:. --twirp_out=. --go_out=. ./rpc/user/service.proto
 ```
 
 ## Try it out
