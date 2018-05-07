@@ -11,10 +11,19 @@ import (
 	"user-api/rpc/user"
 )
 
+const (
+	host = "localhost"
+	port = 5432
+	username = "toy-api-dev-user"
+	password = "password"
+	dbname = "toy-api-dev"
+)
+
 func main() {
 	fmt.Printf("Toy User Service on :8080")
 
-	db, err := sql.Open("postgres", "postgres://testing:testing@0.0.0.0:5432/testing?sslmode=disable")
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, username, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatal(err)
 	}

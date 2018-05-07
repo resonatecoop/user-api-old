@@ -4,6 +4,24 @@ This is a simple User API that uses Twirp. It allows to list and create users wi
 Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html) or
 [repo](https://github.com/twitchtv/twirp).
 
+## Dev database setup
+
+* Make sure you have latest PostgreSQL installed.
+* Create user and database as follow:
+
+username = "toy-api-dev-user"
+
+password = "password"
+
+dbname = "toy-api-dev"
+
+* Run migrations
+```sh
+$ kallax migrate up --dir ./internal/database/migrations --dsn 'toy-api-dev-user:password@localhost:5432/toy-api-dev?sslmode=disable' --all
+```
+
+**Note:** This is temporary database setup until we start using Docker and Minikube.
+
 ## Installation
 
 * [Install Protocol Buffers v3](https://developers.google.com/protocol-buffers/docs/gotutorial),
