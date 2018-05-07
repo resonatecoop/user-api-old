@@ -9,13 +9,14 @@ service ToyUser {
 }
 
 message User {
-  string name = 1;
-  string email = 2;
-  string address = 3;
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string address = 4;
 }
 
 message Users {
-  repeated User users = 1;
+  repeated User user = 1;
 }
 
 message Empty {}

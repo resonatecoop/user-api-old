@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	// "log"
+	"log"
 	"net/http"
+	"database/sql"
+	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	"user-api/internal/userserver"
 	"user-api/rpc/user"
@@ -12,7 +14,12 @@ import (
 func main() {
 	fmt.Printf("Toy User Service on :8080")
 
-	server := userserver.NewServer()
+	db, err := sql.Open("postgres", "postgres://testing:testing@0.0.0.0:5432/testing?sslmode=disable")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	server := userserver.NewServer(db)
 	twirpHandler := user.NewToyUserServer(server, nil)
 
 	mux := http.NewServeMux()
@@ -23,4 +30,5 @@ func main() {
 	handler := cors.Default().Handler(mux)
 
 	http.ListenAndServe(":8080", handler)
+	defer db.Close()
 }

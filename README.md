@@ -22,7 +22,7 @@ protoc-gen-go and protoc-gen-twirp plugins were installed into `_tools` folder u
 
 Build the generators and tool dependencies:
 ```sh
-retool build
+$ retool build
 ```
 
 Then, to run the `protoc` command, make sure to prefix with `retool do`, for example:
@@ -36,12 +36,12 @@ First, download and put this repo into `$GOPATH/src`
 
 Then, run the server
 ```sh
-go run ./cmd/server/main.go
+$ go run ./cmd/server/main.go
 ```
 
 Run the client
 ```sh
-go run ./cmd/client/main.go
+$ go run ./cmd/client/main.go
 ```
 
 ## Example curl requests
