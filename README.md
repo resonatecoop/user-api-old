@@ -1,8 +1,9 @@
 # Toy User API
 
-This is a simple User API that uses Twirp. It allows to list and create users with name and email fields. Learn more about
+This is a simple User API that uses Twirp. It allows to list and create users with username, email and address fields. Learn more about
 Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html) or
 [repo](https://github.com/twitchtv/twirp).
+It also uses [Kallax](https://github.com/src-d/go-kallax) PostgreSQL ORM.
 
 ## Dev database setup
 
@@ -16,6 +17,7 @@ password = "password"
 dbname = "toy-api-dev"
 
 * Run migrations
+
 ```sh
 $ kallax migrate up --dir ./internal/database/migrations --dsn 'toy-api-dev-user:password@localhost:5432/toy-api-dev?sslmode=disable' --all
 ```
@@ -93,6 +95,7 @@ The protobuf definition for the service lives in
 The generated Twirp and Go protobuf code is in the same directory.
 
 The implementation of the server is in `internal/userserver`.
+Database related stuff (migrations, model definitions) can be found in `internal/database`.
 
 Finally, `cmd/server` and `cmd/client` wrap things together into executable main
 packages.
