@@ -1,0 +1,621 @@
+FORMAT: 1A
+
+# Users/Tracks API
+
+Users/Tracks API is the main API to access Users, UserGroups, Tracks, TrackGroups and related collections.
+
+
+## Users Collection [/twirp/resonate.api.user.User/]
+
+### Get User [POST /twirp/resonate.api.user.User/GetUser]
+
+TODO: add scope for restricted access (public/private user profile).
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "created_at": "2015-08-05T08:40:51.620Z",
+            "updated_at": "2015-08-05T08:40:51.620Z",
+            "full_name": "John Doe",
+            "display_name": "JohnD",
+            "first_name": "John",
+            "last_name": "Doe",
+            "residence_address": {},
+            "email": "john@doe.com",
+            "payment_mechanisms": [],
+            "username": "jdoe",
+            "member": false,
+            "tags": [],
+            "userGroups": {
+                "artists": [],
+                "labels": []
+            },
+            "shares": [],
+            "credits": 99.022,
+            "avatar": ""
+        }
+
+
+
+### Create a New User [POST /twirp/resonate.api.user.User/CreateUser]
+
+Used for signup.
+
++ Request (application/json)
+
+        {
+            "full_name": "John Doe",
+            "display_name": "JohnD",
+            "email": "john@doe.com",
+            "username": "jdoe"
+        }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+                "created_at": "2015-08-05T08:40:51.620Z",
+                "updated_at": "2015-08-05T08:40:51.620Z",
+                "full_name": "John Doe",
+                "display_name": "JohnD",
+                "first_name": "",
+                "last_name": "",
+                "residence_address": {},
+                "email": "john@doe.com",
+                "payment_mechanisms": [],
+                "username": "jdoe",
+                "member": false,
+                "tags": [],
+                "userGroups": {
+                    "artists": [],
+                    "labels": []
+                },
+                "shares": [],
+                "credits": 0,
+                "avatar": ""
+            }
+
+### Update a User [POST /twirp/resonate.api.user.User/UpdateUser]
+
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "first_name": "John",
+            "last_name": "Doe"
+        }
+
++ Response 204 (application/json)
+
+### Delete a User [POST /twirp/resonate.api.user.User/DeleteUser]
+
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 204 (application/json)
+
+### Connect to Existing UserGroup [POST /twirp/resonate.api.user.User/ConnectToUserGroup]
+
+For a user to join an existing artist/band:
+Send email notification to owner/admins of user group.
+Then if confirmed: Update UserGroup: members.
+Send email to notify user.
+
++ Request (application/json)
+
+        {
+            "user_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_group_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
+        }
+
++ Response 204 (application/json)
+
+### Add Favorite Track [POST /twirp/resonate.api.user.User/AddFavoriteTrack]
+
++ Request (application/json)
+
+        {
+            "user_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "track_id": "129f3a00-1022-4cb6-beda-8f7eeef8bd31"
+        }
+
++ Response 204 (application/json)
+
+### Remove Favorite Track [POST /twirp/resonate.api.user.User/RemoveFavoriteTrack]
+
++ Request (application/json)
+
+        {
+            "user_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "track_id": "129f3a00-1022-4cb6-beda-8f7eeef8bd31"
+        }
+
++ Response 204 (application/json)
+
+## UserGroups Collection [/twirp/resonate.api.user.UserGroup/]
+
+### Create a New UserGroup [POST /twirp/resonate.api.user.UserGroup/CreateUserGroup]
+
+The user who creates a user group is by default the owner and an admin of this user group.
+Can be a user creating an artist or a label.
+Can be a label owner/user admin creating an artist in this label
+(in this case, specify labels in the request, see example below).
+
++ type (string) - type of user group: artist, label or distributor
+
++ Request (application/json)
+
+        {
+            "type": "artist",
+            "owner_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31",
+            "display_name": "BestArtistEver",
+            "labels": [
+                {
+                    "id": "d38bcdb7-9a05-4077-a6c7-6aec285b865e"
+                }
+            ]
+        }
+
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+                "created_at": "2015-08-05T08:40:51.620Z",
+                "updated_at": "2015-08-05T08:40:51.620Z",
+                "owner": {
+                    "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
+                },
+                "admin_users": [
+                    {
+                        "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
+                    }
+                ],
+                "members": [],
+                "subgroups": [],
+                "labels": [
+                     {
+                        "id": "d38bcdb7-9a05-4077-a6c7-6aec285b865e"
+                    }
+                ],
+                "display_name": "BestArtistEver"
+                "description": "",
+                "links": [],
+                "address": {},
+                "tags": [],
+                "group_email": "john@doe.com",
+                "payment_mechanisms": [],
+                "avatar": "",
+                "images": []
+            }
+
+### Update UserGroup [POST /twirp/resonate.api.user.UserGroup/UpdateUserGroup]
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "description": "I am the best artist ever"
+        }
+
++ Response 204 (application/json)
+
+### Delete UserGroup [POST /twirp/resonate.api.user.UserGroup/DeleteUserGroup]
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 204 (application/json)
+
+### Get UserGroups [POST /twirp/resonate.api.user.UserGroup/GetUserGroups]
+
+Get all UserGroups. Grouped by type.
+(TODO: add features, curated here or in another ressource)
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "artists": [],
+                "labels": [],
+                "distributors": []
+            }
+
+### Get UserGroup [POST /twirp/resonate.api.user.UserGroup/GetUserGroup]
+
+scope private/public.
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+                "created_at": "2015-08-05T08:40:51.620Z",
+                "updated_at": "2015-08-05T08:40:51.620Z",
+                "owner": {
+                    "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
+                },
+                "admin_users": [
+                    {
+                        "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
+                    }
+                ],
+                "members": [],
+                "display_name": "BestArtistEver",
+                "description": "",
+                "links": [],
+                "address": {},
+                "tags": [],
+                "group_email": "john@doe.com",
+                "payment_mechanisms": [],
+                "avatar": "",
+                "images": []
+            }
+
+### Add AdminUsers [POST /twirp/resonate.api.user.UserGroup/AddAdminUsers]
+
+Send email notification to users.
+Then if confirmed, Update UserGroup: admin_users.
+
++ Request (application/json)
+
+        [
+            "b09cd642-9df8-4f44-bb5a-169829043110",
+            "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+        ]
+
++ Response 204 (application/json)
+
+### Add Members [POST /twirp/resonate.api.user.UserGroup/AddMembers]
+
+For an artist user group to add user members:
+Send email notification to users.
+Then if confirmed: Update UserGroup: members.
+
++ Request (application/json)
+
+        [
+            "b09cd642-9df8-4f44-bb5a-169829043110",
+            "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+        ]
+
++ Response 204 (application/json)
+
+### Connect to Label [POST /twirp/resonate.api.user.UserGroup/ConnectToLabel]
+
+For an artist user group to connect to existing label.
+Send email notification to owner/admin of label UserGroup.
+Then, if confirmed: Update UserGroup (artist): labels / Update UserGroup (label): subgroups.
+
++ Request (application/json)
+
+        {
+            "artist_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "label_id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+        }
+
++ Response 204 (application/json)
+
+### Connect to Artist [POST /twirp/resonate.api.user.UserGroup/ConnectToArtist]
+
+For a label user group to connect to existing artists.
+Send email notification to admins/owner of artist UserGroup.
+Then, if confirmed: Update UserGroup (label): subgroups and Update UserGroup (artist): labels.
+
++ Request (application/json)
+
+        {
+            "artist_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "label_id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+        }
+
++ Response 200 (application/json)
+
+## Tracks Collection [/twirp/resonate.api.user.Track]
+
+### Add Tracks [POST /twirp/resonate.api.user.Track/AddTracks]
+
+Upload tracks (track server) and create tracks.
+
++ Request (application/json)
+
+        {
+            "performers": [
+                {
+                    "id": "c09cd642-9df8-4f44-bb5a-169829043110"
+                }
+            ],
+            "labels": [
+                {
+                    "id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+                }
+            ],
+            "rights": [],
+            "publish_date": "2015-08-05",
+            "tags": [],
+            "title": "Greatest track in the world",
+            "status": "free",
+            "cover": ""
+        }
+
++ Response 201 (application/json)
+
+        {
+            "id": "b19cd642-9df8-4f44-bb5a-166529043110",
+            "created_at": "2015-08-05T08:40:51.620Z",
+            "updated_at": "2015-08-05T08:40:51.620Z",
+            "performers": [
+                {
+                    "id": "c09cd642-9df8-4f44-bb5a-169829043110"
+                }
+            ],
+            "labels": [
+                {
+                    "id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+                }
+            ],
+            "rights": [],
+            "publish_date": "2015-08-05",
+            "audiofile": {
+                "id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378"
+            },
+            "tags": [],
+            "title": "Greatest track in the world",
+            "duration": "2m2s",
+            "links": [],
+            "status": "free",
+            "cover": ""
+        }
+
+### Update Track [POST /twirp/resonate.api.user.Track/UpdateTrack]
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "title": "Worst track in the world"
+        }
+
++ Response 204 (application/json)
+
+### Delete Track [POST /twirp/resonate.api.user.Track/DeleteTrack]
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 204 (application/json)
+
+### Get Tracks [POST /twirp/resonate.api.user.Track/GetTracks]
+
+For a given user group
+
++ Request (application/json)
+
+        {
+            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": "b19cd642-9df8-4f44-bb5a-166529043110",
+                "created_at": "2015-08-05T08:40:51.620Z",
+                "updated_at": "2015-08-05T08:40:51.620Z",
+                "performers": [
+                    {
+                        "id": "c09cd642-9df8-4f44-bb5a-169829043110"
+                    }
+                ],
+                "labels": [
+                    {
+                        "id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+                    }
+                ],
+                "rights": [],
+                "publish_date": "2015-08-05",
+                "audiofile": {
+                    "id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378"
+                },
+                "tags": [],
+                "title": "Greatest track in the world",
+                "duration": "2m2s",
+                "links": [],
+                "status": "free",
+                "cover": ""
+            }
+        ]
+
+### Get Random Tracks [POST /twirp/resonate.api.user.Track/GetRandomTracks]
+
+Respond with x (to be defined) random tracks.
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": "b19cd642-9df8-4f44-bb5a-166529043110",
+                "created_at": "2015-08-05T08:40:51.620Z",
+                "updated_at": "2015-08-05T08:40:51.620Z",
+                "performers": [
+                    {
+                        "id": "c09cd642-9df8-4f44-bb5a-169829043110"
+                    }
+                ],
+                "labels": [
+                    {
+                        "id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+                    }
+                ],
+                "rights": [],
+                "publish_date": "2015-08-05",
+                "audiofile": {
+                    "id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378"
+                },
+                "tags": [],
+                "title": "Greatest track in the world",
+                "duration": "2m2s",
+                "links": [],
+                "status": "free",
+                "cover": ""
+            }
+        ]
+
+
+
+## TrackGroups Collection [/twirp/resonate.api.user.TrackGroup]
+
+### Create TrackGroup [POST /twirp/resonate.api.user.Track/CreateTrackGroup]
+
+artist EP, LP, user playlist...
+
++ Request (application/json)
+
+        {
+            "creator_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "tracks": [
+                "c09cd642-9df8-4f44-bb5a-169829043110",
+                "a09cd642-9df8-4f44-bb5a-169829043110"
+            ],
+            "title": "Greatest Album",
+            "publish_date": "2015-08-05"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "id": "a3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05"
+            "created_at": "2015-08-05T08:40:51.620Z",
+            "updated_at": "2015-08-05T08:40:51.620Z",
+            "creator": [
+                {
+                    "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+                }
+            ],
+            "tracks": [
+                {
+                    "id": "c09cd642-9df8-4f44-bb5a-169829043110"
+                },
+                {
+                    "id": "a09cd642-9df8-4f44-bb5a-169829043110"
+                }
+            ],
+            "title": "Greatest Album",
+            "publish_date": "2015-08-05"
+
+        }
+
+### Update TrackGroup [POST /twirp/resonate.api.user.Track/UpdateTrackGroup]
+
++ Request (application/json)
+
+        {
+            "title": "Worst Album"
+        }
+
++ Response 204 (application/json)
+
+### Add Track To TrackGroup [POST /twirp/resonate.api.user.Track/AddTrackToTrackGroup]
+
++ Request (application/json)
+
+        {
+            "track_id": "ad3f89f6-e7d8-4e10-9926-a32b6bff125d"
+        }
+
++ Response 204 (application/json)
+
+### Delete Track From TrackGroup [POST /twirp/resonate.api.user.Track/DeleteTrackFromTrackGroup]
+
++ Request (application/json)
+
+        {
+            "track_id": "ad3f89f6-e7d8-4e10-9926-a32b6bff125d"
+        }
+
++ Response 204 (application/json)
+
+### Delete TrackGroup [POST /twirp/resonate.api.user.Track/DeleteTrackGroup]
+
++ Request (application/json)
+
+        {
+            "id": "a3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05"
+        }
+
++ Response 204 (application/json)
+
+### Get TrackGroups [POST /twirp/resonate.api.user.Track/GetTrackGroups]
+
+For a given user group
+
++ Request (application/json)
+
+        {
+            "user_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d"
+        }
+
++ Response 200 (application/json)
+
+        [
+        ]
+
+## Plays Collection [/twirp/resonate.api.user.Play/]
+
+### Create Play [/twirp/resonate.api.user.Play/CreatePlay]
+
++ Response 200 (application/json)
+
+### Update Play [/twirp/resonate.api.user.Play/UpdatePlay]
+
++ Response 200 (application/json)
+
+### Get Tracks Analytics [/twirp/resonate.api.user.Play/GetAnalytics]
+
+For a given user group:
+artist => grouped by track
+label => grouped by artist => grouped by track
+
++ Response 200 (application/json)
+
+### Get User Library [/twirp/resonate.api.user.Play/GetUserLibrary]
+
+For a given user:
+owned tracks, history, favorites, playlists
+
++ Response 200 (application/json)
+
+### Get User Track Play Count [/twirp/resonate.api.user.Play/GetUserTrackPlayCount]
+
+Play count for a given user and a given track
+
++ Response 200 (application/json)
