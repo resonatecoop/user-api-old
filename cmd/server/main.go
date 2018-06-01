@@ -2,37 +2,27 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"database/sql"
-	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	"user-api/internal/userserver"
 	"user-api/rpc/user"
-)
-
-const (
-	host = "localhost"
-	port = 5432
-	username = "toy-api-dev-user"
-	password = "password"
-	dbname = "toy-api-dev"
+	"user-api/internal/database"
 )
 
 func main() {
-	fmt.Printf("Toy User Service on :8080")
+	fmt.Printf("User Service on :8080")
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, username, password, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	// psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, username, password, dbname)
+	// db, err := sql.Open("postgres", psqlInfo)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	db := database.Conn
 	server := userserver.NewServer(db)
-	twirpHandler := user.NewToyUserServer(server, nil)
+	twirpHandler := user.NewUserServiceServer(server, nil)
 
 	mux := http.NewServeMux()
-	mux.Handle(user.ToyUserPathPrefix, twirpHandler)
+	mux.Handle(user.UserServicePathPrefix, twirpHandler)
 
 	// cors.Default() setup the middleware with default options being
 	// all origins accepted with simple methods (GET, POST).

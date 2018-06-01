@@ -3,45 +3,60 @@ package userserver
 import (
 	// "fmt"
 	"context"
-	"database/sql"
 	"github.com/satori/go.uuid"
+	"github.com/go-pg/pg"
 	pb "user-api/rpc/user"
-	models "user-api/internal/database/models"
-	"gopkg.in/src-d/go-kallax.v1"
+	"user-api/internal/database/models"
 )
 
-// Server implements the ToyUser service
+// Server implements the UserService
 type Server struct {
-	// DB *sql.DB
-	Store *models.UserStore
+	db *pg.DB
 }
 
 // NewServer creates an instance of our server
-func NewServer(db *sql.DB) *Server {
-	store := models.NewUserStore(db)
-	return &Server{Store: store}
+func NewServer(db *pg.DB) *Server {
+	return &Server{db: db}
 }
 
 func (s *Server) GetUsers(ctx context.Context, empty *pb.Empty) (*pb.Users, error) {
-	q := models.NewUserQuery()
-
-	users, err := s.Store.FindAll(q)
-	if err != nil {
-		return nil, err
-	}
-	u := make([]*pb.User, len(users))
-	for i := range u {
-		u[i] = &pb.User{Id: users[i].ID.String(), Email: users[i].Email, Username: users[i].Username, Address: users[i].Address}
-	}
+	// q := models.NewUserQuery()
+	//
+	// users, err := s.Store.FindAll(q)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	u := make([]*pb.User, 3)
+	// for i := range u {
+	// 	u[i] = &pb.User{Id: users[i].ID.String(), Email: users[i].Email, Username: users[i].Username, Address: users[i].Address}
+	// }
 	return &pb.Users{User: u}, nil
 }
 
 func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error) {
-	u := uuid.NewV4()
-	newuser, _ := models.NewUser(kallax.UUID(u), user.Username, user.Email, user.Address)
-	err := s.Store.Insert(newuser)
+	id := uuid.NewV4()
+	newuser := &models.User{
+		Id: id,
+		Username: user.Username,
+		DisplayName: user.DisplayName,
+		FullName: user.FullName,
+		Email: user.Email,
+	}
+	_, err := s.db.Model(newuser).Returning("*").Insert()
 	if err != nil {
     return nil, err
 	}
-	return &pb.User{Id: newuser.ID.String(), Email: user.Email, Username: user.Username, Address: user.Address}, nil
+	// fmt.Printf("%+v\n", newuser)
+	return &pb.User{
+		Id: newuser.Id.String(),
+		Username: newuser.Username,
+		DisplayName: newuser.DisplayName,
+		FullName: newuser.FullName,
+		Email: newuser.Email,
+		FirstName: newuser.FirstName,
+		LastName: newuser.LastName,
+		Member: newuser.Member,
+		Avatar: newuser.Avatar,
+		NewsletterNotification: newuser.NewsletterNotification,
+	}, nil
 }

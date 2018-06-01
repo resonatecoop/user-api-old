@@ -48,3 +48,11 @@
 [[constraint]]
   name = "github.com/satori/go.uuid"
   version = "1.2.0"
+
+[[constraint]]
+  name = "github.com/go-pg/pg"
+  version = "6.13.4"
+
+[[constraint]]
+  name = "github.com/go-pg/migrations"
+  version = "6.2.0"

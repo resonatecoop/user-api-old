@@ -1,17 +1,32 @@
-//go:generate kallax gen
 package models
 
-import "gopkg.in/src-d/go-kallax.v1"
+import (
+  "time"
+
+  "github.com/satori/go.uuid"
+)
+
 
 type User struct {
-        kallax.Model         `table:"users"`
-        ID       kallax.UUID  `pk:""`
-        Username string
-        Email    string
-        Address string
-}
+  Id uuid.UUID `sql:"type:uuid"`
+  FullName string `sql:",notnull"`
+  DisplayName string `sql:",unique,notnull"`
+  FirstName string
+  LastName string
+  Email string `sql:",unique,notnull"`
+  Username string `sql:",unique,notnull"`
+  Member bool `sql:",notnull"`
+  Avatar []byte
+  NewsletterNotification bool
+  CreatedAt time.Time `sql:"default:now()"`
+	UpdatedAt time.Time
 
-
-func newUser(id kallax.UUID, username string, email string, address string) (*User, error) {
-  return &User{ID: id, Username: username, Email: email, Address: address}, nil
+  // ResidenceAddress
+  // Tags
+  // MemberOfGroups
+  // Shares
+  // FavouriteTracks
+  // Playlists
+  // FollowedArtists
+  // PaymentMechanisms
 }

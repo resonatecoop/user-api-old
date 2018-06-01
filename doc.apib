@@ -5,9 +5,9 @@ FORMAT: 1A
 Users/Tracks API is the main API to access Users, UserGroups, Tracks, TrackGroups and related collections.
 
 
-## Users Collection [/twirp/resonate.api.user.User/]
+## Users Collection [/twirp/resonate.api.user.UserService/]
 
-### Get User [POST /twirp/resonate.api.user.User/GetUser]
+### Get User [POST /twirp/resonate.api.user.UserService/GetUser]
 
 TODO: add scope for restricted access (public/private user profile).
 
@@ -38,13 +38,12 @@ TODO: add scope for restricted access (public/private user profile).
                 "labels": []
             },
             "shares": [],
-            "credits": 99.022,
             "avatar": ""
         }
 
 
 
-### Create a New User [POST /twirp/resonate.api.user.User/CreateUser]
+### Create a New User [POST /twirp/resonate.api.user.UserService/CreateUser]
 
 Used for signup.
 
@@ -80,11 +79,10 @@ Used for signup.
                     "labels": []
                 },
                 "shares": [],
-                "credits": 0,
                 "avatar": ""
             }
 
-### Update a User [POST /twirp/resonate.api.user.User/UpdateUser]
+### Update a User [POST /twirp/resonate.api.user.UserService/UpdateUser]
 
 
 + Request (application/json)
@@ -97,7 +95,7 @@ Used for signup.
 
 + Response 204 (application/json)
 
-### Delete a User [POST /twirp/resonate.api.user.User/DeleteUser]
+### Delete a User [POST /twirp/resonate.api.user.UserService/DeleteUser]
 
 
 + Request (application/json)
@@ -108,7 +106,7 @@ Used for signup.
 
 + Response 204 (application/json)
 
-### Connect to Existing UserGroup [POST /twirp/resonate.api.user.User/ConnectToUserGroup]
+### Connect to Existing UserGroup [POST /twirp/resonate.api.user.UserService/ConnectToUserGroup]
 
 For a user to join an existing artist/band:
 Send email notification to owner/admins of user group.
@@ -124,7 +122,7 @@ Send email to notify user.
 
 + Response 204 (application/json)
 
-### Add Favorite Track [POST /twirp/resonate.api.user.User/AddFavoriteTrack]
+### Add Favorite Track [POST /twirp/resonate.api.user.UserService/AddFavoriteTrack]
 
 + Request (application/json)
 
@@ -135,7 +133,7 @@ Send email to notify user.
 
 + Response 204 (application/json)
 
-### Remove Favorite Track [POST /twirp/resonate.api.user.User/RemoveFavoriteTrack]
+### Remove Favorite Track [POST /twirp/resonate.api.user.UserService/RemoveFavoriteTrack]
 
 + Request (application/json)
 

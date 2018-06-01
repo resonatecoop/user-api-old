@@ -1,28 +1,28 @@
 # Toy User API
 
-This is a simple User API that uses Twirp. It allows to list and create users with username, email and address fields. Learn more about
+This is a simple User API that uses Twirp. It allows to create users. Learn more about
 Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html) or
 [repo](https://github.com/twitchtv/twirp).
-It also uses [Kallax](https://github.com/src-d/go-kallax) PostgreSQL ORM.
+It also uses [go-pg](https://github.com/go-pg/pg) PostgreSQL ORM.
 
 ## Dev database setup
 
 * Make sure you have latest PostgreSQL installed.
 * Create user and database as follow:
 
-username = "toy-api-dev-user"
+username = "resonate-dev-user"
 
 password = "password"
 
-dbname = "toy-api-dev"
+dbname = "resonate-dev"
 
-* Run migrations
+* Run migrations from `./internal/database/migrations`
 
 ```sh
-$ kallax migrate up --dir ./internal/database/migrations --dsn 'toy-api-dev-user:password@localhost:5432/toy-api-dev?sslmode=disable' --all
+$ go run *.go
 ```
 
-**Note:** This is temporary database setup until we start using Docker and Minikube.
+**Note:** This is temporary database setup until we start using Docker.
 
 ## Installation
 
@@ -69,23 +69,12 @@ $ go run ./cmd/client/main.go
 ### CreateUser
 ```sh
 curl --request "POST" \
-     --location "http://localhost:8080/twirp/resonate.toyapi.user.ToyUser/CreateUser" \
+     --location "http://localhost:8080/twirp/resonate.api.user.UserService/CreateUser" \
      --header "Content-Type:application/json" \
-     --data '{"name": "john", "email": "john@doe.com"}' \
+     --data '{"display_name": "john", "full_name": "john doe", "email": "john@doe.com", "username": "johnd"}' \
      --verbose
 
-{"name":"john","email":"john@doe.com"}
-```
-
-### GetUsers
-```sh
-curl --request "POST" \
-     --location "http://localhost:8080/twirp/resonate.toyapi.user.ToyUser/GetUsers" \
-     --header "Content-Type:application/json" \
-     --data '{}' \
-     --verbose
-
-{"users":[{"name":"john","email":"john@doe.com"}]}
+{"id":"9ef71770-7a1b-4a11-a81e-1b6d177a3598","username":"johnd","email":"john@doe.com","display_name":"john","full_name":"john doe"}
 ```
 
 ## Code structure

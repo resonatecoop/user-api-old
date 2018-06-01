@@ -2,10 +2,23 @@
 
 
 [[projects]]
-  name = "github.com/Masterminds/squirrel"
+  name = "github.com/go-pg/migrations"
   packages = ["."]
-  revision = "a6b93000bd219143c56c16e6cb1c4b91da3f224b"
-  version = "v1.0"
+  revision = "91a824bb86a910befc819700ec6e21858c41b022"
+  version = "v6.2.0"
+
+[[projects]]
+  name = "github.com/go-pg/pg"
+  packages = [
+    ".",
+    "internal",
+    "internal/parser",
+    "internal/pool",
+    "orm",
+    "types"
+  ]
+  revision = "5a864bc8762fd5f0b547374971878cd6412aa0f3"
+  version = "v6.13.4"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -19,15 +32,9 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/lann/builder"
+  name = "github.com/jinzhu/inflection"
   packages = ["."]
-  revision = "1b87b36280d04fe7882d1512bf038ea2967ad534"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/lann/ps"
-  packages = ["."]
-  revision = "62de8c46ede02a7675c4c79c84883eb164cb71e3"
+  revision = "04140366298a54a039076d798123ffa108fff46c"
 
 [[projects]]
   branch = "master"
@@ -37,12 +44,6 @@
     "oid"
   ]
   revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
-
-[[projects]]
-  name = "github.com/oklog/ulid"
-  packages = ["."]
-  revision = "d311cb43c92434ec4072dfbbda3400741d0a6337"
-  version = "v0.3.0"
 
 [[projects]]
   name = "github.com/rs/cors"
@@ -66,18 +67,9 @@
   revision = "1e149ba374383a4b74e836f6c9e54fede6b09c61"
   version = "v5.3.0"
 
-[[projects]]
-  name = "gopkg.in/src-d/go-kallax.v1"
-  packages = [
-    ".",
-    "types"
-  ]
-  revision = "b1269648051c4fa3feaceba211cc40837e1cdd01"
-  version = "1.3.4"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "764d59a9065fd3a5b4919fc644cb1f761b8624827599407ae04530ed71915dbf"
+  inputs-digest = "f4141f32b2b64ab43c3e3f9aecc950ee5d0fe3af72ccfbdf41e162d0b4fe754f"
   solver-name = "gps-cdcl"
   solver-version = 1
