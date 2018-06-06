@@ -8,7 +8,7 @@ import (
 
 
 type User struct {
-  Id uuid.UUID `sql:"type:uuid"`
+  Id uuid.UUID `sql:"type:uuid,default:uuid_generate_v4()"`
   FullName string `sql:",notnull"`
   DisplayName string `sql:",unique,notnull"`
   FirstName string

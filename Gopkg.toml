@@ -56,3 +56,11 @@
 [[constraint]]
   name = "github.com/go-pg/migrations"
   version = "6.2.0"
+
+[[constraint]]
+  name = "github.com/onsi/ginkgo"
+  version = "1.5.0"
+
+[[constraint]]
+  name = "github.com/onsi/gomega"
+  version = "1.4.0"

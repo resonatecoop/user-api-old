@@ -3,8 +3,9 @@ package userserver
 import (
 	// "fmt"
 	"context"
-	"github.com/satori/go.uuid"
+	"strings"
 	"github.com/go-pg/pg"
+	"github.com/twitchtv/twirp"
 	pb "user-api/rpc/user"
 	"user-api/internal/database/models"
 )
@@ -34,29 +35,48 @@ func (s *Server) GetUsers(ctx context.Context, empty *pb.Empty) (*pb.Users, erro
 }
 
 func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error) {
-	id := uuid.NewV4()
+	if user.Username == "" || user.FullName == "" || user.Email == "" || user.DisplayName == "" {
+		var argument string
+		switch {
+		case user.Username == "":
+			argument = "username"
+		case user.Email == "":
+			argument = "email"
+		case user.DisplayName == "":
+			argument = "display_name"
+		case user.FullName == "":
+			argument = "full_name"
+		}
+		return nil, twirp.RequiredArgumentError(argument)
+	}
+
 	newuser := &models.User{
-		Id: id,
 		Username: user.Username,
-		DisplayName: user.DisplayName,
 		FullName: user.FullName,
 		Email: user.Email,
+		DisplayName: user.DisplayName,
 	}
 	_, err := s.db.Model(newuser).Returning("*").Insert()
+
 	if err != nil {
-    return nil, err
+		pgerr := err.(pg.Error)
+		code := pgerr.Field('C')
+		name := pgerr.Field('n')
+		var message string
+		if code == "23505" { // unique_violation // TODO put code in var
+			message = strings.TrimPrefix(strings.TrimSuffix(name, "_key"), "users_")
+			return nil, twirp.NewError("already_exists", message)
+		} else {
+			message = pgerr.Field('M')
+			return nil, twirp.NewError("unknown", message)
+		}
 	}
-	// fmt.Printf("%+v\n", newuser)
+
 	return &pb.User{
 		Id: newuser.Id.String(),
 		Username: newuser.Username,
 		DisplayName: newuser.DisplayName,
 		FullName: newuser.FullName,
 		Email: newuser.Email,
-		FirstName: newuser.FirstName,
-		LastName: newuser.LastName,
-		Member: newuser.Member,
-		Avatar: newuser.Avatar,
-		NewsletterNotification: newuser.NewsletterNotification,
 	}, nil
 }

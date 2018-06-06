@@ -62,24 +62,10 @@ Used for signup.
 
             {
                 "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-                "created_at": "2015-08-05T08:40:51.620Z",
-                "updated_at": "2015-08-05T08:40:51.620Z",
                 "full_name": "John Doe",
                 "display_name": "JohnD",
-                "first_name": "",
-                "last_name": "",
-                "residence_address": {},
                 "email": "john@doe.com",
-                "payment_mechanisms": [],
-                "username": "jdoe",
-                "member": false,
-                "tags": [],
-                "userGroups": {
-                    "artists": [],
-                    "labels": []
-                },
-                "shares": [],
-                "avatar": ""
+                "username": "jdoe"
             }
 
 ### Update a User [POST /twirp/resonate.api.user.UserService/UpdateUser]
@@ -223,10 +209,7 @@ Can be a label owner/user admin creating an artist in this label
 
 + Response 204 (application/json)
 
-### Get UserGroups [POST /twirp/resonate.api.user.UserGroup/GetUserGroups]
-
-Get all UserGroups. Grouped by type.
-(TODO: add features, curated here or in another ressource)
+### Get Label UserGroups [POST /twirp/resonate.api.user.UserGroup/GetLabelUserGroups]
 
 + Response 200 (application/json)
 
@@ -237,6 +220,8 @@ Get all UserGroups. Grouped by type.
                 "labels": [],
                 "distributors": []
             }
+
+### Get Featured UserGroups [POST /twirp/resonate.api.user.UserGroup/GetFeaturedUserGroups]
 
 ### Get UserGroup [POST /twirp/resonate.api.user.UserGroup/GetUserGroup]
 
