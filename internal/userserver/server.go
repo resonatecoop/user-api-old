@@ -7,6 +7,7 @@ import (
 	"strings"
 	"github.com/go-pg/pg"
 	"github.com/twitchtv/twirp"
+	"github.com/satori/go.uuid"
 
 	pb "user-api/rpc/user"
 	"user-api/internal/database/models"
@@ -22,18 +23,31 @@ func NewServer(db *pg.DB) *Server {
 	return &Server{db: db}
 }
 
-func (s *Server) GetUsers(ctx context.Context, empty *pb.Empty) (*pb.Users, error) {
-	// q := models.NewUserQuery()
-	//
-	// users, err := s.Store.FindAll(q)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	u := make([]*pb.User, 3)
-	// for i := range u {
-	// 	u[i] = &pb.User{Id: users[i].ID.String(), Email: users[i].Email, Username: users[i].Username, Address: users[i].Address}
-	// }
-	return &pb.Users{User: u}, nil
+func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
+	id, err := uuid.FromString(user.Id)
+	if err != nil {
+		return nil, twirp.InvalidArgumentError("id", "must be a valid uuid")
+	}
+	u := &models.User{Id: id}
+	err = s.db.Select(u)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, twirp.NotFoundError("user does not exist")
+		}
+		return nil, twirp.NewError("unknown", err.Error())
+	}
+	return &pb.User{
+		Id: u.Id.String(),
+		Username: u.Username,
+		DisplayName: u.DisplayName,
+		FullName: u.FullName,
+		Email: u.Email,
+		FirstName: u.FirstName,
+		LastName: u.LastName,
+		Member: u.Member,
+		Avatar: u.Avatar,
+		NewsletterNotification: u.NewsletterNotification,
+	}, nil
 }
 
 func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error) {

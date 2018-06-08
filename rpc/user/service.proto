@@ -5,7 +5,7 @@ option go_package = "user";
 
 service UserService {
   rpc CreateUser(User) returns (User);
-  rpc GetUsers(Empty) returns (Users);
+  rpc GetUser(User) returns (User);
 }
 
 message User {
@@ -21,8 +21,8 @@ message User {
   bool newsletter_notification = 10;
 }
 
-message Users {
-  repeated User user = 1;
-}
+// message Users {
+//   repeated User user = 1;
+// }
 
 message Empty {}
