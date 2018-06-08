@@ -16,6 +16,8 @@ password = "password"
 
 dbname = "resonate-dev"
 
+Add following extensions: "hstore" and "uuid-ossp" (TODO: add them on initial migration)
+
 * Run migrations from `./internal/database/migrations`
 
 ```sh
@@ -88,3 +90,31 @@ Database related stuff (migrations, model definitions) can be found in `internal
 
 Finally, `cmd/server` and `cmd/client` wrap things together into executable main
 packages.
+
+## Testing
+
+We use Ginkgo and Gomega for testing.
+
+For the moment, you need to create the testing database and run migrations manually before running tests.
+
+* Create user and database as follow:
+
+username = "resonate-testing-user"
+
+password = ""
+
+dbname = "resonate-testing"
+
+Add following extensions: "hstore" and "uuid-ossp" (TODO: add them on initial migration)
+
+* Run migrations from `./internal/database/migrations`
+
+```sh
+$ go run *.go testing
+```
+
+* Run tests from `./internal/userserver`
+
+```sh
+$ go test
+```

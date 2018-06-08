@@ -10,13 +10,13 @@ import (
 
 func init() {
 	migrations.Register(func(db migrations.DB) error {
-		if _, err := db.Exec( /* language=sql */ `CREATE EXTENSION IF NOT EXISTS "hstore"`); err != nil {
-			return err
-		}
-
-    if _, err := db.Exec( /* language=sql */ `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`); err != nil {
-      return err
-    }
+		// if _, err := db.Exec( /* language=sql */ `CREATE EXTENSION IF NOT EXISTS "hstore"`); err != nil {
+		// 	return err
+		// }
+    //
+    // if _, err := db.Exec( /* language=sql */ `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`); err != nil {
+    //   return err
+    // }
 
 		if _, err := orm.CreateTable(db, &models.User{}, nil); err != nil {
 			return err
@@ -28,7 +28,6 @@ func init() {
 			return err
 		}
 
-		_, err := db.Exec( /* language=sql */ `DROP EXTENSION IF EXISTS "uuid-ossp"`)
-		return err
+    return nil
 	})
 }

@@ -25,7 +25,15 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	oldVersion, newVersion, err := migrations.Run(database.Conn, flag.Args()...)
+	var testing bool
+	flags := flag.Args()
+	if contains(flag.Args(), "testing") {
+		testing = true
+		flags = flags[:len(flags)-1]
+	}
+	fmt.Println(flags)
+
+	oldVersion, newVersion, err := migrations.Run(database.Connect(testing), flags...)
 	if err != nil {
 		exitf(err.Error())
 	}
@@ -49,4 +57,13 @@ func errorf(s string, args ...interface{}) {
 func exitf(s string, args ...interface{}) {
 	errorf(s, args...)
 	os.Exit(1)
+}
+
+func contains(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+		   return true
+		}
+	}
+	return false
 }

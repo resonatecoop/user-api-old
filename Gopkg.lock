@@ -37,10 +37,37 @@
   revision = "04140366298a54a039076d798123ffa108fff46c"
 
 [[projects]]
+  name = "github.com/onsi/ginkgo"
+  packages = [
+    ".",
+    "config",
+    "internal/codelocation",
+    "internal/containernode",
+    "internal/failer",
+    "internal/leafnodes",
+    "internal/remote",
+    "internal/spec",
+    "internal/spec_iterator",
+    "internal/specrunner",
+    "internal/suite",
+    "internal/testingtproxy",
+    "internal/writer",
+    "reporters",
+    "reporters/stenographer",
+    "reporters/stenographer/support/go-colorable",
+    "reporters/stenographer/support/go-isatty",
+    "types"
+  ]
+  revision = "fa5fabab2a1bfbd924faf4c067d07ae414e2aedf"
+  version = "v1.5.0"
+
+[[projects]]
   name = "github.com/onsi/gomega"
   packages = [
     ".",
     "format",
+    "gstruct",
+    "gstruct/errors",
     "internal/assertion",
     "internal/asyncassertion",
     "internal/oraclematcher",
@@ -88,6 +115,12 @@
   revision = "1e491301e022f8f977054da4c2d852decd59571f"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "538ab54ba952cc4c7c705fa213fbf7993c97c175"
+
+[[projects]]
   name = "golang.org/x/text"
   packages = [
     "encoding",
@@ -120,6 +153,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8a904e697eae100bf696de2a28bf54853e926e2583ed1a62f4450d88318f38c0"
+  inputs-digest = "62bd95b7765f10c7356d87d6e620a36f5ea315aa029897484a539c2aade760c7"
   solver-name = "gps-cdcl"
   solver-version = 1
