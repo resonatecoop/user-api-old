@@ -10,7 +10,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	pb "user-api/rpc/user"
-	"user-api/internal/database/models"
+	// "user-api/internal/database/models"
 	// . "user-api/internal/userserver"
 )
 
@@ -22,12 +22,6 @@ var _ = Describe("Userserver", func() {
 	Describe("GetUser", func() {
 		Context("with valid uuid", func() {
 			It("should respond with user if it exists", func() {
-				// First create a new user (users table's empty)
-				newuser := &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
-				err := db.Insert(newuser)
-				Expect(err).NotTo(HaveOccurred())
-
-				// Then get it
 				user := &pb.User{Id: newuser.Id.String()}
 				resp, err := service.GetUser(context.Background(), user)
 
@@ -37,9 +31,8 @@ var _ = Describe("Userserver", func() {
 				Expect(resp.FullName).To(Equal(newuser.FullName))
 				Expect(resp.DisplayName).To(Equal(newuser.DisplayName))
 				Expect(resp.Email).To(Equal(newuser.Email))
-
-				err = db.Delete(newuser)
-				Expect(err).NotTo(HaveOccurred())
+				// err = db.Delete(newuser)
+				// Expect(err).NotTo(HaveOccurred())
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
@@ -58,6 +51,99 @@ var _ = Describe("Userserver", func() {
 				id := "45"
 				user := &pb.User{Id: id}
 				resp, err := service.GetUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
+	})
+
+	Describe("UpdateUser", func() {
+		Context("with valid uuid", func() {
+			It("should update user if it exists", func() {
+				user := &pb.User{
+					Id: newuser.Id.String(),
+					Username: "new username",
+					FullName: "full name",
+					DisplayName: "display name",
+					Email: "email@fake.com",
+					FirstName: "first name",
+				}
+				_, err := service.UpdateUser(context.Background(), user)
+
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				id := uuid.NewV4()
+				user := &pb.User{
+					Id: id.String(),
+					Username: "username",
+					FullName: "fullname",
+					DisplayName: "displayname",
+					Email: "email@fake.comm",
+					FirstName: "firstname",
+				}
+				resp, err := service.UpdateUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error", func() {
+				id := "45"
+				user := &pb.User{
+					Id: id,
+					Username: "new username",
+					FullName: "full name",
+					DisplayName: "display name",
+					Email: "email@fake.com",
+					FirstName: "first name",
+				}
+				resp, err := service.UpdateUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
+	})
+
+	Describe("DeleteUser", func() {
+		Context("with valid uuid", func() {
+			It("should delete user if it exists", func() {
+				user := &pb.User{Id: newuser.Id.String()}
+				_, err := service.DeleteUser(context.Background(), user)
+
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				id := uuid.NewV4()
+				user := &pb.User{Id: id.String()}
+				resp, err := service.DeleteUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error", func() {
+				id := "45"
+				user := &pb.User{Id: id}
+				resp, err := service.DeleteUser(context.Background(), user)
 
 				Expect(resp).To(BeNil())
 				Expect(err).To(HaveOccurred())

@@ -15,6 +15,7 @@ import (
 
 var db *pg.DB
 var service *userserver.Server
+var newuser *models.User
 
 func TestUserserver(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -25,6 +26,10 @@ var _ = BeforeSuite(func() {
 		testing := true
 		db = database.Connect(testing)
 		service = userserver.NewServer(db)
+		// Create a new user (users table's empty)
+		newuser = &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
+		err := db.Insert(newuser)
+		Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {

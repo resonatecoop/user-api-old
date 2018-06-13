@@ -29,7 +29,6 @@ TODO: add scope for restricted access (public/private user profile).
             "last_name": "Doe",
             "residence_address": {},
             "email": "john@doe.com",
-            "payment_mechanisms": [],
             "username": "jdoe",
             "member": false,
             "tags": [],
@@ -37,7 +36,6 @@ TODO: add scope for restricted access (public/private user profile).
                 "artists": [],
                 "labels": []
             },
-            "shares": [],
             "avatar": ""
         }
 
@@ -70,13 +68,18 @@ Used for signup.
 
 ### Update a User [POST /twirp/resonate.api.user.UserService/UpdateUser]
 
+In the example, we update first_name and last_name of previously created user.
 
 + Request (application/json)
 
         {
             "id": "b09cd642-9df8-4f44-bb5a-169829043110",
             "first_name": "John",
-            "last_name": "Doe"
+            "last_name": "Doe",
+            "full_name": "John Doe",
+            "display_name": "JohnD",
+            "email": "john@doe.com",
+            "username": "jdoe"
         }
 
 + Response 204 (application/json)
@@ -129,6 +132,40 @@ Send email to notify user.
         }
 
 + Response 204 (application/json)
+
+### Follow Artist [POST /twirp/resonate.api.user.UserService/FollowArtist]
+
++ Request (application/json)
+
+        {
+            "user_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_group_id": "129f3a00-1022-4cb6-beda-8f7eeef8bd31"
+        }
+
++ Response 204 (application/json)
+
+### Unfollow Artist [POST /twirp/resonate.api.user.UserService/UnfollowArtist]
+
++ Request (application/json)
+
+        {
+            "user_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_group_id": "129f3a00-1022-4cb6-beda-8f7eeef8bd31"
+        }
+
++ Response 204 (application/json)
+
+### Get Feed [POST /twirp/resonate.api.user.UserService/GetFeed]
+
+infinite feed, needs pagination
+
++ Request (application/json)
+
+        {
+            "user_id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 200 (application/json)
 
 ## UserGroups Collection [/twirp/resonate.api.user.UserGroup/]
 
@@ -183,7 +220,6 @@ Can be a label owner/user admin creating an artist in this label
                 "address": {},
                 "tags": [],
                 "group_email": "john@doe.com",
-                "payment_mechanisms": [],
                 "avatar": "",
                 "images": []
             }
@@ -256,7 +292,6 @@ scope private/public.
                 "address": {},
                 "tags": [],
                 "group_email": "john@doe.com",
-                "payment_mechanisms": [],
                 "avatar": "",
                 "images": []
             }

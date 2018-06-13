@@ -9,6 +9,8 @@ import (
 
 type User struct {
   Id uuid.UUID `sql:"type:uuid,default:uuid_generate_v4()"`
+  CreatedAt time.Time `sql:"default:now()"`
+  UpdatedAt time.Time
   FullName string `sql:",notnull"`
   DisplayName string `sql:",unique,notnull"`
   FirstName string
@@ -18,15 +20,16 @@ type User struct {
   Member bool `sql:",notnull"`
   Avatar []byte
   NewsletterNotification bool
-  CreatedAt time.Time `sql:"default:now()"`
-	UpdatedAt time.Time
 
-  // ResidenceAddress
-  // Tags
-  // MemberOfGroups
-  // Shares
-  // FavouriteTracks
+  // ResidenceAddressId uuid.UUID `sql:",notnull"`
+
+  FavoriteTracks []uuid.UUID `pg:",array"`
   // Playlists
   // FollowedArtists
+
+  // MemberOfGroups
+  // Tags
+
+  // Shares
   // PaymentMechanisms
 }
