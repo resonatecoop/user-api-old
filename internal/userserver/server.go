@@ -1,7 +1,7 @@
 package userserver
 
 import (
-	// "fmt"
+	"fmt"
 	// "reflect"
 	"time"
 	"context"
@@ -43,7 +43,7 @@ func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	}
 
 	pgerr := s.db.Select(u)
-	twerr := checkError(pgerr)
+	twerr := checkError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -76,7 +76,7 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	}
 	_, err := s.db.Model(newuser).Returning("*").Insert()
 
-	twerr := checkError(err)
+	twerr := checkError(err, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -104,7 +104,7 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 
 	u.UpdatedAt = time.Now()
 	_, pgerr := s.db.Model(u).WherePK().Returning("*").UpdateNotNull()
-	twerr := checkError(pgerr)
+	twerr := checkError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -118,40 +118,132 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 	}
 
 	pgerr := s.db.Delete(u)
-	twerr := checkError(pgerr)
+	twerr := checkError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) ConnectToUserGroup(ctx context.Context, user *pb.UserToUserGroup) (*pb.Empty, error) {
+func (s *Server) ConnectToUserGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) FollowArtist(ctx context.Context, user *pb.UserToUserGroup) (*pb.Empty, error) {
+func (s *Server) FollowArtist(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) UnfollowArtist(ctx context.Context, user *pb.UserToUserGroup) (*pb.Empty, error) {
+func (s *Server) UnfollowArtist(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) AddFavoriteTrack(ctx context.Context, user_to *pb.UserToTrack) (*pb.Empty, error) {
-	// user_id, err := getUuidFromString()
+func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*pb.Empty, error) {
+	addFavoriteTrack := func(db *pg.DB, userId uuid.UUID, trackId uuid.UUID) (error, string) {
+		var table string
+	  tx, err := db.Begin()
+	  if err != nil {
+			return err, table
+	  }
+	  // Rollback tx on error.
+	  defer tx.Rollback()
 
+		// Add trackId to user FavoriteTracks
+		trackIdArr := []uuid.UUID{trackId}
+		_, pgerr := tx.ExecOne(`
+			UPDATE users
+			SET favorite_tracks = (select array_agg(distinct e) from unnest(favorite_tracks || ?) e)
+			WHERE id = ?
+		`, pg.Array(trackIdArr), userId)
+		// WHERE NOT favorite_tracks @> ?
+		if pgerr != nil {
+			table = "user"
+			return pgerr, table
+		}
+
+		// Add userId to track FavoriteOfUsers
+		userIdArr := []uuid.UUID{userId}
+		_, pgerr = tx.ExecOne(`
+			UPDATE tracks
+			SET favorite_of_users = (select array_agg(distinct e) from unnest(favorite_of_users || ?) e)
+			WHERE id = ?
+		`, pg.Array(userIdArr), trackId)
+		if pgerr != nil {
+			table = "track"
+			return pgerr, table
+		}
+	  return tx.Commit(), table
+	}
+
+	userId, err := getUuidFromString(userToTrack.UserId)
+	if err != nil {
+		return nil, err
+	}
+	trackId, err := getUuidFromString(userToTrack.TrackId)
+	if err != nil {
+		return nil, err
+	}
+
+	if pgerr, table := addFavoriteTrack(s.db, userId, trackId); pgerr != nil {
+		return nil, checkError(pgerr, table)
+	}
 
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) RemoveFavoriteTrack(ctx context.Context, user *pb.UserToTrack) (*pb.Empty, error) {
+func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*pb.Empty, error) {
+	removeFavoriteTrack := func(db *pg.DB, userId uuid.UUID, trackId uuid.UUID) (error, string) {
+		var table string
+	  tx, err := db.Begin()
+	  if err != nil {
+			return err, table
+	  }
+	  // Rollback tx on error.
+	  defer tx.Rollback()
+
+		// Remove trackId from user FavoriteTracks
+		_, pgerr := tx.ExecOne(`
+			UPDATE users
+			SET favorite_tracks = array_remove(favorite_tracks, ?)
+			WHERE id = ?
+		`, trackId, userId)
+		if pgerr != nil {
+			table = "user"
+			return pgerr, table
+		}
+
+		// Remove userId from track FavoriteOfUsers
+		_, pgerr = tx.ExecOne(`
+			UPDATE tracks
+			SET favorite_of_users = array_remove(favorite_of_users, ?)
+			WHERE id = ?
+		`, userId, trackId)
+		if pgerr != nil {
+			table = "track"
+			return pgerr, table
+		}
+	  return tx.Commit(), table
+	}
+
+	// TODO refacto
+	userId, err := getUuidFromString(userToTrack.UserId)
+	if err != nil {
+		return nil, err
+	}
+	trackId, err := getUuidFromString(userToTrack.TrackId)
+	if err != nil {
+		return nil, err
+	}
+
+	if pgerr, table := removeFavoriteTrack(s.db, userId, trackId); pgerr != nil {
+		return nil, checkError(pgerr, table)
+	}
 	return &pb.Empty{}, nil
 }
 
 func getUuidFromString(id string) (uuid.UUID, twirp.Error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
-		return nil, twirp.InvalidArgumentError("id", "must be a valid uuid")
+		return uuid.UUID{}, twirp.InvalidArgumentError("id", "must be a valid uuid")
 	}
 	return uid, nil
 }
@@ -193,10 +285,11 @@ func checkRequiredAttributes(user *pb.User) (twirp.Error) {
 	return nil
 }
 
-func checkError(err error) (twirp.Error) {
+// TODO move to utils package
+func checkError(err error, table string) (twirp.Error) {
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return twirp.NotFoundError("user does not exist")
+			return twirp.NotFoundError(fmt.Sprintf("%s does not exist", table))
 		}
 		pgerr, ok := err.(pg.Error)
 		if ok {
@@ -204,7 +297,7 @@ func checkError(err error) (twirp.Error) {
 			name := pgerr.Field('n')
 			var message string
 			if code == "23505" { // unique_violation
-				message = strings.TrimPrefix(strings.TrimSuffix(name, "_key"), "users_")
+				message = strings.TrimPrefix(strings.TrimSuffix(name, "_key"), fmt.Sprintf("%ss_", table))
 				return twirp.NewError("already_exists", message)
 			} else {
 				message = pgerr.Field('M')

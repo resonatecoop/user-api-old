@@ -31,7 +31,6 @@ func main() {
 		testing = true
 		flags = flags[:len(flags)-1]
 	}
-	fmt.Println(flags)
 
 	oldVersion, newVersion, err := migrations.Run(database.Connect(testing), flags...)
 	if err != nil {

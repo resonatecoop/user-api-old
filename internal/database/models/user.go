@@ -23,7 +23,7 @@ type User struct {
 
   // ResidenceAddressId uuid.UUID `sql:",notnull"`
 
-  FavoriteTracks []uuid.UUID `pg:",array"`
+  FavoriteTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // Playlists
   // FollowedArtists
 
