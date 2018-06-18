@@ -112,16 +112,56 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 }
 
 func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, error) {
+	deleteUser := func(db *pg.DB, u *models.User) (error, string) {
+		var table string
+		tx, err := db.Begin()
+		if err != nil {
+			return err, table
+		}
+		defer tx.Rollback()
+
+		user := new(models.User)
+		pgerr := tx.Model(user).
+	    Column("user.favorite_tracks").
+	    Where("id = ?", u.Id).
+	    Select()
+		if pgerr != nil {
+			return pgerr, "user"
+		}
+
+		if len(user.FavoriteTracks) > 0 {
+			_, pgerr = tx.ExecOne(`
+				UPDATE tracks
+				SET favorite_of_users = array_remove(favorite_of_users, ?)
+				WHERE id IN (?)
+			`, u.Id, pg.In(user.FavoriteTracks))
+				if pgerr != nil {
+					return pgerr, "track"
+				}
+		}
+
+		pgerr = s.db.Delete(u)
+		if pgerr != nil {
+			return pgerr, "user"
+		}
+
+		return tx.Commit(), table
+	}
+
 	u, requiredErr := getUserModel(user)
 	if requiredErr != nil {
 		return nil, requiredErr
 	}
 
-	pgerr := s.db.Delete(u)
-	twerr := checkError(pgerr, "user")
-	if twerr != nil {
-		return nil, twerr
+	if pgerr, table := deleteUser(s.db, u); pgerr != nil {
+		return nil, checkError(pgerr, table)
 	}
+
+	// pgerr := s.db.Delete(u)
+	// twerr := checkError(pgerr, "user")
+	// if twerr != nil {
+	// 	return nil, twerr
+	// }
 	return &pb.Empty{}, nil
 }
 

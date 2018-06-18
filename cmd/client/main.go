@@ -23,3 +23,22 @@ func main() {
     // fmt.Printf("New user created: %+v\n", u2)
     // fmt.Printf("Users: %+v\n", users)
 }
+
+// import (
+//   "user-api/internal/database"
+//   "user-api/internal/database/models"
+//   "time"
+//   "fmt"
+// )
+//
+// func main() {
+//   var testing bool
+//   db := database.Connect(testing)
+//   newuser := &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
+//   err := db.Insert(newuser)
+//   duration, _ := time.ParseDuration("10m10s")
+//   cover := make([]byte, 5)
+//   newtrack := &models.Track{PublishDate: time.Now(), Title: "track title", Duration: duration, Status: "free", Cover: cover}
+//   err= db.Insert(newtrack)
+//   fmt.Println(err)
+// }
