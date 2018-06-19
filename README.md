@@ -32,7 +32,7 @@ $ go run *.go
 [Dep](https://github.com/golang/dep) is used as dependency management tool.
 `vendor/` folder contains project dependencies and should be in sync with `Gopkg.toml` and `Gopkg.lock`.
 
-## Installation
+## Various tools installation for development
 
 * [Install Protocol Buffers v3](https://developers.google.com/protocol-buffers/docs/gotutorial),
 the `protoc` compiler that is used to auto-generate code. The simplest way to do
@@ -58,18 +58,20 @@ Then, to run the `protoc` command and autogenerate Go code for the server interf
 $ retool do protoc --proto_path=$GOPATH/src:. --twirp_out=. --go_out=. ./rpc/user/service.proto
 ```
 
-## Try it out
+## Running/building the server
 
-First, download and put this repo into `$GOPATH/src`
+First, put this repo into `$GOPATH/src`
 
 Then, run the server
 ```sh
 $ go run ./cmd/server/main.go
 ```
 
-Run the client
+Alternatively, you can build and run an executable binary
 ```sh
-$ go run ./cmd/client/main.go
+$ cd ./cmd/server/
+$ go build
+$ ./server
 ```
 
 ## Example curl requests
@@ -99,7 +101,7 @@ packages.
 
 ## Documentation
 
-Check out doc.apib for API documentation.
+Check out `doc.apib` for API documentation.
 
 ## Testing
 
