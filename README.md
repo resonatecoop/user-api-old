@@ -1,6 +1,7 @@
-# Toy User API
+# User/Track API
 
-This is a simple User API that uses Twirp. It allows to create users. Learn more about
+This is the main User/Track API.
+It uses Twirp RPC framework. Learn more about
 Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html) or
 [repo](https://github.com/twitchtv/twirp).
 It also uses [go-pg](https://github.com/go-pg/pg) PostgreSQL ORM.
@@ -16,7 +17,7 @@ password = "password"
 
 dbname = "resonate-dev"
 
-Add following extensions: "hstore" and "uuid-ossp" (TODO: add them on initial migration)
+Add following postgres extensions: "hstore" and "uuid-ossp"
 
 * Run migrations from `./internal/database/migrations`
 
@@ -25,6 +26,11 @@ $ go run *.go
 ```
 
 **Note:** This is temporary database setup until we start using Docker.
+
+## Dependencies
+
+[Dep](https://github.com/golang/dep) is used as dependency management tool.
+`vendor/` folder contains project dependencies and should be in sync with `Gopkg.toml` and `Gopkg.lock`.
 
 ## Installation
 
@@ -47,7 +53,7 @@ Build the generators and tool dependencies:
 $ retool build
 ```
 
-Then, to run the `protoc` command, make sure to prefix with `retool do`, for example:
+Then, to run the `protoc` command and autogenerate Go code for the server interface, make sure to prefix with `retool do`, for example:
 ```sh
 $ retool do protoc --proto_path=$GOPATH/src:. --twirp_out=. --go_out=. ./rpc/user/service.proto
 ```
@@ -90,6 +96,10 @@ Database related stuff (migrations, model definitions) can be found in `internal
 
 Finally, `cmd/server` and `cmd/client` wrap things together into executable main
 packages.
+
+## Documentation
+
+Check out doc.apib for API documentation.
 
 ## Testing
 
