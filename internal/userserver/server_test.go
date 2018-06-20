@@ -288,6 +288,81 @@ var _ = Describe("Userserver", func() {
 		})
 	})
 
+	Describe("UnfollowGroup", func() {
+		Context("with user_id and user_group_id", func() {
+			It("should remove followed group", func() {
+				userToUserGroup := &pb.UserToUserGroup{UserId: newUser.Id.String(), UserGroupId: newUserGroup.Id.String()}
+				_, err := service.UnfollowGroup(context.Background(), userToUserGroup)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				user := new(models.User)
+				err = db.Model(user).Where("id = ?", newUser.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(user.FollowedGroups).To(HaveLen(0))
+				Expect(user.FollowedGroups).NotTo(ContainElement(newUserGroup.Id))
+
+				userGroup := new(models.UserGroup)
+				err = db.Model(userGroup).Where("id = ?", newUserGroup.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(userGroup.Followers).To(HaveLen(0))
+				Expect(userGroup.Followers).NotTo(ContainElement(newUser.Id))
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				userId := uuid.NewV4()
+				for userId == newUser.Id {
+					userId = uuid.NewV4()
+				}
+				userToUserGroup := &pb.UserToUserGroup{UserId: userId.String(), UserGroupId: newUserGroup.Id.String()}
+				resp, err := service.UnfollowGroup(context.Background(), userToUserGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should respond with not_found error if track does not exist", func() {
+				userGroupId := uuid.NewV4()
+				for userGroupId == newUserGroup.Id {
+					userGroupId = uuid.NewV4()
+				}
+				userToUserGroup := &pb.UserToUserGroup{UserId: newUser.Id.String(), UserGroupId: userGroupId.String()}
+				resp, err := service.UnfollowGroup(context.Background(), userToUserGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid user_group_id", func() {
+			It("should respond with invalid_argument_code error", func() {
+				userToUserGroup := &pb.UserToUserGroup{UserId: newUser.Id.String(), UserGroupId: ""}
+				resp, err := service.UnfollowGroup(context.Background(), userToUserGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+		})
+		Context("with invalid user_id", func() {
+			It("should respond with invalid_argument_code error", func() {
+				userToUserGroup := &pb.UserToUserGroup{UserId: "", UserGroupId: newUserGroup.Id.String()}
+				resp, err := service.UnfollowGroup(context.Background(), userToUserGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+		})
+	})
+
 	Describe("UpdateUser", func() {
 		Context("with valid uuid", func() {
 			It("should update user if it exists", func() {

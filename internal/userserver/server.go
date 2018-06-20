@@ -170,7 +170,7 @@ func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUser
 		}
 		defer tx.Rollback()
 
-		// Add userGroupId to user
+		// Add userGroupId to user FollowedGroups
 		userGroupIdArr := []uuid.UUID{userGroupId}
 		_, pgerr := tx.ExecOne(`
 			UPDATE users
@@ -184,8 +184,6 @@ func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUser
 		}
 
 		// Add userId to userGroup Followers
-		// XXX make sure userGroup is of type artist
-		// unless we want to be able to follow other userGroup types in the future
 		userIdArr := []uuid.UUID{userId}
 		_, pgerr = tx.ExecOne(`
 			UPDATE user_groups
@@ -215,7 +213,51 @@ func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUser
 }
 
 func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
+	unfollowGroup := func(db *pg.DB, userId uuid.UUID, userGroupId uuid.UUID) (error, string) {
+		var table string
+		tx, err := db.Begin()
+		if err != nil {
+			return err, table
+		}
+		// Rollback tx on error.
+		defer tx.Rollback()
 
+		// Remove userGroupId from user FollowedGroups
+		_, pgerr := tx.ExecOne(`
+			UPDATE users
+			SET followed_groups = array_remove(followed_groups, ?)
+			WHERE id = ?
+		`, userGroupId, userId)
+		if pgerr != nil {
+			table = "user"
+			return pgerr, table
+		}
+
+		// Remove userId from track FavoriteOfUsers
+		_, pgerr = tx.ExecOne(`
+			UPDATE user_groups
+			SET followers = array_remove(followers, ?)
+			WHERE id = ?
+		`, userId, userGroupId)
+		if pgerr != nil {
+			table = "user_group"
+			return pgerr, table
+		}
+		return tx.Commit(), table
+	}
+
+	userId, err := internal.GetUuidFromString(userToUserGroup.UserId)
+	if err != nil {
+		return nil, err
+	}
+	userGroupId, err := internal.GetUuidFromString(userToUserGroup.UserGroupId)
+	if err != nil {
+		return nil, err
+	}
+
+	if pgerr, table := unfollowGroup(s.db, userId, userGroupId); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
 	return &pb.Empty{}, nil
 }
 
