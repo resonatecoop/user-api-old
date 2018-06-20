@@ -1,16 +1,17 @@
 package userserver
 
 import (
-	"fmt"
+	// "fmt"
 	// "reflect"
 	"time"
 	"context"
-	"strings"
+
 	"github.com/go-pg/pg"
 	"github.com/twitchtv/twirp"
 	"github.com/satori/go.uuid"
 
 	pb "user-api/rpc/user"
+	"user-api/internal"
 	"user-api/internal/database/models"
 )
 
@@ -28,22 +29,15 @@ func NewServer(db *pg.DB) *Server {
 - tags
 - residence_address
 - member_of_groups
-- followed_artists
-- favorite_tracks
 - playlists */
 func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
-	// id, err := uuid.FromString(user.Id)
-	// if err != nil {
-	// 	return nil, twirp.InvalidArgumentError("id", "must be a valid uuid")
-	// }
-	// u := &models.User{Id: id}
 	u, err := getUserModel(user)
 	if err != nil {
 		return nil, err
 	}
 
 	pgerr := s.db.Select(u)
-	twerr := checkError(pgerr, "user")
+	twerr := internal.CheckError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -59,6 +53,8 @@ func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 		Member: u.Member,
 		Avatar: u.Avatar,
 		NewsletterNotification: u.NewsletterNotification,
+		FavoriteTracks: internal.ConvertUuidToStrArray(u.FavoriteTracks),
+		FollowedGroups: internal.ConvertUuidToStrArray(u.FollowedGroups),
 	}, nil
 }
 
@@ -68,25 +64,25 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 		return nil, requiredErr
 	}
 
-	newuser := &models.User{
+	newUser := &models.User{
 		Username: user.Username,
 		FullName: user.FullName,
 		Email: user.Email,
 		DisplayName: user.DisplayName,
 	}
-	_, err := s.db.Model(newuser).Returning("*").Insert()
+	_, err := s.db.Model(newUser).Returning("*").Insert()
 
-	twerr := checkError(err, "user")
+	twerr := internal.CheckError(err, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
 
 	return &pb.User{
-		Id: newuser.Id.String(),
-		Username: newuser.Username,
-		DisplayName: newuser.DisplayName,
-		FullName: newuser.FullName,
-		Email: newuser.Email,
+		Id: newUser.Id.String(),
+		Username: newUser.Username,
+		DisplayName: newUser.DisplayName,
+		FullName: newUser.FullName,
+		Email: newUser.Email,
 	}, nil
 }
 
@@ -104,7 +100,7 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 
 	u.UpdatedAt = time.Now()
 	_, pgerr := s.db.Model(u).WherePK().Returning("*").UpdateNotNull()
-	twerr := checkError(pgerr, "user")
+	twerr := internal.CheckError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -154,14 +150,9 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 	}
 
 	if pgerr, table := deleteUser(s.db, u); pgerr != nil {
-		return nil, checkError(pgerr, table)
+		return nil, internal.CheckError(pgerr, table)
 	}
 
-	// pgerr := s.db.Delete(u)
-	// twerr := checkError(pgerr, "user")
-	// if twerr != nil {
-	// 	return nil, twerr
-	// }
 	return &pb.Empty{}, nil
 }
 
@@ -169,11 +160,62 @@ func (s *Server) ConnectToUserGroup(ctx context.Context, userToUserGroup *pb.Use
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) FollowArtist(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
+// TODO: refacto, pretty similar to AddFavoriteTrack
+func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
+	followGroup := func(db *pg.DB, userId uuid.UUID, userGroupId uuid.UUID) (error, string) {
+		var table string
+		tx, err := db.Begin()
+		if err != nil {
+			return err, table
+		}
+		defer tx.Rollback()
+
+		// Add userGroupId to user
+		userGroupIdArr := []uuid.UUID{userGroupId}
+		_, pgerr := tx.ExecOne(`
+			UPDATE users
+			SET followed_groups = (select array_agg(distinct e) from unnest(followed_groups || ?) e)
+			WHERE id = ?
+		`, pg.Array(userGroupIdArr), userId)
+		// WHERE NOT favorite_tracks @> ?
+		if pgerr != nil {
+			table = "user"
+			return pgerr, table
+		}
+
+		// Add userId to userGroup Followers
+		// XXX make sure userGroup is of type artist
+		// unless we want to be able to follow other userGroup types in the future
+		userIdArr := []uuid.UUID{userId}
+		_, pgerr = tx.ExecOne(`
+			UPDATE user_groups
+			SET followers = (select array_agg(distinct e) from unnest(followers || ?) e)
+			WHERE id = ?
+		`, pg.Array(userIdArr), userGroupId)
+		if pgerr != nil {
+			table = "user_group"
+			return pgerr, table
+		}
+		return tx.Commit(), table
+	}
+	userId, err := internal.GetUuidFromString(userToUserGroup.UserId)
+	if err != nil {
+		return nil, err
+	}
+	userGroupId, err := internal.GetUuidFromString(userToUserGroup.UserGroupId)
+	if err != nil {
+		return nil, err
+	}
+
+	if pgerr, table := followGroup(s.db, userId, userGroupId); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
+
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) UnfollowArtist(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
+func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
+
 	return &pb.Empty{}, nil
 }
 
@@ -214,17 +256,17 @@ func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTra
 	  return tx.Commit(), table
 	}
 
-	userId, err := getUuidFromString(userToTrack.UserId)
+	userId, err := internal.GetUuidFromString(userToTrack.UserId)
 	if err != nil {
 		return nil, err
 	}
-	trackId, err := getUuidFromString(userToTrack.TrackId)
+	trackId, err := internal.GetUuidFromString(userToTrack.TrackId)
 	if err != nil {
 		return nil, err
 	}
 
 	if pgerr, table := addFavoriteTrack(s.db, userId, trackId); pgerr != nil {
-		return nil, checkError(pgerr, table)
+		return nil, internal.CheckError(pgerr, table)
 	}
 
 	return &pb.Empty{}, nil
@@ -265,31 +307,25 @@ func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserTo
 	}
 
 	// TODO refacto
-	userId, err := getUuidFromString(userToTrack.UserId)
+	userId, err := internal.GetUuidFromString(userToTrack.UserId)
 	if err != nil {
 		return nil, err
 	}
-	trackId, err := getUuidFromString(userToTrack.TrackId)
+	trackId, err := internal.GetUuidFromString(userToTrack.TrackId)
 	if err != nil {
 		return nil, err
 	}
 
 	if pgerr, table := removeFavoriteTrack(s.db, userId, trackId); pgerr != nil {
-		return nil, checkError(pgerr, table)
+		return nil, internal.CheckError(pgerr, table)
 	}
 	return &pb.Empty{}, nil
 }
 
-func getUuidFromString(id string) (uuid.UUID, twirp.Error) {
-	uid, err := uuid.FromString(id)
-	if err != nil {
-		return uuid.UUID{}, twirp.InvalidArgumentError("id", "must be a valid uuid")
-	}
-	return uid, nil
-}
+
 
 func getUserModel(user *pb.User) (*models.User, twirp.Error) {
-	id, err := getUuidFromString(user.Id)
+	id, err := internal.GetUuidFromString(user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -326,25 +362,3 @@ func checkRequiredAttributes(user *pb.User) (twirp.Error) {
 }
 
 // TODO move to utils package
-func checkError(err error, table string) (twirp.Error) {
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return twirp.NotFoundError(fmt.Sprintf("%s does not exist", table))
-		}
-		pgerr, ok := err.(pg.Error)
-		if ok {
-			code := pgerr.Field('C')
-			name := pgerr.Field('n')
-			var message string
-			if code == "23505" { // unique_violation
-				message = strings.TrimPrefix(strings.TrimSuffix(name, "_key"), fmt.Sprintf("%ss_", table))
-				return twirp.NewError("already_exists", message)
-			} else {
-				message = pgerr.Field('M')
-				return twirp.NewError("unknown", message)
-			}
-		}
-		return twirp.NewError("unknown", err.Error())
-	}
-	return nil
-}

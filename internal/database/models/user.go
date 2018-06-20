@@ -24,12 +24,11 @@ type User struct {
   // ResidenceAddressId uuid.UUID `sql:",notnull"`
 
   FavoriteTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  FollowedGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // Playlists
-  // FollowedArtists
 
   // MemberOfGroups
   // Tags
 
-  // Shares
-  // PaymentMechanisms
+  // Shares => Membership API?
 }

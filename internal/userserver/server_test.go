@@ -22,19 +22,19 @@ var _ = Describe("Userserver", func() {
 	Describe("GetUser", func() {
 		Context("with valid uuid", func() {
 			It("should respond with user if it exists", func() {
-				user := &pb.User{Id: newuser.Id.String()}
+				user := &pb.User{Id: newUser.Id.String()}
 				resp, err := service.GetUser(context.Background(), user)
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(resp.Id).To(Equal(newuser.Id.String()))
-				Expect(resp.Username).To(Equal(newuser.Username))
-				Expect(resp.FullName).To(Equal(newuser.FullName))
-				Expect(resp.DisplayName).To(Equal(newuser.DisplayName))
-				Expect(resp.Email).To(Equal(newuser.Email))
+				Expect(resp.Id).To(Equal(newUser.Id.String()))
+				Expect(resp.Username).To(Equal(newUser.Username))
+				Expect(resp.FullName).To(Equal(newUser.FullName))
+				Expect(resp.DisplayName).To(Equal(newUser.DisplayName))
+				Expect(resp.Email).To(Equal(newUser.Email))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
-				for id == newuser.Id {
+				for id == newUser.Id {
 					id = uuid.NewV4()
 				}
 				user := &pb.User{Id: id.String()}
@@ -66,29 +66,29 @@ var _ = Describe("Userserver", func() {
 	Describe("AddFavoriteTrack", func() {
 		Context("with user_id and track_id", func() {
 			It("should add favorite track", func() {
-				userToTrack := &pb.UserToTrack{UserId: newuser.Id.String(), TrackId: newtrack.Id.String()}
+				userToTrack := &pb.UserToTrack{UserId: newUser.Id.String(), TrackId: newTrack.Id.String()}
 				_, err := service.AddFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(err).NotTo(HaveOccurred())
 
 				user := new(models.User)
-				err = db.Model(user).Where("id = ?", newuser.Id).Select()
+				err = db.Model(user).Where("id = ?", newUser.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(user.FavoriteTracks).To(HaveLen(1))
-				Expect(user.FavoriteTracks).To(ContainElement(newtrack.Id))
+				Expect(user.FavoriteTracks).To(ContainElement(newTrack.Id))
 
 				track := new(models.Track)
-				err = db.Model(track).Where("id = ?", newtrack.Id).Select()
+				err = db.Model(track).Where("id = ?", newTrack.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(track.FavoriteOfUsers).To(HaveLen(1))
-				Expect(track.FavoriteOfUsers).To(ContainElement(newuser.Id))
+				Expect(track.FavoriteOfUsers).To(ContainElement(newUser.Id))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				userId := uuid.NewV4()
-				for userId == newuser.Id {
+				for userId == newUser.Id {
 					userId = uuid.NewV4()
 				}
-				userToTrack := &pb.UserToTrack{UserId: userId.String(), TrackId: newtrack.Id.String()}
+				userToTrack := &pb.UserToTrack{UserId: userId.String(), TrackId: newTrack.Id.String()}
 				resp, err := service.AddFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(resp).To(BeNil())
@@ -99,10 +99,10 @@ var _ = Describe("Userserver", func() {
 			})
 			It("should respond with not_found error if track does not exist", func() {
 				trackId := uuid.NewV4()
-				for trackId == newtrack.Id {
+				for trackId == newTrack.Id {
 					trackId = uuid.NewV4()
 				}
-				userToTrack := &pb.UserToTrack{UserId: newuser.Id.String(), TrackId: trackId.String()}
+				userToTrack := &pb.UserToTrack{UserId: newUser.Id.String(), TrackId: trackId.String()}
 				resp, err := service.AddFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(resp).To(BeNil())
@@ -114,7 +114,7 @@ var _ = Describe("Userserver", func() {
 		})
 		Context("with invalid track_id", func() {
 			It("should respond with invalid_argument_code error", func() {
-				userToTrack := &pb.UserToTrack{UserId: newuser.Id.String(), TrackId: ""}
+				userToTrack := &pb.UserToTrack{UserId: newUser.Id.String(), TrackId: ""}
 				resp, err := service.AddFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(resp).To(BeNil())
@@ -126,7 +126,7 @@ var _ = Describe("Userserver", func() {
 		})
 		Context("with invalid user_id", func() {
 			It("should respond with invalid_argument_code error", func() {
-				userToTrack := &pb.UserToTrack{UserId: "", TrackId: newtrack.Id.String()}
+				userToTrack := &pb.UserToTrack{UserId: "", TrackId: newTrack.Id.String()}
 				resp, err := service.AddFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(resp).To(BeNil())
@@ -141,29 +141,29 @@ var _ = Describe("Userserver", func() {
 	Describe("RemoveFavoriteTrack", func() {
 		Context("with user_id and track_id", func() {
 			It("should remove favorite track", func() {
-				userToTrack := &pb.UserToTrack{UserId: newuser.Id.String(), TrackId: newtrack.Id.String()}
+				userToTrack := &pb.UserToTrack{UserId: newUser.Id.String(), TrackId: newTrack.Id.String()}
 				_, err := service.RemoveFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(err).NotTo(HaveOccurred())
 
 				user := new(models.User)
-				err = db.Model(user).Where("id = ?", newuser.Id).Select()
+				err = db.Model(user).Where("id = ?", newUser.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(user.FavoriteTracks).To(HaveLen(0))
-				Expect(user.FavoriteTracks).NotTo(ContainElement(newtrack.Id))
+				Expect(user.FavoriteTracks).NotTo(ContainElement(newTrack.Id))
 
 				track := new(models.Track)
-				err = db.Model(track).Where("id = ?", newtrack.Id).Select()
+				err = db.Model(track).Where("id = ?", newTrack.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(track.FavoriteOfUsers).To(HaveLen(0))
-				Expect(track.FavoriteOfUsers).NotTo(ContainElement(newuser.Id))
+				Expect(track.FavoriteOfUsers).NotTo(ContainElement(newUser.Id))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				userId := uuid.NewV4()
-				for userId == newuser.Id {
+				for userId == newUser.Id {
 					userId = uuid.NewV4()
 				}
-				userToTrack := &pb.UserToTrack{UserId: userId.String(), TrackId: newtrack.Id.String()}
+				userToTrack := &pb.UserToTrack{UserId: userId.String(), TrackId: newTrack.Id.String()}
 				resp, err := service.RemoveFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(resp).To(BeNil())
@@ -174,10 +174,10 @@ var _ = Describe("Userserver", func() {
 			})
 			It("should respond with not_found error if track does not exist", func() {
 				trackId := uuid.NewV4()
-				for trackId == newtrack.Id {
+				for trackId == newTrack.Id {
 					trackId = uuid.NewV4()
 				}
-				userToTrack := &pb.UserToTrack{UserId: newuser.Id.String(), TrackId: trackId.String()}
+				userToTrack := &pb.UserToTrack{UserId: newUser.Id.String(), TrackId: trackId.String()}
 				resp, err := service.RemoveFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(resp).To(BeNil())
@@ -189,7 +189,7 @@ var _ = Describe("Userserver", func() {
 		})
 		Context("with invalid track_id", func() {
 			It("should respond with invalid_argument_code error", func() {
-				userToTrack := &pb.UserToTrack{UserId: newuser.Id.String(), TrackId: ""}
+				userToTrack := &pb.UserToTrack{UserId: newUser.Id.String(), TrackId: ""}
 				resp, err := service.RemoveFavoriteTrack(context.Background(), userToTrack)
 
 				Expect(resp).To(BeNil())
@@ -201,8 +201,83 @@ var _ = Describe("Userserver", func() {
 		})
 		Context("with invalid user_id", func() {
 			It("should respond with invalid_argument_code error", func() {
-				userToTrack := &pb.UserToTrack{UserId: "", TrackId: newtrack.Id.String()}
+				userToTrack := &pb.UserToTrack{UserId: "", TrackId: newTrack.Id.String()}
 				resp, err := service.RemoveFavoriteTrack(context.Background(), userToTrack)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+		})
+	})
+
+	Describe("FollowGroup", func() {
+		Context("with user_id and user_group_id", func() {
+			It("should add followed group", func() {
+				userToUserGroup := &pb.UserToUserGroup{UserId: newUser.Id.String(), UserGroupId: newUserGroup.Id.String()}
+				_, err := service.FollowGroup(context.Background(), userToUserGroup)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				user := new(models.User)
+				err = db.Model(user).Where("id = ?", newUser.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(user.FollowedGroups).To(HaveLen(1))
+				Expect(user.FollowedGroups).To(ContainElement(newUserGroup.Id))
+
+				userGroup := new(models.UserGroup)
+				err = db.Model(userGroup).Where("id = ?", newUserGroup.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(userGroup.Followers).To(HaveLen(1))
+				Expect(userGroup.Followers).To(ContainElement(newUser.Id))
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				userId := uuid.NewV4()
+				for userId == newUser.Id {
+					userId = uuid.NewV4()
+				}
+				userToUserGroup := &pb.UserToUserGroup{UserId: userId.String(), UserGroupId: newUserGroup.Id.String()}
+				resp, err := service.FollowGroup(context.Background(), userToUserGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should respond with not_found error if user_group does not exist", func() {
+				userGroupId := uuid.NewV4()
+				for userGroupId == newUserGroup.Id {
+					userGroupId = uuid.NewV4()
+				}
+				userToUserGroup := &pb.UserToUserGroup{UserId: newUser.Id.String(), UserGroupId: userGroupId.String()}
+				resp, err := service.FollowGroup(context.Background(), userToUserGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid user_group_id", func() {
+			It("should respond with invalid_argument_code error", func() {
+				userToUserGroup := &pb.UserToUserGroup{UserId: newUser.Id.String(), UserGroupId: ""}
+				resp, err := service.FollowGroup(context.Background(), userToUserGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+		})
+		Context("with invalid user_id", func() {
+			It("should respond with invalid_argument_code error", func() {
+				userToUserGroup := &pb.UserToUserGroup{UserId: "", UserGroupId: newUserGroup.Id.String()}
+				resp, err := service.FollowGroup(context.Background(), userToUserGroup)
 
 				Expect(resp).To(BeNil())
 				Expect(err).To(HaveOccurred())
@@ -217,7 +292,7 @@ var _ = Describe("Userserver", func() {
 		Context("with valid uuid", func() {
 			It("should update user if it exists", func() {
 				user := &pb.User{
-					Id: newuser.Id.String(),
+					Id: newUser.Id.String(),
 					Username: "new username",
 					FullName: "full name",
 					DisplayName: "display name",
@@ -230,7 +305,7 @@ var _ = Describe("Userserver", func() {
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
-				for id == newuser.Id {
+				for id == newUser.Id {
 					id = uuid.NewV4()
 				}
 				user := &pb.User{
@@ -378,14 +453,14 @@ var _ = Describe("Userserver", func() {
 		Describe("DeleteUser", func() {
 			Context("with valid uuid", func() {
 				It("should delete user if it exists", func() {
-					user := &pb.User{Id: newuser.Id.String()}
+					user := &pb.User{Id: newUser.Id.String()}
 					_, err := service.DeleteUser(context.Background(), user)
 
 					Expect(err).NotTo(HaveOccurred())
 				})
 				It("should respond with not_found error if user does not exist", func() {
 					id := uuid.NewV4()
-					for id == newuser.Id {
+					for id == newUser.Id {
 						id = uuid.NewV4()
 					}
 					user := &pb.User{Id: id.String()}

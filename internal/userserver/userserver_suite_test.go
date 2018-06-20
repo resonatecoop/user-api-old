@@ -16,8 +16,9 @@ import (
 
 var db *pg.DB
 var service *userserver.Server
-var newuser *models.User
-var newtrack *models.Track
+var newUser *models.User
+var newTrack *models.Track
+var newUserGroup *models.UserGroup
 
 func TestUserserver(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -30,15 +31,24 @@ var _ = BeforeSuite(func() {
 		service = userserver.NewServer(db)
 
 		// Create a new user (users table's empty)
-		newuser = &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
-		err := db.Insert(newuser)
+		newUser = &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
+		err := db.Insert(newUser)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Create a new track
 		duration, _ := time.ParseDuration("10m10s")
 		cover := make([]byte, 5)
-		newtrack = &models.Track{PublishDate: time.Now(), Title: "track title", Duration: duration, Status: "free", Cover: cover}
-		err = db.Insert(newtrack)
+		newTrack = &models.Track{PublishDate: time.Now(), Title: "track title", Duration: duration, Status: "free", Cover: cover}
+		err = db.Insert(newTrack)
+		Expect(err).NotTo(HaveOccurred())
+
+		// Create a new user_group
+		newGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "name"}
+		err = db.Insert(newGroupTaxonomy)
+		Expect(err).NotTo(HaveOccurred())
+		avatar := make([]byte, 5)
+		newUserGroup = &models.UserGroup{DisplayName: "artist", Avatar: avatar, OwnerId: newUser.Id, TypeId: newGroupTaxonomy.Id}
+		err = db.Insert(newUserGroup)
 		Expect(err).NotTo(HaveOccurred())
 })
 
@@ -55,5 +65,19 @@ var _ = AfterSuite(func() {
 	err = db.Model(&tracks).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&tracks).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all userGroups
+	var userGroups []models.UserGroup
+	err = db.Model(&userGroups).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&userGroups).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all groupTaxonomies
+	var groupTaxonomies []models.GroupTaxonomy
+	err = db.Model(&groupTaxonomies).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&groupTaxonomies).Delete()
 	Expect(err).NotTo(HaveOccurred())
 })

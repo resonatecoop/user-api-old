@@ -9,8 +9,8 @@ service UserService {
   rpc UpdateUser(User) returns (Empty);
   rpc DeleteUser(User) returns (Empty);
   rpc ConnectToUserGroup(UserToUserGroup) returns (Empty);
-  rpc FollowArtist(UserToUserGroup) returns (Empty);
-  rpc UnfollowArtist(UserToUserGroup) returns (Empty);
+  rpc FollowGroup(UserToUserGroup) returns (Empty);
+  rpc UnfollowGroup(UserToUserGroup) returns (Empty);
   rpc AddFavoriteTrack(UserToTrack) returns (Empty);
   rpc RemoveFavoriteTrack(UserToTrack) returns (Empty);
 }
@@ -27,6 +27,8 @@ message User {
   bool member = 8;
   bytes avatar = 9;
   bool newsletter_notification = 10;
+  repeated string favorite_tracks = 11;
+  repeated string followed_groups = 12;
 }
 
 // Used for:
