@@ -252,12 +252,10 @@ Can be a label owner/user admin creating an artist in this label
     + Body
 
             {
-                "artists": [],
-                "labels": [],
-                "distributors": []
+                []
             }
 
-### Get Featured UserGroups [POST /twirp/resonate.api.user.UserGroup/GetFeaturedUserGroups]
+### Get UserGroups by Genre [POST /twirp/resonate.api.user.UserGroup/GetUserGroupsByGenre]
 
 ### Get UserGroup [POST /twirp/resonate.api.user.UserGroup/GetUserGroup]
 
@@ -310,7 +308,7 @@ Then if confirmed, Update UserGroup: admin_users.
 
 + Response 204 (application/json)
 
-### Add Members [POST /twirp/resonate.api.user.UserGroup/AddMembers]
+### ?Add Members [POST /twirp/resonate.api.user.UserGroup/AddMembers]
 
 For an artist user group to add user members:
 Send email notification to users.

@@ -136,6 +136,17 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 				}
 		}
 
+		if len(user.FollowedGroups) > 0 {
+			_, pgerr = tx.ExecOne(`
+				UPDATE user_groups
+				SET followers = array_remove(followers, ?)
+				WHERE id IN (?)
+			`, u.Id, pg.In(user.FollowedGroups))
+				if pgerr != nil {
+					return pgerr, "user_group"
+				}
+		}
+
 		pgerr = s.db.Delete(u)
 		if pgerr != nil {
 			return pgerr, "user"
