@@ -188,7 +188,6 @@ func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUser
 			SET followed_groups = (select array_agg(distinct e) from unnest(followed_groups || ?) e)
 			WHERE id = ?
 		`, pg.Array(userGroupIdArr), userId)
-		// WHERE NOT favorite_tracks @> ?
 		if pgerr != nil {
 			table = "user"
 			return pgerr, table
@@ -413,5 +412,3 @@ func checkRequiredAttributes(user *pb.User) (twirp.Error) {
 	}
 	return nil
 }
-
-// TODO move to utils package

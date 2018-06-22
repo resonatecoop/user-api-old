@@ -1,4 +1,4 @@
-package userserver_test
+package usergroupserver_test
 
 import (
 	"testing"
@@ -8,21 +8,21 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/go-pg/pg"
+	"github.com/satori/go.uuid"
 
 	"user-api/internal/database"
 	"user-api/internal/database/models"
-	"user-api/internal/userserver"
+	usergroupserver "user-api/internal/server/usergroup"
 )
 
 var db *pg.DB
 var service *userserver.Server
 var newUser *models.User
-var newTrack *models.Track
 var newUserGroup *models.UserGroup
 
-func TestUserserver(t *testing.T) {
+func TestUsergroup(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Userserver Suite")
+	RunSpecs(t, "Usergroup Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -35,19 +35,19 @@ var _ = BeforeSuite(func() {
 		err := db.Insert(newUser)
 		Expect(err).NotTo(HaveOccurred())
 
-		// Create a new track
-		duration, _ := time.ParseDuration("10m10s")
-		cover := make([]byte, 5)
-		newTrack = &models.Track{PublishDate: time.Now(), Title: "track title", Duration: duration, Status: "free", Cover: cover}
-		err = db.Insert(newTrack)
-		Expect(err).NotTo(HaveOccurred())
-
 		// Create a new user_group
 		newGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "name"}
 		err = db.Insert(newGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
 		avatar := make([]byte, 5)
-		newUserGroup = &models.UserGroup{DisplayName: "artist", Avatar: avatar, OwnerId: newUser.Id, TypeId: newGroupTaxonomy.Id}
+		admins := []uuid.UUID{newUser.Id}
+		newUserGroup = &models.UserGroup{
+			DisplayName: "artist",
+			Avatar: avatar,
+			OwnerId: newUser.Id,
+			TypeId: newGroupTaxonomy.Id,
+			AdminUsers: admins,
+		}
 		err = db.Insert(newUserGroup)
 		Expect(err).NotTo(HaveOccurred())
 })
@@ -58,13 +58,6 @@ var _ = AfterSuite(func() {
   err := db.Model(&users).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&users).Delete()
-	Expect(err).NotTo(HaveOccurred())
-
-	// Delete all tracks
-	var tracks []models.Track
-	err = db.Model(&tracks).Select()
-	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&tracks).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all userGroups

@@ -93,7 +93,7 @@ The protobuf definition for the service lives in
 `rpc/user/service.proto`.
 The generated Twirp and Go protobuf code is in the same directory.
 
-The implementation of the server is in `internal/userserver`.
+The implementation of the server is in `internal/server`.
 Database related stuff (migrations, model definitions) can be found in `internal/database`.
 
 Finally, `cmd/server` and `cmd/client` wrap things together into executable main
@@ -125,7 +125,7 @@ Add following extensions: "hstore" and "uuid-ossp" (TODO: add them on initial mi
 $ go run *.go testing
 ```
 
-* Run tests from `./internal/userserver`
+* Run tests from `./internal/server/user`
 
 ```sh
 $ go test

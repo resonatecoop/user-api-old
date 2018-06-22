@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+import "user-api/rpc/user/service.proto";
+
+package resonate.api.user;
+option go_package = "usergroup";
+
+service UserGroupService {
+  rpc CreateUserGroup(UserGroup) returns (UserGroup);
+  rpc GetUserGroup(UserGroup) returns (UserGroup);
+  rpc UpdateUserGroup(UserGroup) returns (Empty);
+  rpc DeleteUserGroup(UserGroup) returns (Empty);
+  rpc GetLabelUserGroups(Empty) returns (GroupedUserGroups);
+  rpc GetUserGroupsByGenre(Tag) returns (GroupedUserGroups);
+  // rpc AddAdminUsers(AdminUsers) returns (Empty);
+  // rpc ConnectToLabel()
+  // rpc ConnectToArtist()
+  // rpc AddMembers()
+}
+
+message UserGroup {
+  string id = 1; // required
+  string display_name = 2; // required
+  string description = 3;
+  bytes avatar = 4; // required
+  bytes banner = 5;
+  string group_email_address = 6;
+  string owner = 7; // required
+  string type = 8; // required
+  repeated string followers = 9;
+  repeated string admin_users = 10;
+  repeated string sub_groups = 11;
+  map<string, string> links = 12;
+  map<string, string> tags = 13;
+  // tracks
+  // track_groups
+  // members
+  // labels
+}
+
+message GroupedUserGroups {
+  repeated UserGroup labels = 1;
+  repeated UserGroup artists = 2;
+}
+
+message AdminUsers {
+  repeated string admin_user_ids = 1;
+}
+
+message Tag {
+  string id = 1;
+}

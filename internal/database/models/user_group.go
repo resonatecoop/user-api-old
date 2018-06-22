@@ -25,22 +25,25 @@ type UserGroup struct {
   OwnerId uuid.UUID `sql:"type:uuid,notnull"`
   Owner *User
 
-  // FeaturedTrack *Track
+  // FeaturedTrack *Track or multiple tracks?
 
   Kvstore map[string]string `pg:",hstore"`
   Followers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
-  // AdminUsers map[string]string `pg:",hstore;sql:",notnull""`
-  // Members map[string]string `pg:",hstore"`
-  // SubGroups map[string]string `pg:",hstore"`
+  AdminUsers []uuid.UUID `sql:",type:uuid[],notnull" pg:",array"`
+  SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
-  // Links map[string]string `pg:",hstore"`
-  // Tags map[string]string `pg:",hstore"`
-  // Tracks map[string]string `pg:",hstore"`
-  // TrackGroups map[string]string `pg:",hstore"`
+  // TODO need classic m2m junction table to store Tags
+  // associated to member, e.g. this member plays drums in this band
+  // Members
+
+  Links []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  Tags []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  TrackGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   // artist
-  // Labels map[string]string `pg:",hstore"`
+  Labels []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // Payees []*User
 
   // distributor

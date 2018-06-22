@@ -167,9 +167,9 @@ infinite feed, needs pagination
 
 + Response 200 (application/json)
 
-## UserGroups Collection [/twirp/resonate.api.user.UserGroup/]
+## UserGroups Collection [/twirp/resonate.api.user.UserGroupService/]
 
-### Create a New UserGroup [POST /twirp/resonate.api.user.UserGroup/CreateUserGroup]
+### Create a New UserGroup [POST /twirp/resonate.api.user.UserGroupService/CreateUserGroup]
 
 The user who creates a user group is by default the owner and an admin of this user group.
 Can be a user creating an artist or a label.
@@ -224,7 +224,7 @@ Can be a label owner/user admin creating an artist in this label
                 "images": []
             }
 
-### Update UserGroup [POST /twirp/resonate.api.user.UserGroup/UpdateUserGroup]
+### Update UserGroup [POST /twirp/resonate.api.user.UserGroupService/UpdateUserGroup]
 
 + Request (application/json)
 
@@ -235,7 +235,7 @@ Can be a label owner/user admin creating an artist in this label
 
 + Response 204 (application/json)
 
-### Delete UserGroup [POST /twirp/resonate.api.user.UserGroup/DeleteUserGroup]
+### Delete UserGroup [POST /twirp/resonate.api.user.UserGroupService/DeleteUserGroup]
 
 + Request (application/json)
 
@@ -245,7 +245,7 @@ Can be a label owner/user admin creating an artist in this label
 
 + Response 204 (application/json)
 
-### Get Label UserGroups [POST /twirp/resonate.api.user.UserGroup/GetLabelUserGroups]
+### Get Label UserGroups [POST /twirp/resonate.api.user.UserGroupService/GetLabelUserGroups]
 
 + Response 200 (application/json)
 
@@ -255,9 +255,9 @@ Can be a label owner/user admin creating an artist in this label
                 []
             }
 
-### Get UserGroups by Genre [POST /twirp/resonate.api.user.UserGroup/GetUserGroupsByGenre]
+### Get UserGroups by Genre [POST /twirp/resonate.api.user.UserGroupService/GetUserGroupsByGenre]
 
-### Get UserGroup [POST /twirp/resonate.api.user.UserGroup/GetUserGroup]
+### Get UserGroup [POST /twirp/resonate.api.user.UserGroupService/GetUserGroup]
 
 scope private/public.
 
@@ -294,7 +294,7 @@ scope private/public.
                 "images": []
             }
 
-### Add AdminUsers [POST /twirp/resonate.api.user.UserGroup/AddAdminUsers]
+### Add AdminUsers [POST /twirp/resonate.api.user.UserGroupService/AddAdminUsers]
 
 Send email notification to users.
 Then if confirmed, Update UserGroup: admin_users.
@@ -308,7 +308,7 @@ Then if confirmed, Update UserGroup: admin_users.
 
 + Response 204 (application/json)
 
-### ?Add Members [POST /twirp/resonate.api.user.UserGroup/AddMembers]
+### ?Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
 
 For an artist user group to add user members:
 Send email notification to users.
@@ -323,7 +323,7 @@ Then if confirmed: Update UserGroup: members.
 
 + Response 204 (application/json)
 
-### Connect to Label [POST /twirp/resonate.api.user.UserGroup/ConnectToLabel]
+### Connect to Label [POST /twirp/resonate.api.user.UserGroupService/ConnectToLabel]
 
 For an artist user group to connect to existing label.
 Send email notification to owner/admin of label UserGroup.
@@ -338,7 +338,7 @@ Then, if confirmed: Update UserGroup (artist): labels / Update UserGroup (label)
 
 + Response 204 (application/json)
 
-### Connect to Artist [POST /twirp/resonate.api.user.UserGroup/ConnectToArtist]
+### Connect to Artist [POST /twirp/resonate.api.user.UserGroupService/ConnectToArtist]
 
 For a label user group to connect to existing artists.
 Send email notification to admins/owner of artist UserGroup.

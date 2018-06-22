@@ -33,7 +33,7 @@ message User {
 
 // Used for:
 // - connecting to user group
-// - follow/unfollow artist
+// - follow/unfollow group
 message UserToUserGroup {
   string user_id = 1; // required
   string user_group_id = 2; // required

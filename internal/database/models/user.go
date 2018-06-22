@@ -6,7 +6,6 @@ import (
   "github.com/satori/go.uuid"
 )
 
-
 type User struct {
   Id uuid.UUID `sql:"type:uuid,default:uuid_generate_v4()"`
   CreatedAt time.Time `sql:"default:now()"`
@@ -22,6 +21,8 @@ type User struct {
   NewsletterNotification bool
 
   // ResidenceAddressId uuid.UUID `sql:",notnull"`
+  ResidenceAddressId uuid.UUID  `sql:"type:uuid,notnull"`
+  ResidenceAddress *StreetAddress
 
   FavoriteTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   FollowedGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`

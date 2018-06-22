@@ -11,7 +11,6 @@ import (
 
 	pb "user-api/rpc/user"
 	"user-api/internal/database/models"
-	// . "user-api/internal/userserver"
 )
 
 var _ = Describe("Userserver", func() {

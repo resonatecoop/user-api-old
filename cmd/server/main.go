@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/rs/cors"
-	"user-api/internal/userserver"
-	"user-api/rpc/user"
+	userServer "user-api/internal/server/user"
+	userGroupServer "user-api/internal/server/usergroup"
+	userRpc "user-api/rpc/user"
+	userGroupRpc "user-api/rpc/usergroup"
 	"user-api/internal/database"
 )
 
@@ -18,11 +20,16 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 	db := database.Connect(false)
-	server := userserver.NewServer(db)
-	twirpHandler := user.NewUserServiceServer(server, nil)
+
+	newUserServer := userServer.NewServer(db)
+	userTwirpHandler := userRpc.NewUserServiceServer(newUserServer, nil)
+
+	newUserGroupServer := userGroupServer.NewServer(db)
+	userGroupTwirpHandler := userGroupRpc.NewUserGroupServiceServer(newUserGroupServer, nil)
 
 	mux := http.NewServeMux()
-	mux.Handle(user.UserServicePathPrefix, twirpHandler)
+	mux.Handle(userRpc.UserServicePathPrefix, userTwirpHandler)
+	mux.Handle(userGroupRpc.UserGroupServicePathPrefix, userGroupTwirpHandler)
 
 	// cors.Default() setup the middleware with default options being
 	// all origins accepted with simple methods (GET, POST).
