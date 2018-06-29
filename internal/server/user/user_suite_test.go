@@ -44,7 +44,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// Create a new user_group
-		newGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "name"}
+		newGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
 		err = db.Insert(newGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
 		avatar := make([]byte, 5)

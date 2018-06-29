@@ -25,13 +25,14 @@ message UserGroup {
   bytes avatar = 4; // required
   bytes banner = 5;
   string group_email_address = 6;
-  string owner = 7; // required
-  string type = 8; // required
+  string owner_id = 7; // required
+  string type_id = 8; // required
   repeated string followers = 9;
   repeated string admin_users = 10;
   repeated string sub_groups = 11;
   map<string, string> links = 12;
   map<string, string> tags = 13;
+  string address = 14;
   // tracks
   // track_groups
   // members

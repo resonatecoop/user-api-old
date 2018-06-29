@@ -30,7 +30,7 @@ type UserGroup struct {
   Kvstore map[string]string `pg:",hstore"`
   Followers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
-  AdminUsers []uuid.UUID `sql:",type:uuid[],notnull" pg:",array"`
+  AdminUsers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   // TODO need classic m2m junction table to store Tags

@@ -13,7 +13,7 @@ import (
 	"user-api/internal/database/models"
 )
 
-var _ = Describe("Userserver", func() {
+var _ = Describe("User server", func() {
 	const already_exists_code twirp.ErrorCode = "already_exists"
 	const invalid_argument_code twirp.ErrorCode = "invalid_argument"
 	const not_found_code twirp.ErrorCode = "not_found"
@@ -523,43 +523,43 @@ var _ = Describe("Userserver", func() {
 				Expect(twerr.Meta("argument")).To(Equal("full_name"))
 			})
 		})
+	})
 
-		Describe("DeleteUser", func() {
-			Context("with valid uuid", func() {
-				It("should delete user if it exists", func() {
-					user := &pb.User{Id: newUser.Id.String()}
-					_, err := service.DeleteUser(context.Background(), user)
+	Describe("DeleteUser", func() {
+		Context("with valid uuid", func() {
+			It("should delete user if it exists", func() {
+				user := &pb.User{Id: newUser.Id.String()}
+				_, err := service.DeleteUser(context.Background(), user)
 
-					Expect(err).NotTo(HaveOccurred())
-				})
-				It("should respond with not_found error if user does not exist", func() {
-					id := uuid.NewV4()
-					for id == newUser.Id {
-						id = uuid.NewV4()
-					}
-					user := &pb.User{Id: id.String()}
-					resp, err := service.DeleteUser(context.Background(), user)
-
-					Expect(resp).To(BeNil())
-					Expect(err).To(HaveOccurred())
-
-					twerr := err.(twirp.Error)
-					Expect(twerr.Code()).To(Equal(not_found_code))
-				})
+				Expect(err).NotTo(HaveOccurred())
 			})
-			Context("with invalid uuid", func() {
-				It("should respond with invalid_argument error", func() {
-					id := "45"
-					user := &pb.User{Id: id}
-					resp, err := service.DeleteUser(context.Background(), user)
+			It("should respond with not_found error if user does not exist", func() {
+				id := uuid.NewV4()
+				for id == newUser.Id {
+					id = uuid.NewV4()
+				}
+				user := &pb.User{Id: id.String()}
+				resp, err := service.DeleteUser(context.Background(), user)
 
-					Expect(resp).To(BeNil())
-					Expect(err).To(HaveOccurred())
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
 
-					twerr := err.(twirp.Error)
-					Expect(twerr.Code()).To(Equal(invalid_argument_code))
-					Expect(twerr.Meta("argument")).To(Equal("id"))
-				})
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error", func() {
+				id := "45"
+				user := &pb.User{Id: id}
+				resp, err := service.DeleteUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
 			})
 		})
 	})

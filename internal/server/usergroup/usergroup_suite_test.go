@@ -2,13 +2,13 @@ package usergroupserver_test
 
 import (
 	"testing"
-	"time"
+	// "time"
 
 	// pb "user-api/rpc/user"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/go-pg/pg"
-	"github.com/satori/go.uuid"
+	// "github.com/satori/go.uuid"
 
 	"user-api/internal/database"
 	"user-api/internal/database/models"
@@ -16,9 +16,12 @@ import (
 )
 
 var db *pg.DB
-var service *userserver.Server
+var service *usergroupserver.Server
 var newUser *models.User
-var newUserGroup *models.UserGroup
+var newArtist *models.UserGroup
+var newLabel *models.UserGroup
+var newArtistGroupTaxonomy *models.GroupTaxonomy
+var newLabelGroupTaxonomy *models.GroupTaxonomy
 
 func TestUsergroup(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -28,28 +31,44 @@ func TestUsergroup(t *testing.T) {
 var _ = BeforeSuite(func() {
 		testing := true
 		db = database.Connect(testing)
-		service = userserver.NewServer(db)
+		service = usergroupserver.NewServer(db)
 
 		// Create a new user (users table's empty)
 		newUser = &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
 		err := db.Insert(newUser)
 		Expect(err).NotTo(HaveOccurred())
 
-		// Create a new user_group
-		newGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "name"}
-		err = db.Insert(newGroupTaxonomy)
+		// Create group taxonomies
+		newArtistGroupTaxonomy = &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
+		err = db.Insert(newArtistGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
+
+		newLabelGroupTaxonomy = &models.GroupTaxonomy{Type: "label", Name: "Label"}
+		err = db.Insert(newLabelGroupTaxonomy)
+		Expect(err).NotTo(HaveOccurred())
+
+
+		// Create user groups
 		avatar := make([]byte, 5)
-		admins := []uuid.UUID{newUser.Id}
-		newUserGroup = &models.UserGroup{
-			DisplayName: "artist",
+		// admins := []uuid.UUID{newUser.Id}
+		newArtist = &models.UserGroup{
+			DisplayName: "best artist ever",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
-			TypeId: newGroupTaxonomy.Id,
-			AdminUsers: admins,
+			TypeId: newArtistGroupTaxonomy.Id,
+			// AdminUsers: admins,
 		}
-		err = db.Insert(newUserGroup)
+		err = db.Insert(newArtist)
 		Expect(err).NotTo(HaveOccurred())
+
+		newLabel = &models.UserGroup{
+			DisplayName: "best label ever",
+			Avatar: avatar,
+			OwnerId: newUser.Id,
+			TypeId: newLabelGroupTaxonomy.Id,
+			// AdminUsers: admins,
+		}
+		err = db.Insert(newLabel)
 })
 
 var _ = AfterSuite(func() {

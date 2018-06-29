@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"context"
 	"net/http"
 	"github.com/rs/cors"
 	userServer "user-api/internal/server/user"
@@ -10,6 +11,17 @@ import (
 	userGroupRpc "user-api/rpc/usergroup"
 	"user-api/internal/database"
 )
+
+func WithURLQuery(base http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		query := r.URL.Query()
+		ctx = context.WithValue(ctx, "query", query)
+		r = r.WithContext(ctx)
+
+		base.ServeHTTP(w, r)
+	})
+}
 
 func main() {
 	fmt.Printf("User Service on :8080")
@@ -25,7 +37,7 @@ func main() {
 	userTwirpHandler := userRpc.NewUserServiceServer(newUserServer, nil)
 
 	newUserGroupServer := userGroupServer.NewServer(db)
-	userGroupTwirpHandler := userGroupRpc.NewUserGroupServiceServer(newUserGroupServer, nil)
+	userGroupTwirpHandler := WithURLQuery(userGroupRpc.NewUserGroupServiceServer(newUserGroupServer, nil))
 
 	mux := http.NewServeMux()
 	mux.Handle(userRpc.UserServicePathPrefix, userTwirpHandler)

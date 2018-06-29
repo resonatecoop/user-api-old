@@ -86,6 +86,7 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	}, nil
 }
 
+// TODO update address, tags
 func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, error) {
 	err := checkRequiredAttributes(user)
 
@@ -118,7 +119,7 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 
 		user := new(models.User)
 		pgerr := tx.Model(user).
-	    Column("user.favorite_tracks").
+	    Column("user.favorite_tracks", "user.followed_groups").
 	    Where("id = ?", u.Id).
 	    Select()
 		if pgerr != nil {
