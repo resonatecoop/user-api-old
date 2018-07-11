@@ -31,7 +31,7 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
-	db := database.Connect(false)
+	db := database.Connect(true)
 
 	newUserServer := userServer.NewServer(db)
 	userTwirpHandler := userRpc.NewUserServiceServer(newUserServer, nil)

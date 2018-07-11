@@ -4,7 +4,7 @@ package main
 //     "context"
 //     "net/http"
 //     "os"
-//     "fmt"
+    // "fmt"
 //
 //     pb "user-api/rpc/user"
 // )
@@ -27,47 +27,86 @@ package main
 import (
   "user-api/internal/database"
   "user-api/internal/database/models"
+  "github.com/satori/go.uuid"
+  "github.com/go-pg/pg"
+  // "github.com/twitchtv/twirp"
+
   // "time"
   "fmt"
+  // "reflect"
 )
 
 func main() {
-  var testing bool
+  testing := true
   db := database.Connect(testing)
 
-  newArtistGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
-  _ = db.Insert(newArtistGroupTaxonomy)
+  id1, _ := uuid.FromString("881d53d4-75d5-4c8e-aeb9-227c852a3ce4")
+  id2, _ := uuid.FromString("399296e6-68d5-456f-9dce-0b385c47884d")
+  ids := make([]uuid.UUID, 2)
+  ids[0] = id1
+  ids[1] = id2
+  var links []models.Link
+  pgerr := db.Model(&links).
+    Where("id in (?)", pg.In(ids)).
+    Select()
+  fmt.Println(links)
+  fmt.Println(pgerr)
 
-  newLabelGroupTaxonomy := &models.GroupTaxonomy{Type: "label", Name: "Label"}
-  _ = db.Insert(newLabelGroupTaxonomy)
+  // newArtistGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
+  // _ = db.Insert(newArtistGroupTaxonomy)
+  //
+  // newLabelGroupTaxonomy := &models.GroupTaxonomy{Type: "label", Name: "Label"}
+  // _ = db.Insert(newLabelGroupTaxonomy)
+  //
+  // newUser := &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
+  // _ = db.Insert(newUser)
+  //
+  // // duration, _ := time.ParseDuration("10m10s")
+  // // cover := make([]byte, 5)
+  // // newTrack := &models.Track{PublishDate: time.Now(), Title: "track title", Duration: duration, Status: "free", Cover: cover}
+  // // err= db.Insert(newTrack)
+  //
 
-  newUser := &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
-  err := db.Insert(newUser)
+  // avatar := make([]byte, 5)
+  // artist := &models.UserGroup{
+  //   DisplayName: "best artist ever",
+  //   Avatar: avatar,
+  //   OwnerId: newUser.Id,
+  //   TypeId: newArtistGroupTaxonomy.Id,
+  //   AddressId: uuid.NewV4(),
+  // }
+  // _, pgerr := db.Model(artist).Returning("*").Insert()
 
-  // duration, _ := time.ParseDuration("10m10s")
-  // cover := make([]byte, 5)
-  // newTrack := &models.Track{PublishDate: time.Now(), Title: "track title", Duration: duration, Status: "free", Cover: cover}
-  // err= db.Insert(newTrack)
-
-  avatar := make([]byte, 5)
-  // admins := []uuid.UUID{newUser.Id}
-  newArtist := &models.UserGroup{
-    DisplayName: "best artist ever",
-    Avatar: avatar,
-    OwnerId: newUser.Id,
-    TypeId: newArtistGroupTaxonomy.Id,
-    // AdminUsers: admins,
-  }
-  err = db.Insert(newArtist)
-
-  newLabel := &models.UserGroup{
-    DisplayName: "best label ever",
-    Avatar: avatar,
-    OwnerId: newUser.Id,
-    TypeId: newLabelGroupTaxonomy.Id,
-    // AdminUsers: admins,
-  }
-  	err = db.Insert(newLabel)
-
-  fmt.Println(err)
+  // artistId, _ := uuid.FromString("a85aae16-c1e9-4eab-ac39-3d23d0fe3728")
+  // artist := &models.UserGroup{DisplayName: "worst artist ever", Id: artistId}
+  // _, pgerr := db.Model(artist).WherePK().Returning("*").UpdateNotNull()
+  //
+  //
+  // //
+  // newLabel := &models.UserGroup{
+  //   DisplayName: "best label ever",
+  //   Avatar: avatar,
+  //   OwnerId: newUser.Id,
+  //   TypeId: newLabelGroupTaxonomy.Id,
+  //   // AdminUsers: admins,
+  // }
+  // 	_ = db.Insert(newLabel)
+  //   pgerr = db.Model(newArtist).
+  //     Column("Privacy").
+  //     WherePK().
+  //     Select()
+  //     fmt.Println(pgerr)
+  // id, _ := uuid.FromString("b217a9b4-2844-439e-b7cb-50a928bca74")
+  // user := models.User{Id: id}
+  // // user := new(models.User)
+  // pgerr := db.Model(&user).
+  //     Column("user.*", "OwnerOfGroups").
+  //     Select()
+  // if pgerr != nil {
+  //     panic(pgerr)
+  // }
+  //
+  // fmt.Println(user.Id, user.Username, reflect.TypeOf(user.OwnerOfGroups))
+  // fmt.Printf("err: %+v\n", pgerr)
+  // fmt.Printf("artist: %+v\n", artist)
 }

@@ -30,6 +30,10 @@ var _ = Describe("User server", func() {
 				Expect(resp.FullName).To(Equal(newUser.FullName))
 				Expect(resp.DisplayName).To(Equal(newUser.DisplayName))
 				Expect(resp.Email).To(Equal(newUser.Email))
+				Expect(len(resp.OwnerOfGroups)).To(Equal(1))
+				Expect(resp.OwnerOfGroups[0].Id).To(Equal(newUserGroup.Id.String()))
+				Expect(resp.OwnerOfGroups[0].DisplayName).To(Equal(newUserGroup.DisplayName))
+				Expect(resp.OwnerOfGroups[0].Avatar).To(Equal(newUserGroup.Avatar))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()

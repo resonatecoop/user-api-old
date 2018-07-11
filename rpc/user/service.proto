@@ -8,7 +8,6 @@ service UserService {
   rpc GetUser(User) returns (User);
   rpc UpdateUser(User) returns (Empty);
   rpc DeleteUser(User) returns (Empty);
-  rpc ConnectToUserGroup(UserToUserGroup) returns (Empty);
   rpc FollowGroup(UserToUserGroup) returns (Empty);
   rpc UnfollowGroup(UserToUserGroup) returns (Empty);
   rpc AddFavoriteTrack(UserToTrack) returns (Empty);
@@ -20,7 +19,7 @@ message User {
 
   string username = 2; // required
   string email = 3; // required
-  string display_name = 4; // required
+  string display_name = 4; // required TODO remove
   string full_name = 5; // required
   string first_name = 6;
   string last_name = 7;
@@ -29,6 +28,20 @@ message User {
   bool newsletter_notification = 10;
   repeated string favorite_tracks = 11;
   repeated string followed_groups = 12;
+  repeated UserGroupResponse owner_of_groups = 13;
+  StreetAddress residence_address = 14;
+}
+
+message StreetAddress {
+  string id = 1;
+  map<string, string> data = 2;
+  bool personal_data = 3;
+}
+
+message UserGroupResponse {
+  string id = 1;
+  string display_name = 2;
+  bytes avatar = 3;
 }
 
 // Used for:

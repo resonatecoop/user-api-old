@@ -17,13 +17,24 @@ func init() {
     // if _, err := db.Exec( /* language=sql */ `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`); err != nil {
     //   return err
     // }
-
+    if _, err := orm.CreateTable(db, &models.StreetAddress{}, nil); err != nil {
+      return err
+    }
+    if _, err := orm.CreateTable(db, &models.Tag{}, nil); err != nil {
+      return err
+    }
 		if _, err := orm.CreateTable(db, &models.User{}, nil); err != nil {
 			return err
 		}
 
 		return nil
 	}, func(db migrations.DB) error {
+    if _, err := orm.DropTable(db, &models.StreetAddress{}, nil); err != nil {
+      return err
+    }
+    if _, err := orm.DropTable(db, &models.Tag{}, nil); err != nil {
+      return err
+    }
 		if _, err := orm.DropTable(db, &models.User{}, nil); err != nil {
 			return err
 		}

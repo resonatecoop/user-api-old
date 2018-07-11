@@ -12,42 +12,62 @@ service UserGroupService {
   rpc DeleteUserGroup(UserGroup) returns (Empty);
   rpc GetLabelUserGroups(Empty) returns (GroupedUserGroups);
   rpc GetUserGroupsByGenre(Tag) returns (GroupedUserGroups);
-  // rpc AddAdminUsers(AdminUsers) returns (Empty);
-  // rpc ConnectToLabel()
-  // rpc ConnectToArtist()
-  // rpc AddMembers()
+  // rpc AddMembers() return (Empty);
+  // rpc AddSubgroups()
+
+  // rpc GetUserGroupTypes(Empty) returns
 }
 
 message UserGroup {
   string id = 1; // required
   string display_name = 2; // required
   string description = 3;
-  bytes avatar = 4; // required
-  bytes banner = 5;
-  string group_email_address = 6;
+  string short_bio = 4;
+  bytes avatar = 5; // required
+  bytes banner = 6;
   string owner_id = 7; // required
-  string type_id = 8; // required
-  repeated string followers = 9;
-  repeated string admin_users = 10;
-  repeated string sub_groups = 11;
-  map<string, string> links = 12;
-  map<string, string> tags = 13;
-  string address = 14;
+  string type = 8; // required
+  repeated User followers = 9;
+  repeated User members = 10;
+  repeated UserGroup sub_groups = 11;
+  repeated Link links = 12;
+  repeated Tag tags = 13;
+  StreetAddress address = 14;
+  Privacy privacy = 16;
+
+  repeated UserGroup recommended_artists = 17;
+
+  repeated string highlighted_tracks = 18; // TODO change type once track rpc implemented
+  string featured_track_group = 19;  // TODO change type once trackgroup rpc implemented
+
+  string group_email_address = 20;
   // tracks
   // track_groups
-  // members
   // labels
+}
+
+message Link {
+  string id = 1;
+  string platform = 2;
+  string type = 3;
+  string uri = 4;
+  bool personal_data = 5;
+}
+
+message Tag {
+  string id = 1;
+  string type = 2;
+  string name = 3;
+}
+
+message Privacy {
+  string id = 1;
+  bool private = 2;
+  bool owned_tracks = 3;
+  bool supported_artists = 4;
 }
 
 message GroupedUserGroups {
   repeated UserGroup labels = 1;
   repeated UserGroup artists = 2;
-}
-
-message AdminUsers {
-  repeated string admin_user_ids = 1;
-}
-
-message Tag {
-  string id = 1;
 }

@@ -22,6 +22,10 @@ func CheckError(err error, table string) (twirp.Error) {
 		if err == pg.ErrNoRows {
 			return twirp.NotFoundError(fmt.Sprintf("%s does not exist", table))
 		}
+    twerr, ok := err.(twirp.Error)
+    if ok && twerr.Meta("argument") == "id" {
+      return twerr
+    }
 		pgerr, ok := err.(pg.Error)
 		if ok {
 			code := pgerr.Field('C')

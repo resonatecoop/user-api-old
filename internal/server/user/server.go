@@ -26,17 +26,20 @@ func NewServer(db *pg.DB) *Server {
 }
 
 /* TODO add to response:
-- tags
 - residence_address
 - member_of_groups
-- playlists */
+- playlists => dedicated endpoint
+*/
 func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	u, err := getUserModel(user)
 	if err != nil {
 		return nil, err
 	}
 
-	pgerr := s.db.Select(u)
+	pgerr := s.db.Model(u).
+      Column("user.*", "OwnerOfGroups").
+			Where("id = ?", u.Id).
+      Select()
 	twerr := internal.CheckError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr
@@ -55,6 +58,7 @@ func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 		NewsletterNotification: u.NewsletterNotification,
 		FavoriteTracks: internal.ConvertUuidToStrArray(u.FavoriteTracks),
 		FollowedGroups: internal.ConvertUuidToStrArray(u.FollowedGroups),
+		OwnerOfGroups: getUserGroupResponse(u.OwnerOfGroups),
 	}, nil
 }
 
@@ -86,7 +90,7 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	}, nil
 }
 
-// TODO update address, tags
+// TODO update address
 func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, error) {
 	err := checkRequiredAttributes(user)
 
@@ -108,6 +112,7 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 	return &pb.Empty{}, nil
 }
 
+// TODO delete user groups and related the user is owner of
 func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, error) {
 	deleteUser := func(db *pg.DB, u *models.User) (error, string) {
 		var table string
@@ -165,10 +170,6 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 		return nil, internal.CheckError(pgerr, table)
 	}
 
-	return &pb.Empty{}, nil
-}
-
-func (s *Server) ConnectToUserGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }
 
@@ -404,7 +405,7 @@ func checkRequiredAttributes(user *pb.User) (twirp.Error) {
 			argument = "username"
 		case user.Email == "":
 			argument = "email"
-		case user.DisplayName == "":
+		case user.DisplayName == "": // TODO remove as user is private by default, no need for display_name
 			argument = "display_name"
 		case user.FullName == "":
 			argument = "full_name"
@@ -412,4 +413,12 @@ func checkRequiredAttributes(user *pb.User) (twirp.Error) {
 		return twirp.RequiredArgumentError(argument)
 	}
 	return nil
+}
+
+func getUserGroupResponse(ownerOfGroup []models.UserGroup) ([]*pb.UserGroupResponse) {
+	groups := make([]*pb.UserGroupResponse, len(ownerOfGroup))
+	for i, group := range ownerOfGroup {
+		groups[i] = &pb.UserGroupResponse{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
+	}
+	return groups
 }

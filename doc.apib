@@ -22,7 +22,7 @@ TODO: add scope for restricted access (public/private user profile).
         {
             "id": "b09cd642-9df8-4f44-bb5a-169829043110",
             "created_at": "2015-08-05T08:40:51.620Z",
-            "updated_at": "2015-08-05T08:40:51.620Z",
+            "updated_at": "2015-08-05T09:40:51.620Z",
             "full_name": "John Doe",
             "display_name": "JohnD",
             "first_name": "John",
@@ -31,12 +31,16 @@ TODO: add scope for restricted access (public/private user profile).
             "email": "john@doe.com",
             "username": "jdoe",
             "member": false,
-            "tags": [],
-            "userGroups": {
-                "artists": [],
-                "labels": []
-            },
-            "avatar": ""
+            "memberOfGroups": [{
+              "id": "c09cd642-9df8-4f44-bb5a-169829043110",
+              "display_name": "best band ever",
+              "avatar": "avatar"
+            }],
+            "ownerOfGroups": [{
+              "id": "d09cd642-9df8-4f44-bb5a-169829043110",
+              "display_name": "DJ John",
+              "avatar": "avatar"
+            }],
         }
 
 
@@ -91,22 +95,6 @@ In the example, we update first_name and last_name of previously created user.
 
         {
             "id": "b09cd642-9df8-4f44-bb5a-169829043110"
-        }
-
-+ Response 204 (application/json)
-
-### Connect to Existing UserGroup [POST /twirp/resonate.api.user.UserService/ConnectToUserGroup]
-
-For a user to join an existing artist/band:
-Send email notification to owner/admins of user group.
-Then if confirmed: Update UserGroup: members.
-Send email to notify user.
-
-+ Request (application/json)
-
-        {
-            "user_id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "user_group_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
         }
 
 + Response 204 (application/json)
@@ -171,12 +159,16 @@ infinite feed, needs pagination
 
 ### Create a New UserGroup [POST /twirp/resonate.api.user.UserGroupService/CreateUserGroup]
 
-The user who creates a user group is by default the owner and an admin of this user group.
-Can be a user creating an artist or a label.
-Can be a label owner/user admin creating an artist in this label
-(in this case, specify labels in the request, see example below).
+The user who creates a user group is by default the owner of this user group.
+Can be a user creating an artist or a label or a user profile.
 
-+ type (string) - type of user group: artist, label or distributor
+if type is "user", "members" and "subgroup" should be empty.
+
+If type is "artist", "members" (array of user object with ids, owners of selected user_groups of type "user") can be added to the request body to list members (musicians in a band for instance).
+
+If type is "label", "subgroups" (array of user_group object with ids) can be added to the request body to list artists that are part of this label
+
++ type (string) - type of user group: user, artist, label or distributor
 
 + Request (application/json)
 
@@ -184,10 +176,26 @@ Can be a label owner/user admin creating an artist in this label
             "type": "artist",
             "owner_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31",
             "display_name": "BestArtistEver",
-            "labels": [
-                {
-                    "id": "d38bcdb7-9a05-4077-a6c7-6aec285b865e"
-                }
+            "short_bio": "I am the best artist ever",
+            "avatar": "blob",
+            "banner": "blob",
+            "address": {
+              "data": {"some": "address"}
+            },
+            "tags": ]
+              {"type": "genre", "name": "ambient"},
+              {"type": "genre", "name": "experimental"}
+            ],
+            "links": [
+                {"platform": "instagram", "uri": "https://www.instagram.com/bestartistever"},
+                {"platform": "twitter", "uri": "https://twitter.com/bestartistever"}
+            ],
+            "recommended_artists": [
+              {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31"},
+              {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31"}
+            ],
+            "members": [
+              {"id": "386f3a00-1022-4cb6-beda-8f7eeef8bd31"}
             ]
         }
 
@@ -197,31 +205,31 @@ Can be a label owner/user admin creating an artist in this label
 
             {
                 "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-                "created_at": "2015-08-05T08:40:51.620Z",
-                "updated_at": "2015-08-05T08:40:51.620Z",
-                "owner": {
-                    "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
-                },
-                "admin_users": [
-                    {
-                        "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
-                    }
-                ],
-                "members": [],
-                "subgroups": [],
-                "labels": [
-                     {
-                        "id": "d38bcdb7-9a05-4077-a6c7-6aec285b865e"
-                    }
-                ],
+                "owner_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "type": "artist",
                 "display_name": "BestArtistEver"
-                "description": "",
-                "links": [],
-                "address": {},
-                "tags": [],
-                "group_email": "john@doe.com",
-                "avatar": "",
-                "images": []
+                "short_bio": "I am the best artist ever",
+                "avatar": "blob",
+                "banner": "blob",
+                "links": [
+                    {"id": "406f3a00-1022-4cb6-beda-8f7eeef8bd31", "platform": "instagram", "uri": "https://www.instagram.com/bestartistever"},
+                    {"id": "416f3a00-1022-4cb6-beda-8f7eeef8bd31", "platform": "twitter", "uri": "https://twitter.com/bestartistever"}
+                ],
+                "address": {
+                  "id": "427f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                  "data": {"some": "address"}
+                },
+                "tags": [
+                  {"id": "426f3a00-1022-4cb6-beda-8f7eeef8bd31", "type": "genre", "name": "ambient"},
+                  {"id": "436f3a00-1022-4cb6-beda-8f7eeef8bd31", "type": "genre", "name": "experimental"}
+                ],
+                "recommended_artists": [
+                  {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"},
+                  {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"}
+                ],
+                "members": [
+                  {"id": "386f3a00-1022-4cb6-beda-8f7eeef8bd31"}
+                ]
             }
 
 ### Update UserGroup [POST /twirp/resonate.api.user.UserGroupService/UpdateUserGroup]
@@ -247,12 +255,21 @@ Can be a label owner/user admin creating an artist in this label
 
 ### Get Label UserGroups [POST /twirp/resonate.api.user.UserGroupService/GetLabelUserGroups]
 
+Return id, display_name and avatar for each labels.
+Support pagination (?page=2?limit=50).
+
 + Response 200 (application/json)
 
     + Body
 
             {
-                []
+                "labels": [
+                    {
+                      "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+                      "display_name": "best label ever",
+                      "avatar": "blob"
+                    }
+                ]
             }
 
 ### Get UserGroups by Genre [POST /twirp/resonate.api.user.UserGroupService/GetUserGroupsByGenre]
@@ -271,87 +288,58 @@ scope private/public.
 
     + Body
 
-            {
-                "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-                "created_at": "2015-08-05T08:40:51.620Z",
-                "updated_at": "2015-08-05T08:40:51.620Z",
-                "owner": {
-                    "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
-                },
-                "admin_users": [
-                    {
-                        "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
-                    }
-                ],
-                "members": [],
-                "display_name": "BestArtistEver",
-                "description": "",
-                "links": [],
-                "address": {},
-                "tags": [],
-                "group_email": "john@doe.com",
-                "avatar": "",
-                "images": []
-            }
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "owner": {
+                "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
+            },
+            "display_name": "BestArtistEver"
+            "description": "long bio",
+            "short_bio": "short bio",
+            "avatar": "blob",
+            "banner": "blob",
+            "members": [],
+            "subgroups": [],
+            "labels": [
+                {
+                    "id": "d38bcdb7-9a05-4077-a6c7-6aec285b865e",
+                    "display_name": "best label ever",
+                    "avatar": "blob"
+                }
+            ],
+            "links": [
+                {"id": "406f3a00-1022-4cb6-beda-8f7eeef8bd31", "platform": "instagram", "uri": "https://www.instagram.com/bestartistever"},
+                {"id": "416f3a00-1022-4cb6-beda-8f7eeef8bd31", "platform": "twitter", "uri": "https://twitter.com/bestartistever"}
+            ],
+            "address": {
+              "id": "427f3a00-1022-4cb6-beda-8f7eeef8bd31",
+              "data": {"some": "address"}
+            },
+            "tags": [
+              {"id": "426f3a00-1022-4cb6-beda-8f7eeef8bd31", "type": "genre", "name": "ambient"},
+              {"id": "436f3a00-1022-4cb6-beda-8f7eeef8bd31", "type": "genre", "name": "experimental"}
+            ],
+            "recommended_artists": [
+              {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"},
+              {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"}
+            ],
+        }
 
-### Add AdminUsers [POST /twirp/resonate.api.user.UserGroupService/AddAdminUsers]
+### Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
 
-Send email notification to users.
-Then if confirmed, Update UserGroup: admin_users.
-
-+ Request (application/json)
-
-        [
-            "b09cd642-9df8-4f44-bb5a-169829043110",
-            "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
-        ]
-
-+ Response 204 (application/json)
-
-### ?Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
-
-For an artist user group to add user members:
-Send email notification to users.
-Then if confirmed: Update UserGroup: members.
-
-+ Request (application/json)
-
-        [
-            "b09cd642-9df8-4f44-bb5a-169829043110",
-            "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
-        ]
-
-+ Response 204 (application/json)
-
-### Connect to Label [POST /twirp/resonate.api.user.UserGroupService/ConnectToLabel]
-
-For an artist user group to connect to existing label.
-Send email notification to owner/admin of label UserGroup.
-Then, if confirmed: Update UserGroup (artist): labels / Update UserGroup (label): subgroups.
+For an artist user group to add user members.
 
 + Request (application/json)
 
         {
-            "artist_id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "label_id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "members": [
+                "b09cd642-9df8-4f44-bb5a-169829043110",
+                "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+            ]
         }
 
 + Response 204 (application/json)
-
-### Connect to Artist [POST /twirp/resonate.api.user.UserGroupService/ConnectToArtist]
-
-For a label user group to connect to existing artists.
-Send email notification to admins/owner of artist UserGroup.
-Then, if confirmed: Update UserGroup (label): subgroups and Update UserGroup (artist): labels.
-
-+ Request (application/json)
-
-        {
-            "artist_id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "label_id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
-        }
-
-+ Response 200 (application/json)
 
 ## Tracks Collection [/twirp/resonate.api.user.Track]
 
