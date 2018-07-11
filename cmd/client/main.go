@@ -40,26 +40,15 @@ func main() {
   testing := true
   db := database.Connect(testing)
 
-  id1, _ := uuid.FromString("881d53d4-75d5-4c8e-aeb9-227c852a3ce4")
-  id2, _ := uuid.FromString("399296e6-68d5-456f-9dce-0b385c47884d")
-  ids := make([]uuid.UUID, 2)
-  ids[0] = id1
-  ids[1] = id2
-  var links []models.Link
-  pgerr := db.Model(&links).
-    Where("id in (?)", pg.In(ids)).
-    Select()
-  fmt.Println(links)
-  fmt.Println(pgerr)
 
-  // newArtistGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
-  // _ = db.Insert(newArtistGroupTaxonomy)
-  //
-  // newLabelGroupTaxonomy := &models.GroupTaxonomy{Type: "label", Name: "Label"}
-  // _ = db.Insert(newLabelGroupTaxonomy)
-  //
-  // newUser := &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
-  // _ = db.Insert(newUser)
+  newArtistGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
+  _ = db.Insert(newArtistGroupTaxonomy)
+
+  newLabelGroupTaxonomy := &models.GroupTaxonomy{Type: "label", Name: "Label"}
+  _ = db.Insert(newLabelGroupTaxonomy)
+
+  newUser := &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
+  _ = db.Insert(newUser)
   //
   // // duration, _ := time.ParseDuration("10m10s")
   // // cover := make([]byte, 5)
@@ -67,15 +56,20 @@ func main() {
   // // err= db.Insert(newTrack)
   //
 
-  // avatar := make([]byte, 5)
-  // artist := &models.UserGroup{
-  //   DisplayName: "best artist ever",
-  //   Avatar: avatar,
-  //   OwnerId: newUser.Id,
-  //   TypeId: newArtistGroupTaxonomy.Id,
-  //   AddressId: uuid.NewV4(),
-  // }
-  // _, pgerr := db.Model(artist).Returning("*").Insert()
+  avatar := make([]byte, 5)
+  artist := &models.UserGroup{
+    DisplayName: "best artist ever",
+    Avatar: avatar,
+    OwnerId: newUser.Id,
+    TypeId: newArtistGroupTaxonomy.Id,
+    AddressId: uuid.NewV4(),
+  }
+  _, pgerr := db.Model(artist).Returning("*").Insert()
+
+  db.Model(artist).
+		Column("user_group.*", "Privacy", "Type", "Address").
+		WherePK().
+		Select()
 
   // artistId, _ := uuid.FromString("a85aae16-c1e9-4eab-ac39-3d23d0fe3728")
   // artist := &models.UserGroup{DisplayName: "worst artist ever", Id: artistId}

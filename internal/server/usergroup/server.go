@@ -1,7 +1,7 @@
 package usergroupserver
 
 import (
-	// "fmt"
+	"fmt"
 	// "reflect"
 	"time"
 	"context"
@@ -172,7 +172,6 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		return nil, err
 	}
 
-	// pgerr := s.db.Select(u)
 	pgerr := s.db.Model(u).
 		Column("user_group.*", "Privacy", "Type", "Address").
 		WherePK().
@@ -182,29 +181,49 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	}
 
 	// Get user group links
-	var groupLinks []models.Link
-	pgerr = s.db.Model(&groupLinks).
-		Where("id in (?)", pg.In(u.Links)).
-		Select()
-	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "link")
-	}
-	links := make([]*pb.Link, len(groupLinks))
-	for i, link := range groupLinks {
-		links[i] = &pb.Link{Id: link.Id.String(), Platform: link.Platform, Uri: link.Uri}
+	links := make([]*pb.Link, len(u.Links))
+	if len(links) > 0 {
+		var groupLinks []models.Link
+		pgerr = s.db.Model(&groupLinks).
+			Where("id in (?)", pg.In(u.Links)).
+			Select()
+		if pgerr != nil {
+			return nil, internal.CheckError(pgerr, "link")
+		}
+		for i, link := range groupLinks {
+			links[i] = &pb.Link{Id: link.Id.String(), Platform: link.Platform, Uri: link.Uri}
+		}
 	}
 
 	// Get user group tags
-	var groupTags []models.Tag
-	pgerr = s.db.Model(&groupTags).
-		Where("id in (?)", pg.In(u.Tags)).
-		Select()
-	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "tag")
+	// TODO refacto using interface
+	tags := make([]*pb.Tag, len(u.Tags))
+	if len(tags) > 0 {
+		var groupTags []models.Tag
+		pgerr = s.db.Model(&groupTags).
+			Where("id in (?)", pg.In(u.Tags)).
+			Select()
+		if pgerr != nil {
+			return nil, internal.CheckError(pgerr, "tag")
+		}
+		for i, tag := range groupTags {
+			tags[i] = &pb.Tag{Id: tag.Id.String(), Type: tag.Type, Name: tag.Name}
+		}
 	}
-	tags := make([]*pb.Tag, len(groupTags))
-	for i, tag := range groupTags {
-		tags[i] = &pb.Tag{Id: tag.Id.String(), Type: tag.Type, Name: tag.Name}
+
+	// Get related user groups
+	recommendedArtists, twerr := getRelatedUserGroup(u.RecommendedArtists, s.db)
+	if twerr != nil {
+		fmt.Println("RELATED", twerr)
+		return nil, twerr
+	}
+	subgroups, twerr := getRelatedUserGroup(u.SubGroups, s.db)
+	if twerr != nil {
+		return nil, twerr
+	}
+	labels, twerr := getRelatedUserGroup(u.Labels, s.db)
+	if twerr != nil {
+		return nil, twerr
 	}
 
 	address := &userpb.StreetAddress{Id: u.Address.Id.String(), Data: u.Address.Data}
@@ -224,8 +243,9 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		Address: address,
 		Links: links,
 		Tags: tags,
-		// RecommendedArtists
-		// Subgroups
+		RecommendedArtists: recommendedArtists,
+		SubGroups: subgroups,
+		Labels: labels,
 
 		// Tracks
 		// TrackGroups
@@ -346,6 +366,9 @@ func (s *Server) GetUserGroupsByGenre(ctx context.Context, tag *pb.Tag) (*pb.Gro
   return &pb.GroupedUserGroups{}, nil
 }
 
+
+
+
 func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)
 	if err != nil {
@@ -365,6 +388,9 @@ func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error)
 	}, nil
 }
 
+// Select user groups in db with given ids in 'userGroups'
+// Return ids slice
+// Used in CreateUserGroup to add ids slice to related user groups: recommended_artists, subgroups...
 func getRelatedUserGroupIds(userGroups []*pb.UserGroup, db *pg.DB) ([]uuid.UUID, error) {
 	relatedUserGroups := make([]*models.UserGroup, len(userGroups))
 	relatedUserGroupIds := make([]uuid.UUID, len(userGroups))
@@ -387,8 +413,27 @@ func getRelatedUserGroupIds(userGroups []*pb.UserGroup, db *pg.DB) ([]uuid.UUID,
 	return relatedUserGroupIds, nil
 }
 
-func getRelatedUserGroup() () {
+// Select user groups in db with given 'ids'
+// Return slice of UserGroup response
+// Used in GetUserGroup to respond with info about related user groups: recommended_artists, subgroups, labels
+func getRelatedUserGroup(ids []uuid.UUID, db *pg.DB) ([]*pb.UserGroup, twirp.Error) {
+	groupsResponse := make([]*pb.UserGroup, len(ids))
 
+	if len(ids) > 0 {
+		var groups []models.UserGroup
+		pgerr := db.Model(&groups).
+			Where("id in (?)", pg.In(ids)).
+			Select()
+		if pgerr != nil {
+			fmt.Println("PG", pgerr)
+			return nil, internal.CheckError(pgerr, "user_group")
+		}
+		for i, group := range groups {
+			groupsResponse[i] = &pb.UserGroup{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
+		}
+	}
+
+	return groupsResponse, nil
 }
 
 func checkRequiredAttributes(userGroup *pb.UserGroup) (twirp.Error) {

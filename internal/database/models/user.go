@@ -11,27 +11,22 @@ type User struct {
   CreatedAt time.Time `sql:"default:now()"`
   UpdatedAt time.Time
   FullName string `sql:",notnull"`
-  DisplayName string `sql:",unique"` // TODO (notnull) remove as user is private by default
+  DisplayName string `sql:",unique"`
   FirstName string
   LastName string
   Email string `sql:",unique,notnull"`
-  Username string `sql:",unique,notnull"` // TODO (notnull?)
+  Username string `sql:",unique"`
   Member bool `sql:",notnull"`
   Avatar []byte
   NewsletterNotification bool
 
   ResidenceAddressId uuid.UUID  `sql:"type:uuid,notnull"`
-  // ResidenceAddress *StreetAddress
+  ResidenceAddress *StreetAddress
 
   FavoriteTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   FollowedGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // Playlists
 
   OwnerOfGroups []UserGroup `pg:"fk:owner_id"`
-  // OwnerOfGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // MemberOfGroups
-
-  // Tags?
-
-  // Shares => Membership API?
 }

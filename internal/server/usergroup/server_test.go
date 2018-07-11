@@ -21,7 +21,7 @@ var _ = Describe("UserGroup server", func() {
   const invalid_argument_code twirp.ErrorCode = "invalid_argument"
   const not_found_code twirp.ErrorCode = "not_found"
 
-	XDescribe("GetUserGroup", func() {
+	Describe("GetUserGroup", func() {
 		Context("with valid uuid", func() {
 			It("should respond with user_group if it exists", func() {
 				userGroup := &pb.UserGroup{Id: newArtist.Id.String()}
@@ -31,10 +31,23 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.Id).To(Equal(newArtist.Id.String()))
 				Expect(resp.DisplayName).To(Equal(newArtist.DisplayName))
 				Expect(resp.Description).To(Equal(newArtist.Description))
+				Expect(resp.ShortBio).To(Equal(newArtist.ShortBio))
 				Expect(resp.Avatar).To(Equal(newArtist.Avatar))
 				Expect(resp.Banner).To(Equal(newArtist.Banner))
 				Expect(resp.OwnerId).To(Equal(newArtist.OwnerId.String()))
-				// Expect(resp.Type).To(Equal("artist"))
+				Expect(resp.Type).To(Equal("artist"))
+				Expect(len(resp.Labels)).To(Equal(1))
+				Expect(resp.Labels[0].Id).To(Equal(newLabel.Id.String()))
+				Expect(resp.Labels[0].DisplayName).To(Equal(newLabel.DisplayName))
+				Expect(resp.Labels[0].Avatar).To(Equal(newLabel.Avatar))
+				Expect(len(resp.Tags)).To(Equal(1))
+				Expect(resp.Tags[0].Id).To(Equal(newTag.Id.String()))
+				Expect(resp.Tags[0].Type).To(Equal(newTag.Type))
+				Expect(resp.Tags[0].Name).To(Equal(newTag.Name))
+				Expect(len(resp.Links)).To(Equal(1))
+				Expect(resp.Links[0].Id).To(Equal(newLink.Id.String()))
+				Expect(resp.Links[0].Uri).To(Equal(newLink.Uri))
+				Expect(resp.Links[0].Platform).To(Equal(newLink.Platform))
 				Expect(resp.GroupEmailAddress).To(Equal(newArtist.GroupEmailAddress))
 			})
 			It("should respond with not_found error if user_group does not exist", func() {
@@ -68,7 +81,7 @@ var _ = Describe("UserGroup server", func() {
 		})
 	})
 
-	XDescribe("GetLabelUserGroups", func() {
+	Describe("GetLabelUserGroups", func() {
 		It("should respond with user_groups of type label", func() {
 			emptyReq := &userpb.Empty{}
 			u := url.URL{}

@@ -23,6 +23,8 @@ var newArtist *models.UserGroup
 var newLabel *models.UserGroup
 var newArtistGroupTaxonomy *models.GroupTaxonomy
 var newLabelGroupTaxonomy *models.GroupTaxonomy
+var newLink *models.Link
+var newTag *models.Tag
 
 func TestUsergroup(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -48,36 +50,48 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newLabelGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
 
-		// var data map[string]string
-		// data["some"] = "data"
+		// Create link
+		newLink = &models.Link{Platform: "fakebook", Uri: "https://fakebook.com/bestartist"}
+		err = db.Insert(newLink)
+		Expect(err).NotTo(HaveOccurred())
+
+		// Create tag
+		newTag = &models.Tag{Type: "genre", Name: "rock"}
+		err = db.Insert(newTag)
+		Expect(err).NotTo(HaveOccurred())
+
 		newAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}
 		err = db.Insert(newAddress)
 		Expect(err).NotTo(HaveOccurred())
 
-		addressId := uuid.NewV4()
 		// Create user groups
 		avatar := make([]byte, 5)
-		// admins := []uuid.UUID{newUser.Id}
-		newArtist = &models.UserGroup{
-			DisplayName: "best artist ever",
-			Avatar: avatar,
-			OwnerId: newUser.Id,
-			TypeId: newArtistGroupTaxonomy.Id,
-			AddressId: addressId,
-			// AdminUsers: admins,
-		}
-		_, err = db.Model(newArtist).Returning("*").Insert()
-		// Expect(err).NotTo(HaveOccurred())
-
 		newLabel = &models.UserGroup{
 			DisplayName: "best label ever",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
 			TypeId: newLabelGroupTaxonomy.Id,
-			AddressId: addressId,
+			AddressId: newAddress.Id,
 			// AdminUsers: admins,
 		}
 		_, err = db.Model(newLabel).Returning("*").Insert()
+		Expect(err).NotTo(HaveOccurred())
+
+		labels := []uuid.UUID{newLabel.Id}
+		links := []uuid.UUID{newLink.Id}
+		tags := []uuid.UUID{newTag.Id}
+		newArtist = &models.UserGroup{
+			DisplayName: "best artist ever",
+			Avatar: avatar,
+			OwnerId: newUser.Id,
+			TypeId: newArtistGroupTaxonomy.Id,
+			AddressId: newAddress.Id,
+			Labels: labels,
+			Links: links,
+			Tags: tags,
+		}
+		_, err = db.Model(newArtist).Returning("*").Insert()
+		Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
@@ -107,5 +121,26 @@ var _ = AfterSuite(func() {
 	err = db.Model(&streetAddresses).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&streetAddresses).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all links
+	var links []models.Link
+	err = db.Model(&links).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&links).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all tags
+	var tags []models.Tag
+	err = db.Model(&tags).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&tags).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all user group privacies
+	var privacies []models.UserGroupPrivacy
+	err = db.Model(&privacies).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&privacies).Delete()
 	Expect(err).NotTo(HaveOccurred())
 })

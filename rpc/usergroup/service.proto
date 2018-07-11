@@ -36,11 +36,12 @@ message UserGroup {
   Privacy privacy = 16;
 
   repeated UserGroup recommended_artists = 17;
+  repeated UserGroup labels = 18;
 
-  repeated string highlighted_tracks = 18; // TODO change type once track rpc implemented
-  string featured_track_group = 19;  // TODO change type once trackgroup rpc implemented
+  repeated string highlighted_tracks = 19; // TODO change type once track rpc implemented
+  string featured_track_group = 20;  // TODO change type once trackgroup rpc implemented
 
-  string group_email_address = 20;
+  string group_email_address = 21;
   // tracks
   // track_groups
   // labels

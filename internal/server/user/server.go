@@ -398,19 +398,8 @@ func getUserModel(user *pb.User) (*models.User, twirp.Error) {
 }
 
 func checkRequiredAttributes(user *pb.User) (twirp.Error) {
-	if user.Username == "" || user.FullName == "" || user.Email == "" || user.DisplayName == "" {
-		var argument string
-		switch {
-		case user.Username == "":
-			argument = "username"
-		case user.Email == "":
-			argument = "email"
-		case user.DisplayName == "": // TODO remove as user is private by default, no need for display_name
-			argument = "display_name"
-		case user.FullName == "":
-			argument = "full_name"
-		}
-		return twirp.RequiredArgumentError(argument)
+	if user.Email == "" {
+		return twirp.RequiredArgumentError("email")
 	}
 	return nil
 }
