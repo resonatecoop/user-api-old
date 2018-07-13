@@ -370,8 +370,8 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *userpb.Empty) (*
 	//   Apply(orm.Pagination(ctx.Value("query").(url.Values))).
 	//   Select()
 
-	groupTaxomony := new(models.GroupTaxonomy)
-	err := s.db.Model(groupTaxomony).
+	groupTaxonomy := new(models.GroupTaxonomy)
+	err := s.db.Model(groupTaxonomy).
 		Where("type = ?", "label").
 		First()
 	twerr := internal.CheckError(err, "group_taxonomy")
@@ -380,7 +380,7 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *userpb.Empty) (*
 	}
 
 	err = s.db.Model(&labels).
-		Where("user_group.type_id = ?", groupTaxomony.Id).
+		Where("user_group.type_id = ?", groupTaxonomy.Id).
 		Apply(orm.Pagination(ctx.Value("query").(url.Values))).
 		Select()
 	twerr = internal.CheckError(err, "user_group")
@@ -396,8 +396,21 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *userpb.Empty) (*
   return &pb.GroupedUserGroups{Labels: userGroups}, nil
 }
 
-func (s *Server) GetUserGroupsByGenre(ctx context.Context, tag *pb.Tag) (*pb.GroupedUserGroups, error) {
-  return &pb.GroupedUserGroups{}, nil
+func (s *Server) GetUserGroupTypes(ctx context.Context, empty *userpb.Empty) (*pb.GroupTaxonomies, error) {
+	var types []models.GroupTaxonomy
+	var groupTaxonomies pb.GroupTaxonomies
+	err := s.db.Model(&types).
+		Where("group_taxonomy.type != ?", "distributor"). // except distributors, internally added by staff
+		Select()
+	if err != nil {
+		return nil, internal.CheckError(err, "group_taxonomy")
+	}
+
+	for _, groupType := range(types) {
+		groupTaxonomies.Types = append(groupTaxonomies.Types, &pb.GroupTaxonomy{Id: groupType.Id.String(), Type: groupType.Type, Name: groupType.Name})
+	}
+
+  return &groupTaxonomies, nil
 }
 
 

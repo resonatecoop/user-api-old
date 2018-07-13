@@ -312,8 +312,6 @@ Support pagination (?page=2?limit=50).
                 ]
             }
 
-### Get UserGroups by Genre [POST /twirp/resonate.api.user.UserGroupService/GetUserGroupsByGenre]
-
 ### Get UserGroup [POST /twirp/resonate.api.user.UserGroupService/GetUserGroup]
 
 scope private/public.
@@ -339,7 +337,6 @@ scope private/public.
             "avatar": "blob",
             "banner": "blob",
             "members": [],
-            "sub_groups": [],
             "labels": [
                 {
                     "id": "d38bcdb7-9a05-4077-a6c7-6aec285b865e",
@@ -363,6 +360,22 @@ scope private/public.
               {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"},
               {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"}
             ],
+        }
+
+### Get User Group Types [POST /twirp/resonate.api.user.UserGroupService/GetUserGroupTypes]
+
+Return all existing group taxonomies.
+
++ Response 200 (application/json)
+
+    + Body
+
+        {
+            "types": [
+                {"id":  "156f3a00-1022-4cb6-beda-8f7eeef8bd31", "type": "user", "name": "User"},
+                {"id":  "176f3a00-1022-4cb6-beda-8f7eeef8bd31", "type": "artist", "name": "Artist"},
+                {"id":  "186f3a00-1022-4cb6-beda-8f7eeef8bd31", "type": "label", "name": "Label"},
+            ]
         }
 
 ### Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]

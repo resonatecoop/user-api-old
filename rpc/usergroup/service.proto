@@ -10,13 +10,14 @@ service UserGroupService {
   rpc GetUserGroup(UserGroup) returns (UserGroup);
   rpc UpdateUserGroup(UserGroup) returns (Empty);
   rpc DeleteUserGroup(UserGroup) returns (Empty);
-  rpc GetLabelUserGroups(Empty) returns (GroupedUserGroups);
-  rpc GetUserGroupsByGenre(Tag) returns (GroupedUserGroups);
-  rpc AddSubGroups(UserGroups) returns (Empty);
-  rpc RemoveSubGroups(UserGroups) returns (Empty);
-  // rpc AddMembers() return (Empty);
 
-  // rpc GetUserGroupTypes(Empty) returns
+  rpc GetLabelUserGroups(Empty) returns (GroupedUserGroups);
+  rpc GetUserGroupTypes(Empty) returns (GroupTaxonomies);
+
+  rpc AddSubGroups(UserGroups) returns (Empty); // Update?
+  rpc RemoveSubGroups(UserGroups) returns (Empty);
+  rpc AddMembers(User) returns (Empty);
+  rpc RemoveMembers(User) returns (Empty);
 }
 
 message UserGroup {
@@ -48,10 +49,18 @@ message UserGroup {
   // labels
 }
 
+message UserGroups {
+  repeated UserGroup user_groups = 1;
+}
+
 message GroupTaxonomy {
   string id = 1;
   string type = 2;
   string name = 3;
+}
+
+message GroupTaxonomies {
+  repeated GroupTaxonomy types = 1;
 }
 
 message Link {

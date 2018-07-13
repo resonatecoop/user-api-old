@@ -402,4 +402,14 @@ var _ = Describe("UserGroup server", func() {
 			})
 		})
 	})
+
+	Describe("GetUserGroupTypes", func() {
+		It("should respond with group_taxonomies except distributor", func() {
+			emptyReq := &userpb.Empty{}
+			groupTaxonomies, err := service.GetUserGroupTypes(context.Background(), emptyReq)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(groupTaxonomies.Types)).To(Equal(2))
+		})
+	})
 })

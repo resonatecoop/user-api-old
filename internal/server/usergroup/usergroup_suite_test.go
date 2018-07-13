@@ -52,6 +52,10 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newLabelGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
 
+		newDistributorGroupTaxonomy := &models.GroupTaxonomy{Type: "distributor", Name: "Distributor"}
+		err = db.Insert(newDistributorGroupTaxonomy)
+		Expect(err).NotTo(HaveOccurred())
+
 		// Create link
 		newLink = &models.Link{Platform: "fakebook", Uri: "https://fakebook.com/bestartist"}
 		err = db.Insert(newLink)
