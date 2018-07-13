@@ -27,12 +27,13 @@ package main
 import (
   "user-api/internal/database"
   "user-api/internal/database/models"
+  pb "user-api/rpc/usergroup"
   "github.com/satori/go.uuid"
-  "github.com/go-pg/pg"
+  // "github.com/go-pg/pg"
   // "github.com/twitchtv/twirp"
 
   // "time"
-  "fmt"
+  // "fmt"
   // "reflect"
 )
 
@@ -40,67 +41,50 @@ func main() {
   testing := true
   db := database.Connect(testing)
 
-
-  newArtistGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
-  _ = db.Insert(newArtistGroupTaxonomy)
-
-  newLabelGroupTaxonomy := &models.GroupTaxonomy{Type: "label", Name: "Label"}
-  _ = db.Insert(newLabelGroupTaxonomy)
-
-  newUser := &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
-  _ = db.Insert(newUser)
+  privacyId, _ := uuid.FromString("b5d58ac6-dbed-413a-9ca5-6c683ec52063")
+  p := &pb.Privacy{Private: false}
+  privacy := &models.UserGroupPrivacy{Id: privacyId, Private: true, OwnedTracks: p.OwnedTracks, SupportedArtists: p.SupportedArtists}
+  _, _ = db.Model(privacy).WherePK().Returning("*").UpdateNotNull()
+  // newArtistGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
+  // _ = db.Insert(newArtistGroupTaxonomy)
   //
+  // newLabelGroupTaxonomy := &models.GroupTaxonomy{Type: "label", Name: "Label"}
+  // _ = db.Insert(newLabelGroupTaxonomy)
+  //
+  // newUser := &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
+  // _ = db.Insert(newUser)
+  //
+  // newLink := &models.Link{Platform: "fakebook", Uri: "https://fakebook.com/bestartist"}
+  // _ = db.Insert(newLink)
+  //
+  // // Create tag
+  // newTag := &models.Tag{Type: "genre", Name: "rock"}
+  // _ = db.Insert(newTag)
+  //
+  // newAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}
+  // _ = db.Insert(newAddress)
+
   // // duration, _ := time.ParseDuration("10m10s")
   // // cover := make([]byte, 5)
   // // newTrack := &models.Track{PublishDate: time.Now(), Title: "track title", Duration: duration, Status: "free", Cover: cover}
   // // err= db.Insert(newTrack)
-  //
 
-  avatar := make([]byte, 5)
-  artist := &models.UserGroup{
-    DisplayName: "best artist ever",
-    Avatar: avatar,
-    OwnerId: newUser.Id,
-    TypeId: newArtistGroupTaxonomy.Id,
-    AddressId: uuid.NewV4(),
-  }
-  _, pgerr := db.Model(artist).Returning("*").Insert()
-
-  db.Model(artist).
-		Column("user_group.*", "Privacy", "Type", "Address").
-		WherePK().
-		Select()
-
-  // artistId, _ := uuid.FromString("a85aae16-c1e9-4eab-ac39-3d23d0fe3728")
-  // artist := &models.UserGroup{DisplayName: "worst artist ever", Id: artistId}
-  // _, pgerr := db.Model(artist).WherePK().Returning("*").UpdateNotNull()
-  //
-  //
-  // //
-  // newLabel := &models.UserGroup{
-  //   DisplayName: "best label ever",
+  // links := []uuid.UUID{newLink.Id}
+  // tags := []uuid.UUID{newTag.Id}
+  // avatar := make([]byte, 5)
+  // artist := &models.UserGroup{
+  //   DisplayName: "best artist ever",
   //   Avatar: avatar,
   //   OwnerId: newUser.Id,
-  //   TypeId: newLabelGroupTaxonomy.Id,
-  //   // AdminUsers: admins,
+  //   TypeId: newArtistGroupTaxonomy.Id,
+  //   AddressId: newAddress.Id,
+  //   Links: links,
+  //   Tags: tags,
   // }
-  // 	_ = db.Insert(newLabel)
-  //   pgerr = db.Model(newArtist).
-  //     Column("Privacy").
-  //     WherePK().
-  //     Select()
-  //     fmt.Println(pgerr)
-  // id, _ := uuid.FromString("b217a9b4-2844-439e-b7cb-50a928bca74")
-  // user := models.User{Id: id}
-  // // user := new(models.User)
-  // pgerr := db.Model(&user).
-  //     Column("user.*", "OwnerOfGroups").
-  //     Select()
-  // if pgerr != nil {
-  //     panic(pgerr)
-  // }
+  // _, _ = db.Model(artist).Returning("*").Insert()
   //
-  // fmt.Println(user.Id, user.Username, reflect.TypeOf(user.OwnerOfGroups))
-  // fmt.Printf("err: %+v\n", pgerr)
-  // fmt.Printf("artist: %+v\n", artist)
+  // db.Model(artist).
+	// 	Column("user_group.*", "Privacy", "Type", "Address").
+	// 	WherePK().
+	// 	Select()
 }

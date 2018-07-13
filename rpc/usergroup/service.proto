@@ -12,8 +12,9 @@ service UserGroupService {
   rpc DeleteUserGroup(UserGroup) returns (Empty);
   rpc GetLabelUserGroups(Empty) returns (GroupedUserGroups);
   rpc GetUserGroupsByGenre(Tag) returns (GroupedUserGroups);
+  rpc AddSubGroups(UserGroups) returns (Empty);
+  rpc RemoveSubGroups(UserGroups) returns (Empty);
   // rpc AddMembers() return (Empty);
-  // rpc AddSubgroups()
 
   // rpc GetUserGroupTypes(Empty) returns
 }
@@ -26,7 +27,7 @@ message UserGroup {
   bytes avatar = 5; // required
   bytes banner = 6;
   string owner_id = 7; // required
-  string type = 8; // required
+  GroupTaxonomy type = 8; // required
   repeated User followers = 9;
   repeated User members = 10;
   repeated UserGroup sub_groups = 11;
@@ -45,6 +46,12 @@ message UserGroup {
   // tracks
   // track_groups
   // labels
+}
+
+message GroupTaxonomy {
+  string id = 1;
+  string type = 2;
+  string name = 3;
 }
 
 message Link {

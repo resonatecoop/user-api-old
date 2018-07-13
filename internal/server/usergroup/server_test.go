@@ -13,7 +13,7 @@ import (
 	pb "user-api/rpc/usergroup"
 	userpb "user-api/rpc/user"
 	// "user-api/internal"
-	// "user-api/internal/database/models"
+	"user-api/internal/database/models"
 )
 
 var _ = Describe("UserGroup server", func() {
@@ -35,7 +35,8 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.Avatar).To(Equal(newArtist.Avatar))
 				Expect(resp.Banner).To(Equal(newArtist.Banner))
 				Expect(resp.OwnerId).To(Equal(newArtist.OwnerId.String()))
-				Expect(resp.Type).To(Equal("artist"))
+				Expect(resp.Type.Id).To(Equal(newArtistGroupTaxonomy.Id.String()))
+				Expect(resp.Type.Type).To(Equal("artist"))
 				Expect(len(resp.Labels)).To(Equal(1))
 				Expect(resp.Labels[0].Id).To(Equal(newLabel.Id.String()))
 				Expect(resp.Labels[0].DisplayName).To(Equal(newLabel.DisplayName))
@@ -97,26 +98,67 @@ var _ = Describe("UserGroup server", func() {
 		})
 	})
 
-	XDescribe("UpdateUserGroup", func() {
+	Describe("UpdateUserGroup", func() {
 		Context("with valid uuid", func() {
 			It("should update user_group if it exists", func() {
+				tags := []*pb.Tag{&pb.Tag{Type: "genre", Name: "experimental"}}
+				links := []*pb.Link{&pb.Link{Platform: "instagram", Uri: "https://instagram/bestartistever"}}
+				recommendedArtists := []*pb.UserGroup{&pb.UserGroup{Id: newRecommendedArtist.Id.String()}}
 				userGroup := &pb.UserGroup{
 					Id: newArtist.Id.String(),
 					DisplayName: "new display name",
 					Description: "new description",
 					Avatar: newArtist.Avatar,
-					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
-					Type: "artist",
+					Address: &userpb.StreetAddress{Id: newAddress.Id.String(), Data: map[string]string{"some": "new data"}},
+					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
+					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
 					OwnerId: newArtist.OwnerId.String(),
-					// AdminUsers: internal.ConvertUuidToStrArray(newArtist.AdminUsers),
+					Tags: tags,
+					Links: links,
+					RecommendedArtists: recommendedArtists,
 				}
 				_, err := service.UpdateUserGroup(context.Background(), userGroup)
 
 				Expect(err).NotTo(HaveOccurred())
+
+				address := new(models.StreetAddress)
+				err = db.Model(address).Where("id = ?", newAddress.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(address.Data).To(Equal(map[string]string{"some": "new data"}))
+
+				privacy := new(models.UserGroupPrivacy)
+				err = db.Model(privacy).Where("id = ?", newArtist.Privacy.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(privacy.Private).To(Equal(true))
+				Expect(privacy.OwnedTracks).To(Equal(false))
+				Expect(privacy.SupportedArtists).To(Equal(true))
+
+				updatedUserGroup := new(models.UserGroup)
+				err = db.Model(updatedUserGroup).Where("id = ?", newArtist.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(updatedUserGroup.Tags)).To(Equal(1))
+				Expect(updatedUserGroup.Tags[0]).NotTo(Equal(newTag.Id))
+
+				addedTag := models.Tag{Id: updatedUserGroup.Tags[0]}
+				err = db.Model(&addedTag).WherePK().Returning("*").Select()
+				Expect(addedTag.Type).To(Equal("genre"))
+				Expect(addedTag.Name).To(Equal("experimental"))
+
+				Expect(len(updatedUserGroup.Links)).To(Equal(1))
+				addedLink := models.Link{Id: updatedUserGroup.Links[0]}
+				err = db.Model(&addedLink).WherePK().Returning("*").Select()
+				Expect(addedLink.Platform).To(Equal("instagram"))
+				Expect(addedLink.Uri).To(Equal("https://instagram/bestartistever"))
+				err = db.Model(newLink).WherePK().Returning("*").Select()
+				Expect(err).To(HaveOccurred())
+
+				Expect(len(updatedUserGroup.RecommendedArtists)).To(Equal(1))
+				Expect(updatedUserGroup.RecommendedArtists[0]).To(Equal(newRecommendedArtist.Id))
+
 			})
 			It("should respond with not_found error if user_group does not exist", func() {
 				id := uuid.NewV4()
-				for id == newArtist.Id {
+				for id == newArtist.Id || id == newLabel.Id {
 					id = uuid.NewV4()
 				}
 				userGroup := &pb.UserGroup{
@@ -124,10 +166,10 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "new display name",
 					Description: "new description",
 					Avatar: newArtist.Avatar,
-					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
-					Type: "artist",
+					Address: &userpb.StreetAddress{Id: newAddress.Id.String(), Data: map[string]string{"some": "data"}},
+					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
+					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String()},
 					OwnerId: newArtist.OwnerId.String(),
-					// AdminUsers: internal.ConvertUuidToStrArray(newArtist.AdminUsers),
 				}
 				resp, err := service.UpdateUserGroup(context.Background(), userGroup)
 
@@ -146,10 +188,10 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "new display name",
 					Description: "new description",
 					Avatar: newArtist.Avatar,
-					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
-					Type: "artist",
+					Address: &userpb.StreetAddress{Id: newAddress.Id.String(), Data: map[string]string{"some": "data"}},
+					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
 					OwnerId: newArtist.OwnerId.String(),
-					// AdminUsers: internal.ConvertUuidToStrArray(newArtist.AdminUsers),
+					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String()},
 				}
 				resp, err := service.UpdateUserGroup(context.Background(), userGroup)
 
@@ -169,12 +211,11 @@ var _ = Describe("UserGroup server", func() {
 				avatar := make([]byte, 5)
 				tags := make([]*pb.Tag, 1)
 				tags[0] = &pb.Tag{Type: "genre", Name: "rock"}
-				// typeId := newArtistGroupTaxonomy.Id.String()
 				ownerId := newUser.Id.String()
 				userGroup := &pb.UserGroup{
 					DisplayName: "group2",
 					Avatar: avatar,
-					Type: "artist",
+					Type: &pb.GroupTaxonomy{Type: "artist"},
 					OwnerId: ownerId,
 					ShortBio: "short bio",
 					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
@@ -187,11 +228,15 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.DisplayName).To(Equal("group2"))
 				Expect(resp.ShortBio).To(Equal("short bio"))
 				Expect(resp.Avatar).To(Equal(avatar))
-				Expect(resp.Type).To(Equal("artist"))
+				Expect(resp.Type.Id).To(Equal(newArtistGroupTaxonomy.Id.String()))
+				Expect(resp.Type.Type).To(Equal("artist"))
 				Expect(resp.OwnerId).To(Equal(ownerId))
 				Expect(len(resp.Tags)).To(Equal(1))
-				Expect(resp.Address.Id).NotTo(BeNil())
-				Expect(resp.Privacy.Id).NotTo(BeNil())
+				Expect(resp.Tags[0].Id).NotTo(Equal(""))
+				Expect(resp.Tags[0].Type).To(Equal("genre"))
+				Expect(resp.Tags[0].Name).To(Equal("rock"))
+				Expect(resp.Address.Id).NotTo(Equal(""))
+				Expect(resp.Privacy.Id).NotTo(Equal(""))
 			})
 
 			It("should not create a user_group with same display_name", func() {
@@ -202,7 +247,7 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "group2",
 					Avatar: avatar,
 					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
-					Type: "artist",
+					Type: &pb.GroupTaxonomy{Type: "artist"},
 					OwnerId: ownerId,
 				}
 				resp, err := service.CreateUserGroup(context.Background(), userGroup)
@@ -225,7 +270,7 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "",
 					Avatar: avatar,
 					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
-					Type: "artist",
+					Type: &pb.GroupTaxonomy{Type: "artist"},
 					OwnerId: ownerId,
 				}
 				resp, err := service.CreateUserGroup(context.Background(), userGroup)
@@ -245,7 +290,7 @@ var _ = Describe("UserGroup server", func() {
 				userGroup := &pb.UserGroup{
 					DisplayName: "group3",
 					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
-					Type: "artist",
+					Type: &pb.GroupTaxonomy{Type: "artist"},
 					OwnerId: ownerId,
 				}
 				resp, err := service.CreateUserGroup(context.Background(), userGroup)
@@ -265,7 +310,7 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "group4",
 					Address: &userpb.StreetAddress{},
 					Avatar: avatar,
-					Type: "artist",
+					Type: &pb.GroupTaxonomy{Type: "artist"},
 					OwnerId: ownerId,
 				}
 				resp, err := service.CreateUserGroup(context.Background(), userGroup)
@@ -285,7 +330,7 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "group5",
 					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
 					Avatar: avatar,
-					Type: "",
+					Type: &pb.GroupTaxonomy{},
 					OwnerId: ownerId,
 				}
 				resp, err := service.CreateUserGroup(context.Background(), userGroup)
@@ -304,7 +349,7 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "group5",
 					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
 					Avatar: avatar,
-					Type: "artist",
+					Type: &pb.GroupTaxonomy{Type: "artist"},
 					OwnerId: "",
 				}
 				resp, err := service.CreateUserGroup(context.Background(), userGroup)

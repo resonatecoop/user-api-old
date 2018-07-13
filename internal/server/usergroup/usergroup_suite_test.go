@@ -20,11 +20,13 @@ var db *pg.DB
 var service *usergroupserver.Server
 var newUser *models.User
 var newArtist *models.UserGroup
+var newRecommendedArtist *models.UserGroup
 var newLabel *models.UserGroup
 var newArtistGroupTaxonomy *models.GroupTaxonomy
 var newLabelGroupTaxonomy *models.GroupTaxonomy
 var newLink *models.Link
 var newTag *models.Tag
+var newAddress *models.StreetAddress
 
 func TestUsergroup(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -60,7 +62,7 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newTag)
 		Expect(err).NotTo(HaveOccurred())
 
-		newAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}
+		newAddress = &models.StreetAddress{Data: map[string]string{"some": "data"}}
 		err = db.Insert(newAddress)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -72,7 +74,6 @@ var _ = BeforeSuite(func() {
 			OwnerId: newUser.Id,
 			TypeId: newLabelGroupTaxonomy.Id,
 			AddressId: newAddress.Id,
-			// AdminUsers: admins,
 		}
 		_, err = db.Model(newLabel).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
@@ -91,6 +92,22 @@ var _ = BeforeSuite(func() {
 			Tags: tags,
 		}
 		_, err = db.Model(newArtist).Returning("*").Insert()
+		Expect(err).NotTo(HaveOccurred())
+
+		newRecommendedArtist = &models.UserGroup{
+			DisplayName: "recommended by best artist ever",
+			Avatar: avatar,
+			OwnerId: newUser.Id,
+			TypeId: newArtistGroupTaxonomy.Id,
+			AddressId: newAddress.Id,
+		}
+		_, err = db.Model(newRecommendedArtist).Returning("*").Insert()
+		Expect(err).NotTo(HaveOccurred())
+
+		err = db.Model(newArtist).
+			Column("Privacy").
+			WherePK().
+			Select()
 		Expect(err).NotTo(HaveOccurred())
 })
 

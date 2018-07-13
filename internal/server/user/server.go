@@ -28,7 +28,6 @@ func NewServer(db *pg.DB) *Server {
 /* TODO add to response:
 - residence_address
 - member_of_groups
-- playlists => dedicated endpoint
 */
 func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	u, err := getUserModel(user)

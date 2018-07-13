@@ -162,18 +162,20 @@ infinite feed, needs pagination
 The user who creates a user group is by default the owner of this user group.
 Can be a user creating an artist or a label or a user profile.
 
-if type is "user", "members" and "subgroup" should be empty.
+if type is "user", "members" should be empty.
 
 If type is "artist", "members" (array of user object with ids, owners of selected user_groups of type "user") can be added to the request body to list members (musicians in a band for instance).
 
-If type is "label", "subgroups" (array of user_group object with ids) can be added to the request body to list artists that are part of this label
+If type is "label", cf. Add/Remove SubGroup to list artists that are part of this label and attach this label to artists.
 
 + type (string) - type of user group: user, artist, label or distributor
 
 + Request (application/json)
 
         {
-            "type": "artist",
+            "type": {
+              "type": "artist"
+            },
             "owner_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31",
             "display_name": "BestArtistEver",
             "short_bio": "I am the best artist ever",
@@ -206,7 +208,10 @@ If type is "label", "subgroups" (array of user_group object with ids) can be add
             {
                 "id": "b09cd642-9df8-4f44-bb5a-169829043110",
                 "owner_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31",
-                "type": "artist",
+                "type": {
+                  "id": "736f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                  "type": "artist"
+                },
                 "display_name": "BestArtistEver"
                 "short_bio": "I am the best artist ever",
                 "avatar": "blob",
@@ -218,6 +223,12 @@ If type is "label", "subgroups" (array of user_group object with ids) can be add
                 "address": {
                   "id": "427f3a00-1022-4cb6-beda-8f7eeef8bd31",
                   "data": {"some": "address"}
+                },
+                "privacy": {
+                  "id": "427f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                  "private": false,
+                  "owned_tracks": true,
+                  "supported_artists": true,
                 },
                 "tags": [
                   {"id": "426f3a00-1022-4cb6-beda-8f7eeef8bd31", "type": "genre", "name": "ambient"},
@@ -234,11 +245,40 @@ If type is "label", "subgroups" (array of user_group object with ids) can be add
 
 ### Update UserGroup [POST /twirp/resonate.api.user.UserGroupService/UpdateUserGroup]
 
+If the request body doesn't contain a certain user group attribute, it will be set to nil.
+
+To update address or privacy, update desired fields (data for address; private, owned_track and supported_artists for privacy). Type and owner_id are not updatable.
+
+To add or remove tags or links:
+- add {...obj} to the corresponding array in the request body with info (type, name for tags; platform, uri for links).
+- remove {"id": "idToRemove"} from the array.
+
+To add or remove recommended_artists:
+- add {"id": "idToadd"} to the corresponding array in the request body.
+- remove {"id": "idToRemove"} from the array.
+
+
 + Request (application/json)
 
         {
             "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "description": "I am the best artist ever"
+            "description": "I am the very best artist ever",
+            "avatar": "blob",
+            "owner_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31",
+            "privacy": {
+                "id": "427f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "private": false,
+                "owned_tracks": true,
+                "supported_artists": true,
+            },
+            "address": {
+                "id": "437f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "data": {"some": "new address"}
+            },
+            "type": {
+                "id": "736f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "type": "artist"
+            }
         }
 
 + Response 204 (application/json)
@@ -299,7 +339,7 @@ scope private/public.
             "avatar": "blob",
             "banner": "blob",
             "members": [],
-            "subgroups": [],
+            "sub_groups": [],
             "labels": [
                 {
                     "id": "d38bcdb7-9a05-4077-a6c7-6aec285b865e",

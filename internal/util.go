@@ -24,7 +24,11 @@ func CheckError(err error, table string) (twirp.Error) {
 		}
     twerr, ok := err.(twirp.Error)
     if ok && twerr.Meta("argument") == "id" {
-      return twerr
+      argument := "id"
+      if table != "" {
+        argument = table + " id"
+      }
+      return twirp.InvalidArgumentError(argument, "must be a valid uuid")
     }
 		pgerr, ok := err.(pg.Error)
 		if ok {
@@ -50,4 +54,18 @@ func GetUuidFromString(id string) (uuid.UUID, twirp.Error) {
 		return uuid.UUID{}, twirp.InvalidArgumentError("id", "must be a valid uuid")
 	}
 	return uid, nil
+}
+
+func Difference(a, b []uuid.UUID) []uuid.UUID {
+    mb := map[uuid.UUID]bool{}
+    for _, x := range b {
+        mb[x] = true
+    }
+    ab := []uuid.UUID{}
+    for _, x := range a {
+        if _, ok := mb[x]; !ok {
+            ab = append(ab, x)
+        }
+    }
+    return ab
 }
