@@ -283,11 +283,14 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		u.Links = linkIds
 		u.RecommendedArtists = recommendedArtistIds
 		u.UpdatedAt = time.Now()
-		// _, pgerr := db.Model(u).Where("id = ?", u.Id).Returning("*").Update()
 		_, pgerr = db.Model(u).WherePK().Returning("*").Update()
-
 		if pgerr != nil {
 			return internal.CheckError(pgerr, "user_group")
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			return internal.CheckError(err, "user_group")
 		}
 		return nil
 	}
@@ -407,10 +410,80 @@ func (s *Server) GetUserGroupTypes(ctx context.Context, empty *userpb.Empty) (*p
 	}
 
 	for _, groupType := range(types) {
-		groupTaxonomies.Types = append(groupTaxonomies.Types, &pb.GroupTaxonomy{Id: groupType.Id.String(), Type: groupType.Type, Name: groupType.Name})
+		groupTaxonomies.Types = append(groupTaxonomies.Types, &pb.GroupTaxonomy{
+			Id: groupType.Id.String(),
+			Type: groupType.Type,
+			Name: groupType.Name,
+		})
 	}
 
   return &groupTaxonomies, nil
+}
+
+func (s *Server) AddSubGroups(ctx context.Context, userGroupToUserGroups *pb.UserGroupToUserGroups) (*userpb.Empty, error) {
+	addSubGroups := func(db *pg.DB, userGroupId uuid.UUID, subGroupIds []uuid.UUID) (error, string) {
+		var table string
+		tx, err := db.Begin()
+		if err != nil {
+			return err, table
+		}
+		defer tx.Rollback()
+
+		// Add subGroupIds to userGroup SubGroups
+		_, pgerr := tx.ExecOne(`
+			UPDATE user_groups
+			SET sub_groups = (select array_agg(distinct e) from unnest(sub_groups || ?) e)
+			WHERE id = ?
+		`, pg.Array(subGroupIds), userGroupId)
+		if pgerr != nil {
+			table = "user_group"
+			return pgerr, table
+		}
+
+		// Add userGroupId to subGroups labels if userGroup is of type label
+		userGroup := models.UserGroup{Id: userGroupId}
+		pgerr = s.db.Model(&userGroup).
+			Column("Type").
+			WherePK().
+			Select()
+		if pgerr != nil {
+			table = "user_group"
+			return pgerr, table
+		}
+		if userGroup.Type.Type == "label" {
+			userGroupIdArr := []uuid.UUID{userGroupId}
+			_, pgerr := tx.ExecOne(`
+				UPDATE user_groups
+				SET labels = (select array_agg(distinct e) from unnest(labels || ?) e)
+				WHERE id IN (?)
+			`, pg.Array(userGroupIdArr), pg.In(subGroupIds))
+			if pgerr != nil {
+				table = "user_group"
+				return pgerr, table
+			}
+		}
+
+		return tx.Commit(), table
+	}
+
+	userGroupId, err := internal.GetUuidFromString(userGroupToUserGroups.UserGroupId)
+	if err != nil {
+		return nil, err
+	}
+
+	subGroupIds := make([]uuid.UUID, len(userGroupToUserGroups.UserGroups))
+	for i, subgroup := range(userGroupToUserGroups.UserGroups) {
+		subGroupId, err := internal.GetUuidFromString(subgroup.Id)
+		if err != nil {
+			return nil, err
+		}
+		subGroupIds[i] = subGroupId
+	}
+
+	if pgerr, table := addSubGroups(s.db, userGroupId, subGroupIds); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
+	return &userpb.Empty{}, nil
 }
 
 

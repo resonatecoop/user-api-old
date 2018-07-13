@@ -22,6 +22,7 @@ var newUser *models.User
 var newArtist *models.UserGroup
 var newRecommendedArtist *models.UserGroup
 var newLabel *models.UserGroup
+var newDistributor *models.UserGroup
 var newArtistGroupTaxonomy *models.GroupTaxonomy
 var newLabelGroupTaxonomy *models.GroupTaxonomy
 var newLink *models.Link
@@ -112,6 +113,16 @@ var _ = BeforeSuite(func() {
 			Column("Privacy").
 			WherePK().
 			Select()
+		Expect(err).NotTo(HaveOccurred())
+
+		newDistributor = &models.UserGroup{
+			DisplayName: "distributor",
+			Avatar: avatar,
+			OwnerId: newUser.Id,
+			TypeId: newArtistGroupTaxonomy.Id,
+			AddressId: newAddress.Id,
+		}
+		_, err = db.Model(newDistributor).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
 })
 
