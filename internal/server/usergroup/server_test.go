@@ -343,6 +343,110 @@ var _ = Describe("UserGroup server", func() {
 		})
 	})
 
+	Describe("RemoveSubGroups", func() {
+		Context("with valid label userGroupId and subGroupIds", func() {
+			It("should remove subGroups from userGroup's SubGroups and userGroup from subGroups's Labels", func() {
+				userGroupToUserGroups := &pb.UserGroupToUserGroups{
+					UserGroupId: newLabel.Id.String(),
+					UserGroups: []*pb.UserGroup{
+						&pb.UserGroup{Id: newArtist.Id.String()},
+					},
+				}
+				_, err := service.RemoveSubGroups(context.Background(), userGroupToUserGroups)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				label := models.UserGroup{Id: newLabel.Id}
+				err = db.Model(&label).
+					Column("user_group.sub_groups").
+					WherePK().
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(label.SubGroups)).To(Equal(0))
+
+				artist := models.UserGroup{Id: newArtist.Id}
+				err = db.Model(&artist).
+					Column("user_group.labels").
+					WherePK().
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(artist.Labels)).To(Equal(0))
+			})
+		})
+		Context("with invalid userGroupId or subGroupIds", func() {
+			It("should respond with invalid argument error if userGroupId not valid", func() {
+				userGroupToUserGroups := &pb.UserGroupToUserGroups{
+					UserGroupId: "",
+					UserGroups: []*pb.UserGroup{
+						&pb.UserGroup{Id: newLabel.Id.String()},
+					},
+				}
+				resp, err := service.RemoveSubGroups(context.Background(), userGroupToUserGroups)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+			It("should respond with invalid argument error if one of subGroupIds not valid", func() {
+				userGroupToUserGroups := &pb.UserGroupToUserGroups{
+					UserGroupId: newLabel.Id.String(),
+					UserGroups: []*pb.UserGroup{
+						&pb.UserGroup{Id: ""},
+					},
+				}
+				resp, err := service.RemoveSubGroups(context.Background(), userGroupToUserGroups)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+			It("should respond with not found error if userGroup does not exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id) {
+					id = uuid.NewV4()
+				}
+				userGroupToUserGroups := &pb.UserGroupToUserGroups{
+					UserGroupId: id.String(),
+					UserGroups: []*pb.UserGroup{
+						&pb.UserGroup{Id: newLabel.Id.String()},
+					},
+				}
+				resp, err := service.RemoveSubGroups(context.Background(), userGroupToUserGroups)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should respond with not found error if one of subGroup does not exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id) {
+					id = uuid.NewV4()
+				}
+				userGroupToUserGroups := &pb.UserGroupToUserGroups{
+					UserGroupId: newLabel.Id.String(),
+					UserGroups: []*pb.UserGroup{
+						&pb.UserGroup{Id: id.String()},
+					},
+				}
+				resp, err := service.RemoveSubGroups(context.Background(), userGroupToUserGroups)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+	})
+
 	Describe("DeleteUserGroup", func() {
 		Context("with valid uuid", func() {
 			It("should delete user_group if it exists", func() {

@@ -378,7 +378,41 @@ Return all existing group taxonomies.
             ]
         }
 
-### Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
+### Add SubGroups [POST /twirp/resonate.api.user.UserGroupService/AddSubGroups]
+
+For labels to add artists as subgroups.
+For distributors to add labels as subgroups.
+
++ Request (application/json)
+
+        {
+            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_groups": [
+                {"id": "b19cd642-9df8-4f44-bb5a-169829043110"},
+                {"id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"}
+            ]
+        }
+
++ Response 204 (application/json)
+
+### Remove SubGroups [POST /twirp/resonate.api.user.UserGroupService/RemoveSubGroups]
+
+For labels to remove artists as subgroups.
+For distributors to remove labels as subgroups.
+
++ Request (application/json)
+
+        {
+            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_groups": [
+                {"id": "b19cd642-9df8-4f44-bb5a-169829043110"},
+                {"id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"}
+            ]
+        }
+
++ Response 204 (application/json)
+
+### TODO Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
 
 For an artist user group to add user members.
 

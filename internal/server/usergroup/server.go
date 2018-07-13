@@ -471,23 +471,96 @@ func (s *Server) AddSubGroups(ctx context.Context, userGroupToUserGroups *pb.Use
 		return nil, err
 	}
 
-	subGroupIds := make([]uuid.UUID, len(userGroupToUserGroups.UserGroups))
-	for i, subgroup := range(userGroupToUserGroups.UserGroups) {
-		subGroupId, err := internal.GetUuidFromString(subgroup.Id)
+	subGroupIds, err := getSubGroupIds(userGroupToUserGroups.UserGroups)
 		if err != nil {
 			return nil, err
 		}
-		subGroupIds[i] = subGroupId
-	}
 
 	if pgerr, table := addSubGroups(s.db, userGroupId, subGroupIds); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
 	return &userpb.Empty{}, nil
 }
+func (s *Server) RemoveSubGroups(ctx context.Context, userGroupToUserGroups *pb.UserGroupToUserGroups) (*userpb.Empty, error) {
+	removeSubGroups := func(db *pg.DB, userGroupId uuid.UUID, subGroupIds []uuid.UUID) (error, string) {
+		var table string
+		tx, err := db.Begin()
+		if err != nil {
+			return err, table
+		}
+		defer tx.Rollback()
+		// Remove subGroupIds from userGroup SubGroups
+		_, pgerr := tx.ExecOne(`
+			UPDATE user_groups
+			SET sub_groups = (
+				select array_agg(e)
+				from unnest(sub_groups) e
+				where e != all(?)
+			)
+			WHERE id = ?
+		`, pg.Array(subGroupIds), userGroupId)
+		if pgerr != nil {
+			table = "user_group"
+			return pgerr, table
+		}
 
+		// Remove userGroupId from subGroups labels if userGroup is of type label
+		userGroup := models.UserGroup{Id: userGroupId}
+		pgerr = s.db.Model(&userGroup).
+			Column("Type").
+			WherePK().
+			Select()
+		if pgerr != nil {
+			table = "user_group"
+			return pgerr, table
+		}
+		if userGroup.Type.Type == "label" {
+			userGroupIdArr := []uuid.UUID{userGroupId}
+			_, pgerr := tx.ExecOne(`
+				UPDATE user_groups
+				SET labels = (
+					select array_agg(e)
+					from unnest(labels) e
+					where e != all(?)
+				)
+				WHERE id IN (?)
+			`, pg.Array(userGroupIdArr), pg.In(subGroupIds))
+			if pgerr != nil {
+				table = "user_group"
+				return pgerr, table
+			}
+		}
 
+		return tx.Commit(), table
+	}
 
+	userGroupId, err := internal.GetUuidFromString(userGroupToUserGroups.UserGroupId)
+	if err != nil {
+		return nil, err
+	}
+
+	subGroupIds, err := getSubGroupIds(userGroupToUserGroups.UserGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	if pgerr, table := removeSubGroups(s.db, userGroupId, subGroupIds); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
+	return &userpb.Empty{}, nil
+}
+
+func getSubGroupIds(subGroups []*pb.UserGroup) ([]uuid.UUID, twirp.Error) {
+	subGroupIds := make([]uuid.UUID, len(subGroups))
+	for i, subgroup := range(subGroups) {
+		subGroupId, err := internal.GetUuidFromString(subgroup.Id)
+		if err != nil {
+			return nil, err
+		}
+		subGroupIds[i] = subGroupId
+	}
+	return subGroupIds, nil
+}
 
 func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)
