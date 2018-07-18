@@ -1,7 +1,7 @@
 package usergroupserver
 
 import (
-	"fmt"
+	// "fmt"
 	// "reflect"
 	"time"
 	"context"
@@ -596,8 +596,6 @@ func getUserGroupMembers(userGroupId uuid.UUID, userGroups []models.UserGroup, m
 		}
 		userGroupsResponse[i] = u
 	}
-	fmt.Println("members", members)
-	fmt.Println("userGroupsResponse", userGroupsResponse)
 	return userGroupsResponse, nil, ""
 }
 
