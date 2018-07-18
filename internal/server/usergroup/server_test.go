@@ -37,10 +37,6 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.OwnerId).To(Equal(newArtist.OwnerId.String()))
 				Expect(resp.Type.Id).To(Equal(newArtistGroupTaxonomy.Id.String()))
 				Expect(resp.Type.Type).To(Equal("artist"))
-				Expect(len(resp.Labels)).To(Equal(1))
-				Expect(resp.Labels[0].Id).To(Equal(newLabel.Id.String()))
-				Expect(resp.Labels[0].DisplayName).To(Equal(newLabel.DisplayName))
-				Expect(resp.Labels[0].Avatar).To(Equal(newLabel.Avatar))
 				Expect(len(resp.Tags)).To(Equal(1))
 				Expect(resp.Tags[0].Id).To(Equal(newTag.Id.String()))
 				Expect(resp.Tags[0].Type).To(Equal(newTag.Type))
@@ -207,11 +203,11 @@ var _ = Describe("UserGroup server", func() {
 
 	Describe("AddMembers", func() {
 		Context("with valid UserGroupId and Members ids", func() {
-			It("should add new member with given display_name", func() {
+			It("should add new members with given display_name", func() {
 				userGroupMembers := &pb.UserGroupMembers{
 					UserGroupId: newRecommendedArtist.Id.String(),
-					Members: []*pb.UserGroupMember{
-						&pb.UserGroupMember{
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
 							Id: newUserProfile.Id.String(),
 							DisplayName: "John Doe",
 							Tags: []*pb.Tag{
@@ -259,11 +255,11 @@ var _ = Describe("UserGroup server", func() {
 				Expect(userGroupMember.DisplayName).To(Equal("John Doe"))
 				Expect(len(userGroupMember.Tags)).To(Equal(2))
 			})
-			It("should add new member with default display_name", func() {
+			It("should add new members with default display_name", func() {
 				userGroupMembers := &pb.UserGroupMembers{
 					UserGroupId: newArtist.Id.String(),
-					Members: []*pb.UserGroupMember{
-						&pb.UserGroupMember{
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
 							Id: newUserProfile.Id.String(),
 						},
 					},
@@ -296,8 +292,8 @@ var _ = Describe("UserGroup server", func() {
 			It("should respond with invalid argument error if one of Members id not valid", func() {
 				userGroupMembers := &pb.UserGroupMembers{
 					UserGroupId: newArtist.Id.String(),
-					Members: []*pb.UserGroupMember{
-						&pb.UserGroupMember{
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
 							Id: "1",
 						},
 					},
@@ -314,8 +310,8 @@ var _ = Describe("UserGroup server", func() {
 			It("should respond with invalid argument error if UserGroupId not valid", func() {
 				userGroupMembers := &pb.UserGroupMembers{
 					UserGroupId: "1",
-					Members: []*pb.UserGroupMember{
-						&pb.UserGroupMember{
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
 							Id: newUserProfile.Id.String(),
 						},
 					},
@@ -336,8 +332,8 @@ var _ = Describe("UserGroup server", func() {
 				}
 				userGroupMembers := &pb.UserGroupMembers{
 					UserGroupId: newArtist.Id.String(),
-					Members: []*pb.UserGroupMember{
-						&pb.UserGroupMember{
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
 							Id: id.String(),
 						},
 					},
@@ -358,14 +354,149 @@ var _ = Describe("UserGroup server", func() {
 				}
 				userGroupMembers := &pb.UserGroupMembers{
 					UserGroupId: id.String(),
-					Members: []*pb.UserGroupMember{
-						&pb.UserGroupMember{
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
 							Id: newUserProfile.Id.String(),
 						},
 					},
 				}
 
 				resp, err := service.AddMembers(context.Background(), userGroupMembers)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+	})
+
+	Describe("DeleteMembers", func() {
+		Context("with valid UserGroupId and Members ids", func() {
+			It("should delete members", func() {
+				userGroupMembers := &pb.UserGroupMembers{
+					UserGroupId: newRecommendedArtist.Id.String(),
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
+							Id: newUserProfile.Id.String(),
+							DisplayName: "John Doe",
+							Tags: []*pb.Tag{
+								&pb.Tag{
+									Type: "role",
+									Name: "keyboard",
+								},
+								&pb.Tag{
+									Type: "role",
+									Name: "singer",
+								},
+							},
+						},
+					},
+				}
+
+				_, err := service.DeleteMembers(context.Background(), userGroupMembers)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				artist := models.UserGroup{Id: newRecommendedArtist.Id}
+				err = db.Model(&artist).
+					Column("Members").
+					WherePK().
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(artist.Members)).To(Equal(0))
+
+				userProfile := models.UserGroup{Id: newUserProfile.Id}
+				err = db.Model(&userProfile).
+					Column("MemberOfGroups").
+					WherePK().
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(userProfile.MemberOfGroups)).To(Equal(1))
+
+				userGroupMember := models.UserGroupMember{UserGroupId: newRecommendedArtist.Id, MemberId: newUserProfile.Id}
+				err = db.Model(&userGroupMember).
+					Where("user_group_id = ?user_group_id").
+					Where("member_id = ?member_id").
+					Select()
+				Expect(err).To(HaveOccurred())
+			})
+		})
+		Context("with invalid UserGroupId or Members ids", func() {
+			It("should respond with invalid argument error if one of Members id not valid", func() {
+				userGroupMembers := &pb.UserGroupMembers{
+					UserGroupId: newArtist.Id.String(),
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
+							Id: "1",
+						},
+					},
+				}
+				resp, err := service.DeleteMembers(context.Background(), userGroupMembers)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("member id"))
+			})
+			It("should respond with invalid argument error if UserGroupId not valid", func() {
+				userGroupMembers := &pb.UserGroupMembers{
+					UserGroupId: "1",
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
+							Id: newUserProfile.Id.String(),
+						},
+					},
+				}
+				resp, err := service.DeleteMembers(context.Background(), userGroupMembers)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("user_group id"))
+			})
+			It("should respond with not found error if one of Members does not exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id || id == newUserProfile.Id) {
+					id = uuid.NewV4()
+				}
+				userGroupMembers := &pb.UserGroupMembers{
+					UserGroupId: newArtist.Id.String(),
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
+							Id: id.String(),
+						},
+					},
+				}
+
+				resp, err := service.DeleteMembers(context.Background(), userGroupMembers)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should respond with not found error if UserGroup does not exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id || id == newUserProfile.Id) {
+					id = uuid.NewV4()
+				}
+				userGroupMembers := &pb.UserGroupMembers{
+					UserGroupId: id.String(),
+					Members: []*pb.UserGroup{
+						&pb.UserGroup{
+							Id: newUserProfile.Id.String(),
+						},
+					},
+				}
+
+				resp, err := service.DeleteMembers(context.Background(), userGroupMembers)
 
 				Expect(resp).To(BeNil())
 				Expect(err).To(HaveOccurred())

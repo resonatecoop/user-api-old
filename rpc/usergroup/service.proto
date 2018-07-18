@@ -17,7 +17,7 @@ service UserGroupService {
   // rpc AddSubGroups(UserGroupToUserGroups) returns (Empty); // Update?
   // rpc RemoveSubGroups(UserGroupToUserGroups) returns (Empty);
   rpc AddMembers(UserGroupMembers) returns (Empty);
-  rpc RemoveMembers(UserGroupMembers) returns (Empty);
+  rpc DeleteMembers(UserGroupMembers) returns (Empty);
 }
 
 message UserGroup {
@@ -30,40 +30,27 @@ message UserGroup {
   string owner_id = 7; // required
   GroupTaxonomy type = 8; // required
   repeated User followers = 9;
-  repeated User members = 10;
-  repeated UserGroup sub_groups = 11;
+  repeated UserGroup members = 10;
+  repeated UserGroup memberOfGroups = 11;
   repeated Link links = 12;
   repeated Tag tags = 13;
   StreetAddress address = 14;
   Privacy privacy = 16;
 
   repeated UserGroup recommended_artists = 17;
-  repeated UserGroup labels = 18;
 
-  repeated string highlighted_tracks = 19; // TODO change type once track rpc implemented
-  string featured_track_group = 20;  // TODO change type once trackgroup rpc implemented
+  repeated string highlighted_tracks = 18; // TODO change type once track rpc implemented
+  string featured_track_group = 19;  // TODO change type once trackgroup rpc implemented
 
-  string group_email_address = 21;
+  string group_email_address = 20;
   // tracks
   // track_groups
   // labels
 }
 
-message UserGroupToUserGroups {
-  string user_group_id = 1;
-  repeated UserGroup user_groups = 2;
-}
-
-message UserGroupMember {
-  string id = 1;
-  string display_name = 2;
-  bytes avatar = 3;
-  repeated Tag tags = 4;
-}
-
 message UserGroupMembers {
   string user_group_id = 1;
-  repeated UserGroupMember members = 2;
+  repeated UserGroup members = 2;
 }
 
 message GroupTaxonomy {

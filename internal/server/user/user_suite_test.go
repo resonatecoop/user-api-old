@@ -23,7 +23,7 @@ var newUserGroup *models.UserGroup
 
 func TestUser(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Userserver Suite")
+	RunSpecs(t, "User server Suite")
 }
 
 var _ = BeforeSuite(func() {

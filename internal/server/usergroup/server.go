@@ -76,7 +76,6 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 			Tags: tagIds,
 			Links: linkIds,
 			RecommendedArtists: recommendedArtistIds,
-			// SubGroups: subGroupIds,
 			// Members
 		}
 		_, pgerr = s.db.Model(newUserGroup).Returning("*").Insert()
@@ -132,7 +131,6 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		Links: userGroup.Links,
 		Tags: userGroup.Tags,
 		RecommendedArtists: userGroup.RecommendedArtists,
-		SubGroups: userGroup.SubGroups,
 		Privacy: userGroup.Privacy,
 	}, nil
 }
@@ -189,14 +187,6 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	if twerr != nil {
 		return nil, twerr
 	}
-	sub_groups, twerr := getRelatedUserGroups(u.SubGroups, s.db)
-	if twerr != nil {
-		return nil, twerr
-	}
-	labels, twerr := getRelatedUserGroups(u.Labels, s.db)
-	if twerr != nil {
-		return nil, twerr
-	}
 
 	address := &userpb.StreetAddress{Id: u.Address.Id.String(), Data: u.Address.Data}
 	privacy := &pb.Privacy{Id: u.Privacy.Id.String(), Private: u.Privacy.Private, SupportedArtists: u.Privacy.SupportedArtists, OwnedTracks: u.Privacy.OwnedTracks}
@@ -217,12 +207,11 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		Links: links,
 		Tags: tags,
 		RecommendedArtists: recommendedArtists,
-		SubGroups: sub_groups,
-		Labels: labels,
+		// Members
+		// MemberOfGroups
 
 		// Tracks
 		// TrackGroups
-		// Members
 	}, nil
 }
 
@@ -459,14 +448,9 @@ func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupM
 			}
 
 			// create tags
-			tagIds := make([]uuid.UUID, len(member.Tags))
-			for i, tag := range(member.Tags) {
-				t := &models.Tag{Type: tag.Type, Name: tag.Name}
-				_, pgerr := s.db.Model(t).Insert()
-				if pgerr != nil {
-					return pgerr, "tag"
-				}
-				tagIds[i] = t.Id
+			tagIds, pgerr := getTagIds(member, s.db)
+			if pgerr != nil {
+				return pgerr, "tag"
 			}
 			userGroupMember.Tags = tagIds
 
@@ -485,20 +469,49 @@ func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupM
 	return &userpb.Empty{}, nil
 }
 
-func (s *Server) RemoveMembers(ctx context.Context, userGroupMembers *pb.UserGroupMembers) (*userpb.Empty, error) {
-	return &userpb.Empty{}, nil
-}
-
-func getSubGroupIds(subGroups []*pb.UserGroup) ([]uuid.UUID, twirp.Error) {
-	subGroupIds := make([]uuid.UUID, len(subGroups))
-	for i, subgroup := range(subGroups) {
-		subGroupId, err := internal.GetUuidFromString(subgroup.Id)
+func (s *Server) DeleteMembers(ctx context.Context, userGroupMembers *pb.UserGroupMembers) (*userpb.Empty, error) {
+	deleteMembers := func() (error, string) {
+		var table string
+		tx, err := s.db.Begin()
 		if err != nil {
-			return nil, err
+			return err, table
 		}
-		subGroupIds[i] = subGroupId
+		defer tx.Rollback()
+
+		userGroupId, err := internal.GetUuidFromString(userGroupMembers.UserGroupId)
+		if err != nil {
+			return err, "user_group"
+		}
+
+		for _, member := range(userGroupMembers.Members) {
+			// verify uuid
+			memberId, err := internal.GetUuidFromString(member.Id)
+			if err != nil {
+				return err, "member"
+			}
+
+			// delete UserGroup/Member relation
+			// we don't delete tags because they could be used for other members
+			// avoiding having multiple tags that represent the same thing
+			userGroupMember := &models.UserGroupMember{UserGroupId: userGroupId, MemberId: memberId}
+			res, pgerr := s.db.Model(userGroupMember).
+				Where("user_group_id = ?user_group_id").
+				Where("member_id = ?member_id").
+				Delete()
+			if res.RowsAffected() == 0 {
+				return pg.ErrNoRows, "user_group"
+			}
+			if pgerr != nil {
+				return pgerr, "user_group_member"
+			}
+		}
+
+		return tx.Commit(), table
 	}
-	return subGroupIds, nil
+	if err, table := deleteMembers(); err != nil {
+		return nil, internal.CheckError(err, table)
+	}
+	return &userpb.Empty{}, nil
 }
 
 func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error) {

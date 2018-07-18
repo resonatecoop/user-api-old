@@ -40,7 +40,7 @@ func CheckError(err error, table string) (twirp.Error) {
 				return twirp.NewError("already_exists", message)
       } else if code == "23503" { // foreign_key_violation
         message = pgerr.Field('M')
-        return twirp.NewError("not_found", message)
+        return twirp.NotFoundError(message)
 			} else {
 				message = pgerr.Field('M')
 				return twirp.NewError("unknown", message)

@@ -32,7 +32,7 @@ var newAddress *models.StreetAddress
 
 func TestUsergroup(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Usergroup Suite")
+	RunSpecs(t, "Usergroup server Suite")
 }
 
 var _ = BeforeSuite(func() {
