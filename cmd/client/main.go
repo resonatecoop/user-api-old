@@ -27,24 +27,29 @@ package main
 import (
   "user-api/internal/database"
   "user-api/internal/database/models"
-  pb "user-api/rpc/usergroup"
+  // pb "user-api/rpc/usergroup"
   "github.com/satori/go.uuid"
-  // "github.com/go-pg/pg"
+  "github.com/go-pg/pg"
   // "github.com/twitchtv/twirp"
 
-  // "time"
-  // "fmt"
+  "time"
+  "log"
+  "fmt"
   // "reflect"
 )
 
 func main() {
   testing := true
   db := database.Connect(testing)
+  db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
+    query, err := event.FormattedQuery()
+    if err != nil {
+      panic(err)
+    }
 
-  privacyId, _ := uuid.FromString("b5d58ac6-dbed-413a-9ca5-6c683ec52063")
-  p := &pb.Privacy{Private: false}
-  privacy := &models.UserGroupPrivacy{Id: privacyId, Private: true, OwnedTracks: p.OwnedTracks, SupportedArtists: p.SupportedArtists}
-  _, _ = db.Model(privacy).WherePK().Returning("*").UpdateNotNull()
+    log.Printf("%s %s", time.Since(event.StartTime), query)
+  })
+
   // newArtistGroupTaxonomy := &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
   // _ = db.Insert(newArtistGroupTaxonomy)
   //
@@ -58,7 +63,7 @@ func main() {
   // _ = db.Insert(newLink)
   //
   // // Create tag
-  // newTag := &models.Tag{Type: "genre", Name: "rock"}
+  // newTag := &models.Tag{Type: "user_role", Name: "guitarist"}
   // _ = db.Insert(newTag)
   //
   // newAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}
@@ -78,13 +83,8 @@ func main() {
   //   OwnerId: newUser.Id,
   //   TypeId: newArtistGroupTaxonomy.Id,
   //   AddressId: newAddress.Id,
-  //   Links: links,
-  //   Tags: tags,
+    // Links: links,
+    // Tags: tags,
   // }
   // _, _ = db.Model(artist).Returning("*").Insert()
-  //
-  // db.Model(artist).
-	// 	Column("user_group.*", "Privacy", "Type", "Address").
-	// 	WherePK().
-	// 	Select()
 }

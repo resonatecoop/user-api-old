@@ -26,7 +26,6 @@ func NewServer(db *pg.DB) *Server {
 }
 
 /* TODO add to response:
-- residence_address
 - member_of_groups
 */
 func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
@@ -53,7 +52,6 @@ func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 		FirstName: u.FirstName,
 		LastName: u.LastName,
 		Member: u.Member,
-		Avatar: u.Avatar,
 		NewsletterNotification: u.NewsletterNotification,
 		FavoriteTracks: internal.ConvertUuidToStrArray(u.FavoriteTracks),
 		FollowedGroups: internal.ConvertUuidToStrArray(u.FollowedGroups),
@@ -89,7 +87,6 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	}, nil
 }
 
-// TODO update address
 func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, error) {
 	err := checkRequiredAttributes(user)
 
@@ -391,7 +388,6 @@ func getUserModel(user *pb.User) (*models.User, twirp.Error) {
 		FirstName: user.FirstName,
 		LastName: user.LastName,
 		Member: user.Member,
-		Avatar: user.Avatar,
 		NewsletterNotification: user.NewsletterNotification,
 	}, nil
 }

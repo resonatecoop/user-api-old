@@ -2,7 +2,6 @@ package usergroupserver_test
 
 import (
 	"testing"
-	// "time"
 	// "fmt"
 
 	// pb "user-api/rpc/user"
@@ -20,9 +19,11 @@ var db *pg.DB
 var service *usergroupserver.Server
 var newUser *models.User
 var newArtist *models.UserGroup
+var newUserProfile *models.UserGroup
 var newRecommendedArtist *models.UserGroup
 var newLabel *models.UserGroup
 var newDistributor *models.UserGroup
+var newUserGroupTaxonomy *models.GroupTaxonomy
 var newArtistGroupTaxonomy *models.GroupTaxonomy
 var newLabelGroupTaxonomy *models.GroupTaxonomy
 var newLink *models.Link
@@ -45,6 +46,10 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// Create group taxonomies
+		newUserGroupTaxonomy = &models.GroupTaxonomy{Type: "user", Name: "User"}
+		err = db.Insert(newUserGroupTaxonomy)
+		Expect(err).NotTo(HaveOccurred())
+
 		newArtistGroupTaxonomy = &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
 		err = db.Insert(newArtistGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
@@ -81,6 +86,16 @@ var _ = BeforeSuite(func() {
 			AddressId: newAddress.Id,
 		}
 		_, err = db.Model(newLabel).Returning("*").Insert()
+		Expect(err).NotTo(HaveOccurred())
+
+		newUserProfile = &models.UserGroup{
+			DisplayName: "DJ JohnD",
+			Avatar: avatar,
+			OwnerId: newUser.Id,
+			TypeId: newUserGroupTaxonomy.Id,
+			AddressId: newAddress.Id,
+		}
+		_, err = db.Model(newUserProfile).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
 
 		labels := []uuid.UUID{newLabel.Id}
@@ -134,10 +149,17 @@ var _ = AfterSuite(func() {
 	_, err = db.Model(&users).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
+	// Delete all userGroupMembers
+	var userGroupMembers []models.UserGroupMember
+	err = db.Model(&userGroupMembers).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&userGroupMembers).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
 	// Delete all userGroups
 	var userGroups []models.UserGroup
 	err = db.Model(&userGroups).Select()
-	// Expect(err).NotTo(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&userGroups).Delete()
 	Expect(err).NotTo(HaveOccurred())
 

@@ -40,21 +40,17 @@ type UserGroup struct {
   Followers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   AdminUsers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
-  SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
-  // TODO need classic m2m junction table to store additional info
-  // associated to member, e.g. this member plays drums in this band
-  // Members
+  Members []UserGroup `pg:"many2many:user_group_members,fk:user_group_id,joinFK:member_id"`
+  MemberOfGroups []UserGroup `pg:"many2many:user_group_members,fk:member_id,joinFK:user_group_id"`
 
   Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   TrackGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
+  // TODO remove
+  SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // artist
   Labels []uuid.UUID `sql:",type:uuid[]" pg:",array"`
-  // Payees []*User
-
-  // distributor
-  // Distributees []*UserGroup
 }
 
 func (u *UserGroup) BeforeInsert(db orm.DB) error {

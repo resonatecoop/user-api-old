@@ -420,133 +420,72 @@ func (s *Server) GetUserGroupTypes(ctx context.Context, empty *userpb.Empty) (*p
   return &groupTaxonomies, nil
 }
 
-func (s *Server) AddSubGroups(ctx context.Context, userGroupToUserGroups *pb.UserGroupToUserGroups) (*userpb.Empty, error) {
-	addSubGroups := func(db *pg.DB, userGroupId uuid.UUID, subGroupIds []uuid.UUID) (error, string) {
+func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupMembers) (*userpb.Empty, error) {
+	addMembers := func() (error, string) {
 		var table string
-		tx, err := db.Begin()
+		tx, err := s.db.Begin()
 		if err != nil {
 			return err, table
 		}
 		defer tx.Rollback()
 
-		// Add subGroupIds to userGroup SubGroups
-		_, pgerr := tx.ExecOne(`
-			UPDATE user_groups
-			SET sub_groups = (select array_agg(distinct e) from unnest(sub_groups || ?) e)
-			WHERE id = ?
-		`, pg.Array(subGroupIds), userGroupId)
-		if pgerr != nil {
-			table = "user_group"
-			return pgerr, table
+		userGroupId, err := internal.GetUuidFromString(userGroupMembers.UserGroupId)
+		if err != nil {
+			return err, "user_group"
 		}
 
-		// Add userGroupId to subGroups labels if userGroup is of type label
-		userGroup := models.UserGroup{Id: userGroupId}
-		pgerr = s.db.Model(&userGroup).
-			Column("Type").
-			WherePK().
-			Select()
-		if pgerr != nil {
-			table = "user_group"
-			return pgerr, table
-		}
-		if userGroup.Type.Type == "label" {
-			userGroupIdArr := []uuid.UUID{userGroupId}
-			_, pgerr := tx.ExecOne(`
-				UPDATE user_groups
-				SET labels = (select array_agg(distinct e) from unnest(labels || ?) e)
-				WHERE id IN (?)
-			`, pg.Array(userGroupIdArr), pg.In(subGroupIds))
+		for _, member := range(userGroupMembers.Members) {
+			// verify uuid
+			memberId, err := internal.GetUuidFromString(member.Id)
+			if err != nil {
+				return err, "member"
+			}
+
+			// get user_group (should exist)
+			m := &models.UserGroup{Id: memberId}
+			pgerr := s.db.Model(m).WherePK().Select()
 			if pgerr != nil {
-				table = "user_group"
-				return pgerr, table
+				return pgerr, "user_group"
+			}
+
+			userGroupMember := &models.UserGroupMember{UserGroupId: userGroupId, MemberId: memberId}
+
+			// set display_name
+			// if not provided, default will be member user_group display_name
+			if member.DisplayName != "" {
+				userGroupMember.DisplayName = member.DisplayName
+			} else {
+				userGroupMember.DisplayName = m.DisplayName
+			}
+
+			// create tags
+			tagIds := make([]uuid.UUID, len(member.Tags))
+			for i, tag := range(member.Tags) {
+				t := &models.Tag{Type: tag.Type, Name: tag.Name}
+				_, pgerr := s.db.Model(t).Insert()
+				if pgerr != nil {
+					return pgerr, "tag"
+				}
+				tagIds[i] = t.Id
+			}
+			userGroupMember.Tags = tagIds
+
+			// create UserGroup/Member relation
+			_, pgerr = s.db.Model(userGroupMember).Insert()
+			if pgerr != nil {
+				return pgerr, "user_group_member"
 			}
 		}
 
 		return tx.Commit(), table
 	}
-
-	userGroupId, err := internal.GetUuidFromString(userGroupToUserGroups.UserGroupId)
-	if err != nil {
-		return nil, err
-	}
-
-	subGroupIds, err := getSubGroupIds(userGroupToUserGroups.UserGroups)
-		if err != nil {
-			return nil, err
-		}
-
-	if pgerr, table := addSubGroups(s.db, userGroupId, subGroupIds); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+	if err, table := addMembers(); err != nil {
+		return nil, internal.CheckError(err, table)
 	}
 	return &userpb.Empty{}, nil
 }
-func (s *Server) RemoveSubGroups(ctx context.Context, userGroupToUserGroups *pb.UserGroupToUserGroups) (*userpb.Empty, error) {
-	removeSubGroups := func(db *pg.DB, userGroupId uuid.UUID, subGroupIds []uuid.UUID) (error, string) {
-		var table string
-		tx, err := db.Begin()
-		if err != nil {
-			return err, table
-		}
-		defer tx.Rollback()
-		// Remove subGroupIds from userGroup SubGroups
-		_, pgerr := tx.ExecOne(`
-			UPDATE user_groups
-			SET sub_groups = (
-				select array_agg(e)
-				from unnest(sub_groups) e
-				where e != all(?)
-			)
-			WHERE id = ?
-		`, pg.Array(subGroupIds), userGroupId)
-		if pgerr != nil {
-			table = "user_group"
-			return pgerr, table
-		}
 
-		// Remove userGroupId from subGroups labels if userGroup is of type label
-		userGroup := models.UserGroup{Id: userGroupId}
-		pgerr = s.db.Model(&userGroup).
-			Column("Type").
-			WherePK().
-			Select()
-		if pgerr != nil {
-			table = "user_group"
-			return pgerr, table
-		}
-		if userGroup.Type.Type == "label" {
-			userGroupIdArr := []uuid.UUID{userGroupId}
-			_, pgerr := tx.ExecOne(`
-				UPDATE user_groups
-				SET labels = (
-					select array_agg(e)
-					from unnest(labels) e
-					where e != all(?)
-				)
-				WHERE id IN (?)
-			`, pg.Array(userGroupIdArr), pg.In(subGroupIds))
-			if pgerr != nil {
-				table = "user_group"
-				return pgerr, table
-			}
-		}
-
-		return tx.Commit(), table
-	}
-
-	userGroupId, err := internal.GetUuidFromString(userGroupToUserGroups.UserGroupId)
-	if err != nil {
-		return nil, err
-	}
-
-	subGroupIds, err := getSubGroupIds(userGroupToUserGroups.UserGroups)
-	if err != nil {
-		return nil, err
-	}
-
-	if pgerr, table := removeSubGroups(s.db, userGroupId, subGroupIds); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
-	}
+func (s *Server) RemoveMembers(ctx context.Context, userGroupMembers *pb.UserGroupMembers) (*userpb.Empty, error) {
 	return &userpb.Empty{}, nil
 }
 

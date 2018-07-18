@@ -11,22 +11,21 @@ type User struct {
   CreatedAt time.Time `sql:"default:now()"`
   UpdatedAt time.Time
   FullName string `sql:",notnull"`
-  DisplayName string `sql:",unique"`
   FirstName string
   LastName string
   Email string `sql:",unique,notnull"`
-  Username string `sql:",unique"`
   Member bool `sql:",notnull"`
-  Avatar []byte
   NewsletterNotification bool
-
-  ResidenceAddressId uuid.UUID  `sql:"type:uuid,notnull"`
-  ResidenceAddress *StreetAddress
 
   FavoriteTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   FollowedGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // Playlists
 
   OwnerOfGroups []UserGroup `pg:"fk:owner_id"`
-  // MemberOfGroups
+
+  // remove, unused fields
+  Username string `sql:",unique"`
+  DisplayName string `sql:",unique"`
+  ResidenceAddressId uuid.UUID  `sql:"type:uuid,notnull"`
+  ResidenceAddress *StreetAddress
 }

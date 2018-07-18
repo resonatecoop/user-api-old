@@ -125,8 +125,14 @@ Add following extensions: "hstore" and "uuid-ossp" (TODO: add them on initial mi
 $ go run *.go testing
 ```
 
-* Run tests from `./internal/server/user`
+* Run tests from `./internal/server/user` or `./internal/server/usergroup`
 
 ```sh
 $ go test
+```
+
+Or run all tests using ginkgo CLI from `./`
+
+```sh
+$ ginkgo -r
 ```

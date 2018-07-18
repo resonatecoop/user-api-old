@@ -27,7 +27,10 @@ TODO: add scope for restricted access (public/private user profile).
             "display_name": "JohnD",
             "first_name": "John",
             "last_name": "Doe",
-            "residence_address": {},
+            "residence_address": {
+              "id": "c09cd642-9df8-4f44-bb5a-169829043110",
+              "data": {"some": "data"}
+            },
             "email": "john@doe.com",
             "username": "jdoe",
             "member": false,
@@ -72,7 +75,8 @@ Used for signup.
 
 ### Update a User [POST /twirp/resonate.api.user.UserService/UpdateUser]
 
-In the example, we update first_name and last_name of previously created user.
+In the example, we update first_name and last_name of previously created user and add a street address.
+In the case of updating an existing street address, its id should be part of the street_address field.
 
 + Request (application/json)
 
@@ -83,7 +87,10 @@ In the example, we update first_name and last_name of previously created user.
             "full_name": "John Doe",
             "display_name": "JohnD",
             "email": "john@doe.com",
-            "username": "jdoe"
+            "username": "jdoe",
+            "street_address": {
+              "data": "some": "data"
+            }
         }
 
 + Response 204 (application/json)
@@ -121,7 +128,7 @@ In the example, we update first_name and last_name of previously created user.
 
 + Response 204 (application/json)
 
-### Follow Artist [POST /twirp/resonate.api.user.UserService/FollowArtist]
+### Follow User Group [POST /twirp/resonate.api.user.UserService/FollowGroup]
 
 + Request (application/json)
 
@@ -132,7 +139,7 @@ In the example, we update first_name and last_name of previously created user.
 
 + Response 204 (application/json)
 
-### Unfollow Artist [POST /twirp/resonate.api.user.UserService/UnfollowArtist]
+### Unfollow User Group [POST /twirp/resonate.api.user.UserService/UnfollowGroup]
 
 + Request (application/json)
 
@@ -378,10 +385,11 @@ Return all existing group taxonomies.
             ]
         }
 
-### Add SubGroups [POST /twirp/resonate.api.user.UserGroupService/AddSubGroups]
+### DEPRECATED Add SubGroups [POST /twirp/resonate.api.user.UserGroupService/AddSubGroups]
 
 For labels to add artists as subgroups.
 For distributors to add labels as subgroups.
+user_groups array contain user groups' ids to add.
 
 + Request (application/json)
 
@@ -395,10 +403,11 @@ For distributors to add labels as subgroups.
 
 + Response 204 (application/json)
 
-### Remove SubGroups [POST /twirp/resonate.api.user.UserGroupService/RemoveSubGroups]
+### DEPRECATED Remove SubGroups [POST /twirp/resonate.api.user.UserGroupService/RemoveSubGroups]
 
 For labels to remove artists as subgroups.
 For distributors to remove labels as subgroups.
+user_groups array contain user groups' ids to remove.
 
 + Request (application/json)
 
@@ -412,19 +421,70 @@ For distributors to remove labels as subgroups.
 
 + Response 204 (application/json)
 
-### TODO Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
+### Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
 
-For an artist user group to add user members.
+For artists to add user profiles (e.g. band members). You can define their roles within this artist using `tags` (with role as type) and set `display_name` (if not set it'll be the added user_group display_name).
+For labels to add artists.
+For distributors to add labels.
+
+members array contains user groups to add.
 
 + Request (application/json)
 
         {
-            "id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110",
             "members": [
-                "b09cd642-9df8-4f44-bb5a-169829043110",
-                "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
+                {
+                    "id": "c09cd642-9df8-4f44-bb5a-169829043110",
+                    "display_name": "John Doe",
+                    "tags": [
+                        {
+                          "type": "role",
+                          "name": "guitarist"
+                        },
+                        {
+                          "type": "role",
+                          "name": "singer"
+                        }
+                    ]
+                },
+                {
+                    "id": "c04cd642-9df8-4f44-bb5a-169829043110",
+                    "display_name": "Jane Doe",
+                    "tags": [
+                        {
+                          "type": "role",
+                          "name": "bassist"
+                        }
+                    ]
+                }
+
             ]
         }
+
++ Response 204 (application/json)
+
+### Remove Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
+
+For artists to remove user profiles (e.g. band members).
+For labels to remove artists.
+For distributors to remove labels.
+
+members array contains user groups to remove.
+
++ Request (application/json)
+
+      {
+          "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+          "members": [
+              {
+                "id": "b19cd642-9df8-4f44-bb5a-169829043110"
+              },
+              {
+                "id": "b89cd642-9df8-4f44-bb5a-169829043110"
+              }
+          ]
+      }
 
 + Response 204 (application/json)
 

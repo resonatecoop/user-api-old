@@ -38,6 +38,9 @@ func CheckError(err error, table string) (twirp.Error) {
 			if code == "23505" { // unique_violation
 				message = strings.TrimPrefix(strings.TrimSuffix(name, "_key"), fmt.Sprintf("%ss_", table))
 				return twirp.NewError("already_exists", message)
+      } else if code == "23503" { // foreign_key_violation
+        message = pgerr.Field('M')
+        return twirp.NewError("not_found", message)
 			} else {
 				message = pgerr.Field('M')
 				return twirp.NewError("unknown", message)
