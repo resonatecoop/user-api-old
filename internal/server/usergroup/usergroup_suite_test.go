@@ -23,11 +23,14 @@ var newUserProfile *models.UserGroup
 var newRecommendedArtist *models.UserGroup
 var newLabel *models.UserGroup
 var newDistributor *models.UserGroup
+var newArtistUserGroupMember *models.UserGroupMember
+var newLabelUserGroupMember *models.UserGroupMember
 var newUserGroupTaxonomy *models.GroupTaxonomy
 var newArtistGroupTaxonomy *models.GroupTaxonomy
 var newLabelGroupTaxonomy *models.GroupTaxonomy
 var newLink *models.Link
-var newTag *models.Tag
+var newGenreTag *models.Tag
+var newRoleTag *models.Tag
 var newAddress *models.StreetAddress
 
 func TestUsergroup(t *testing.T) {
@@ -67,9 +70,12 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newLink)
 		Expect(err).NotTo(HaveOccurred())
 
-		// Create tag
-		newTag = &models.Tag{Type: "genre", Name: "rock"}
-		err = db.Insert(newTag)
+		// Create tags
+		newGenreTag = &models.Tag{Type: "genre", Name: "rock"}
+		err = db.Insert(newGenreTag)
+		Expect(err).NotTo(HaveOccurred())
+		newRoleTag = &models.Tag{Type: "role", Name: "bassist"}
+		err = db.Insert(newRoleTag)
 		Expect(err).NotTo(HaveOccurred())
 
 		newAddress = &models.StreetAddress{Data: map[string]string{"some": "data"}}
@@ -98,20 +104,36 @@ var _ = BeforeSuite(func() {
 		_, err = db.Model(newUserProfile).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
 
-		labels := []uuid.UUID{newLabel.Id}
 		links := []uuid.UUID{newLink.Id}
-		tags := []uuid.UUID{newTag.Id}
+		genreTags := []uuid.UUID{newGenreTag.Id}
 		newArtist = &models.UserGroup{
 			DisplayName: "best artist ever",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
 			TypeId: newArtistGroupTaxonomy.Id,
 			AddressId: newAddress.Id,
-			Labels: labels,
 			Links: links,
-			Tags: tags,
+			Tags: genreTags,
 		}
 		_, err = db.Model(newArtist).Returning("*").Insert()
+		Expect(err).NotTo(HaveOccurred())
+
+		roleTags := []uuid.UUID{newRoleTag.Id}
+		newArtistUserGroupMember = &models.UserGroupMember{
+			UserGroupId: newArtist.Id,
+			MemberId: newUserProfile.Id,
+			DisplayName: "John Doe",
+			Tags: roleTags,
+		}
+		_, err = db.Model(newArtistUserGroupMember).Returning("*").Insert()
+		Expect(err).NotTo(HaveOccurred())
+
+		newLabelUserGroupMember = &models.UserGroupMember{
+			UserGroupId: newLabel.Id,
+			MemberId: newArtist.Id,
+			DisplayName: newArtist.DisplayName,
+		}
+		_, err = db.Model(newLabelUserGroupMember).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
 
 		newRecommendedArtist = &models.UserGroup{

@@ -34,18 +34,34 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.ShortBio).To(Equal(newArtist.ShortBio))
 				Expect(resp.Avatar).To(Equal(newArtist.Avatar))
 				Expect(resp.Banner).To(Equal(newArtist.Banner))
+				Expect(resp.GroupEmailAddress).To(Equal(newArtist.GroupEmailAddress))
 				Expect(resp.OwnerId).To(Equal(newArtist.OwnerId.String()))
 				Expect(resp.Type.Id).To(Equal(newArtistGroupTaxonomy.Id.String()))
 				Expect(resp.Type.Type).To(Equal("artist"))
+
 				Expect(len(resp.Tags)).To(Equal(1))
-				Expect(resp.Tags[0].Id).To(Equal(newTag.Id.String()))
-				Expect(resp.Tags[0].Type).To(Equal(newTag.Type))
-				Expect(resp.Tags[0].Name).To(Equal(newTag.Name))
+				Expect(resp.Tags[0].Id).To(Equal(newGenreTag.Id.String()))
+				Expect(resp.Tags[0].Type).To(Equal(newGenreTag.Type))
+				Expect(resp.Tags[0].Name).To(Equal(newGenreTag.Name))
+
 				Expect(len(resp.Links)).To(Equal(1))
 				Expect(resp.Links[0].Id).To(Equal(newLink.Id.String()))
 				Expect(resp.Links[0].Uri).To(Equal(newLink.Uri))
 				Expect(resp.Links[0].Platform).To(Equal(newLink.Platform))
-				Expect(resp.GroupEmailAddress).To(Equal(newArtist.GroupEmailAddress))
+
+				Expect(len(resp.Members)).To(Equal(1))
+				Expect(resp.Members[0].Id).To(Equal(newArtistUserGroupMember.Id.String()))
+				Expect(resp.Members[0].DisplayName).To(Equal(newArtistUserGroupMember.DisplayName))
+				Expect(resp.Members[0].Avatar).To(Equal(newArtist.Avatar))
+				Expect(len(resp.Members[0].Tags)).To(Equal(1))
+				Expect(resp.Members[0].Tags[0].Id).To(Equal(newRoleTag.Id.String()))
+				Expect(resp.Members[0].Tags[0].Type).To(Equal(newRoleTag.Type))
+				Expect(resp.Members[0].Tags[0].Name).To(Equal(newRoleTag.Name))
+
+				Expect(len(resp.MemberOfGroups)).To(Equal(1))
+				Expect(resp.MemberOfGroups[0].Id).To(Equal(newLabelUserGroupMember.Id.String()))
+				Expect(resp.MemberOfGroups[0].DisplayName).To(Equal(newArtist.DisplayName))
+				Expect(resp.MemberOfGroups[0].Avatar).To(Equal(newArtist.Avatar))
 			})
 			It("should respond with not_found error if user_group does not exist", func() {
 				id := uuid.NewV4()
@@ -133,7 +149,7 @@ var _ = Describe("UserGroup server", func() {
 				err = db.Model(updatedUserGroup).Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(updatedUserGroup.Tags)).To(Equal(1))
-				Expect(updatedUserGroup.Tags[0]).NotTo(Equal(newTag.Id))
+				Expect(updatedUserGroup.Tags[0]).NotTo(Equal(newGenreTag.Id))
 
 				addedTag := models.Tag{Id: updatedUserGroup.Tags[0]}
 				err = db.Model(&addedTag).WherePK().Returning("*").Select()
@@ -243,8 +259,7 @@ var _ = Describe("UserGroup server", func() {
 					WherePK().
 					Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(userProfile.MemberOfGroups)).To(Equal(1))
-				Expect(userProfile.MemberOfGroups[0].Id).To(Equal(newRecommendedArtist.Id))
+				Expect(len(userProfile.MemberOfGroups)).To(Equal(2))
 
 				userGroupMember := models.UserGroupMember{UserGroupId: newRecommendedArtist.Id, MemberId: newUserProfile.Id}
 				err = db.Model(&userGroupMember).
@@ -257,10 +272,10 @@ var _ = Describe("UserGroup server", func() {
 			})
 			It("should add new members with default display_name", func() {
 				userGroupMembers := &pb.UserGroupMembers{
-					UserGroupId: newArtist.Id.String(),
+					UserGroupId: newDistributor.Id.String(),
 					Members: []*pb.UserGroup{
 						&pb.UserGroup{
-							Id: newUserProfile.Id.String(),
+							Id: newLabel.Id.String(),
 						},
 					},
 				}
@@ -269,22 +284,22 @@ var _ = Describe("UserGroup server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				userProfile := models.UserGroup{Id: newUserProfile.Id}
-				err = db.Model(&userProfile).
+				label := models.UserGroup{Id: newLabel.Id}
+				err = db.Model(&label).
 					Column("MemberOfGroups").
 					WherePK().
 					Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(userProfile.MemberOfGroups)).To(Equal(2))
-				Expect(userProfile.MemberOfGroups[1].Id).To(Equal(newArtist.Id))
+				Expect(len(label.MemberOfGroups)).To(Equal(1))
+				Expect(label.MemberOfGroups[0].Id).To(Equal(newDistributor.Id))
 
-				userGroupMember := models.UserGroupMember{UserGroupId: newArtist.Id, MemberId: newUserProfile.Id}
+				userGroupMember := models.UserGroupMember{UserGroupId: newDistributor.Id, MemberId: newLabel.Id}
 				err = db.Model(&userGroupMember).
 					Where("user_group_id = ?user_group_id").
 					Where("member_id = ?member_id").
 					Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(userGroupMember.DisplayName).To(Equal(newUserProfile.DisplayName))
+				Expect(userGroupMember.DisplayName).To(Equal(newLabel.DisplayName))
 				Expect(len(userGroupMember.Tags)).To(Equal(0))
 			})
 		})

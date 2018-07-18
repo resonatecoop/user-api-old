@@ -1,7 +1,7 @@
 package usergroupserver
 
 import (
-	// "fmt"
+	"fmt"
 	// "reflect"
 	"time"
 	"context"
@@ -144,7 +144,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	u := &models.UserGroup{Id: id}
 
 	pgerr := s.db.Model(u).
-		Column("user_group.*", "Privacy", "Type", "Address").
+		Column("user_group.*", "Privacy", "Type", "Address", "Members", "MemberOfGroups").
 		WherePK().
 		Select()
 	if pgerr != nil {
@@ -187,6 +187,14 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	if twerr != nil {
 		return nil, twerr
 	}
+	members, pgerr, table := getUserGroupMembers(id, u.Members, true, s.db)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
+	memberOfGroups, pgerr, table := getUserGroupMembers(id, u.MemberOfGroups, false, s.db)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
 
 	address := &userpb.StreetAddress{Id: u.Address.Id.String(), Data: u.Address.Data}
 	privacy := &pb.Privacy{Id: u.Privacy.Id.String(), Private: u.Privacy.Private, SupportedArtists: u.Privacy.SupportedArtists, OwnedTracks: u.Privacy.OwnedTracks}
@@ -207,8 +215,8 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		Links: links,
 		Tags: tags,
 		RecommendedArtists: recommendedArtists,
-		// Members
-		// MemberOfGroups
+		Members: members,
+		MemberOfGroups: memberOfGroups,
 
 		// Tracks
 		// TrackGroups
@@ -550,6 +558,49 @@ func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error)
 	}, nil
 }
 
+func getUserGroupMembers(userGroupId uuid.UUID, userGroups []models.UserGroup, members bool, db *pg.DB) ([]*pb.UserGroup, error, string) {
+	userGroupsResponse := make([]*pb.UserGroup, len(userGroups))
+	for i, userGroup := range userGroups {
+		u := &pb.UserGroup{Avatar: userGroup.Avatar}
+		userGroupMember := models.UserGroupMember{}
+		if members { // userGroups are members of user group with userGroupId
+			userGroupMember.UserGroupId = userGroupId
+			userGroupMember.MemberId = userGroup.Id
+		} else { // user group with userGroupId is member of userGroups
+			userGroupMember.UserGroupId = userGroup.Id
+			userGroupMember.MemberId = userGroupId
+		}
+		err := db.Model(&userGroupMember).
+			Where("user_group_id = ?user_group_id").
+			Where("member_id = ?member_id").
+			Select()
+		if err != nil {
+			return nil, err, "user_group_member"
+		}
+
+		u.Id = userGroupMember.Id.String()
+		u.DisplayName = userGroupMember.DisplayName
+
+		// get tags
+		if len(userGroupMember.Tags) > 0 {
+			var tags []*models.Tag
+			err = db.Model(&tags).
+				Where("id in (?)", pg.In(userGroupMember.Tags)).
+				Select()
+			if err != nil {
+				return nil, err, "tag"
+			}
+			for _, tag := range tags {
+				u.Tags = append(u.Tags, &pb.Tag{Id: tag.Id.String(), Type: tag.Type, Name: tag.Name})
+			}
+		}
+		userGroupsResponse[i] = u
+	}
+	fmt.Println("members", members)
+	fmt.Println("userGroupsResponse", userGroupsResponse)
+	return userGroupsResponse, nil, ""
+}
+
 // Select user groups in db with given ids in 'userGroups'
 // Return ids slice
 // Used in CreateUserGroup/UpdateUserGroup to add/update ids slice to recommended Artists
@@ -578,7 +629,7 @@ func getRelatedUserGroupIds(userGroups []*pb.UserGroup, db *pg.DB) ([]uuid.UUID,
 
 // Select user groups in db with given 'ids'
 // Return slice of UserGroup response
-// Used in GetUserGroup to respond with info about related user groups: recommended_artists, sub_groups, labels
+// Used in GetUserGroup to respond with info about related recommended_artists
 func getRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*pb.UserGroup, twirp.Error) {
 	groupsResponse := make([]*pb.UserGroup, len(ids))
 
