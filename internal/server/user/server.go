@@ -25,9 +25,6 @@ func NewServer(db *pg.DB) *Server {
 	return &Server{db: db}
 }
 
-/* TODO add to response:
-- member_of_groups
-*/
 func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	u, err := getUserModel(user)
 	if err != nil {
@@ -108,7 +105,6 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 	return &pb.Empty{}, nil
 }
 
-// TODO delete user groups and related the user is owner of
 func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, error) {
 	deleteUser := func(db *pg.DB, u *models.User) (error, string) {
 		var table string
@@ -120,7 +116,7 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 
 		user := new(models.User)
 		pgerr := tx.Model(user).
-	    Column("user.favorite_tracks", "user.followed_groups").
+	    Column("user.favorite_tracks", "user.followed_groups", "OwnerOfGroups").
 	    Where("id = ?", u.Id).
 	    Select()
 		if pgerr != nil {
@@ -133,9 +129,9 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 				SET favorite_of_users = array_remove(favorite_of_users, ?)
 				WHERE id IN (?)
 			`, u.Id, pg.In(user.FavoriteTracks))
-				if pgerr != nil {
-					return pgerr, "track"
-				}
+			if pgerr != nil {
+				return pgerr, "track"
+			}
 		}
 
 		if len(user.FollowedGroups) > 0 {
@@ -144,10 +140,13 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 				SET followers = array_remove(followers, ?)
 				WHERE id IN (?)
 			`, u.Id, pg.In(user.FollowedGroups))
-				if pgerr != nil {
-					return pgerr, "user_group"
-				}
+			if pgerr != nil {
+				return pgerr, "user_group"
+			}
 		}
+
+		// if len(user.OwnerOfGroups) > 0{
+		// }
 
 		pgerr = s.db.Delete(u)
 		if pgerr != nil {

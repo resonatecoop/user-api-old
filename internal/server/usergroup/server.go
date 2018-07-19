@@ -76,7 +76,6 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 			Tags: tagIds,
 			Links: linkIds,
 			RecommendedArtists: recommendedArtistIds,
-			// Members
 		}
 		_, pgerr = s.db.Model(newUserGroup).Returning("*").Insert()
 		if pgerr != nil {
@@ -322,7 +321,7 @@ func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 
 		userGroup := new(models.UserGroup)
 		pgerr := tx.Model(userGroup).
-			Column("user_group.followers"). // TODO add other columns
+			Column("user_group.followers", "StreetAddress", "Privacy"). // TODO delete track and track group
 			Where("id = ?", u.Id).
 			Select()
 		if pgerr != nil {

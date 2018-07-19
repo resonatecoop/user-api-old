@@ -23,27 +23,15 @@ TODO: add scope for restricted access (public/private user profile).
             "id": "b09cd642-9df8-4f44-bb5a-169829043110",
             "created_at": "2015-08-05T08:40:51.620Z",
             "updated_at": "2015-08-05T09:40:51.620Z",
-            "full_name": "John Doe",
-            "display_name": "JohnD",
-            "first_name": "John",
-            "last_name": "Doe",
-            "residence_address": {
-              "id": "c09cd642-9df8-4f44-bb5a-169829043110",
-              "data": {"some": "data"}
-            },
             "email": "john@doe.com",
-            "username": "jdoe",
             "member": false,
-            "memberOfGroups": [{
-              "id": "c09cd642-9df8-4f44-bb5a-169829043110",
-              "display_name": "best band ever",
-              "avatar": "avatar"
-            }],
-            "ownerOfGroups": [{
+            "owner_of_groups": [{
               "id": "d09cd642-9df8-4f44-bb5a-169829043110",
               "display_name": "DJ John",
               "avatar": "avatar"
             }],
+            "favorite_tracks": ["b19cd642-9df8-4f44-bb5a-169829043110"],
+            "followed_groups": ["b29cd642-9df8-4f44-bb5a-169829043110"],
         }
 
 
@@ -55,10 +43,7 @@ Used for signup.
 + Request (application/json)
 
         {
-            "full_name": "John Doe",
-            "display_name": "JohnD",
             "email": "john@doe.com",
-            "username": "jdoe"
         }
 
 + Response 201 (application/json)
@@ -67,30 +52,16 @@ Used for signup.
 
             {
                 "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-                "full_name": "John Doe",
-                "display_name": "JohnD",
                 "email": "john@doe.com",
-                "username": "jdoe"
             }
 
 ### Update a User [POST /twirp/resonate.api.user.UserService/UpdateUser]
-
-In the example, we update first_name and last_name of previously created user and add a street address.
-In the case of updating an existing street address, its id should be part of the street_address field.
 
 + Request (application/json)
 
         {
             "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "first_name": "John",
-            "last_name": "Doe",
-            "full_name": "John Doe",
-            "display_name": "JohnD",
-            "email": "john@doe.com",
-            "username": "jdoe",
-            "street_address": {
-              "data": "some": "data"
-            }
+            "email": "john@doe.fr"
         }
 
 + Response 204 (application/json)
@@ -150,9 +121,9 @@ In the case of updating an existing street address, its id should be part of the
 
 + Response 204 (application/json)
 
-### Get Feed [POST /twirp/resonate.api.user.UserService/GetFeed]
+### TODO Get Feed [POST /twirp/resonate.api.user.UserService/GetFeed]
 
-infinite feed, needs pagination
+activity feed, needs pagination
 
 + Request (application/json)
 
@@ -169,13 +140,9 @@ infinite feed, needs pagination
 The user who creates a user group is by default the owner of this user group.
 Can be a user creating an artist or a label or a user profile.
 
-if type is "user", "members" should be empty.
+To add members/memberOfGroups, refer to dedicated endpoint.
 
-If type is "artist", "members" (array of user object with ids, owners of selected user_groups of type "user") can be added to the request body to list members (musicians in a band for instance).
-
-If type is "label", cf. Add/Remove SubGroup to list artists that are part of this label and attach this label to artists.
-
-+ type (string) - type of user group: user, artist, label or distributor
++ type (string) - type of user group: user, artist, label (or distributor: added internally)
 
 + Request (application/json)
 
@@ -202,9 +169,6 @@ If type is "label", cf. Add/Remove SubGroup to list artists that are part of thi
             "recommended_artists": [
               {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31"},
               {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31"}
-            ],
-            "members": [
-              {"id": "386f3a00-1022-4cb6-beda-8f7eeef8bd31"}
             ]
         }
 
@@ -244,15 +208,12 @@ If type is "label", cf. Add/Remove SubGroup to list artists that are part of thi
                 "recommended_artists": [
                   {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"},
                   {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"}
-                ],
-                "members": [
-                  {"id": "386f3a00-1022-4cb6-beda-8f7eeef8bd31"}
                 ]
             }
 
 ### Update UserGroup [POST /twirp/resonate.api.user.UserGroupService/UpdateUserGroup]
 
-If the request body doesn't contain a certain user group attribute, it will be set to nil.
+If the request body doesn't contain a certain user group attribute, it will be set to its zero value.
 
 To update address or privacy, update desired fields (data for address; private, owned_track and supported_artists for privacy). Type and owner_id are not updatable.
 
@@ -343,11 +304,27 @@ scope private/public.
             "short_bio": "short bio",
             "avatar": "blob",
             "banner": "blob",
-            "members": [],
-            "labels": [
+            "members": [
                 {
                     "id": "d38bcdb7-9a05-4077-a6c7-6aec285b865e",
-                    "display_name": "best label ever",
+                    "display_name": "John Doe",
+                    "avatar": "blob",
+                    "tags": [
+                        {
+                          "type": "role",
+                          "name": "guitarist"
+                        },
+                        {
+                          "type": "role",
+                          "name": "singer"
+                        }
+                    ]
+                }
+            ],
+            "member_of_groups": [
+                {
+                    "id": "d09bcdb7-9a05-4077-a6c7-6aec285b865e",
+                    "display_name": "Best label ever",
                     "avatar": "blob"
                 }
             ],
@@ -371,7 +348,7 @@ scope private/public.
 
 ### Get User Group Types [POST /twirp/resonate.api.user.UserGroupService/GetUserGroupTypes]
 
-Return all existing group taxonomies.
+Return all existing group taxonomies (except distributor, handled internally).
 
 + Response 200 (application/json)
 
@@ -385,42 +362,6 @@ Return all existing group taxonomies.
             ]
         }
 
-### DEPRECATED Add SubGroups [POST /twirp/resonate.api.user.UserGroupService/AddSubGroups]
-
-For labels to add artists as subgroups.
-For distributors to add labels as subgroups.
-user_groups array contain user groups' ids to add.
-
-+ Request (application/json)
-
-        {
-            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "user_groups": [
-                {"id": "b19cd642-9df8-4f44-bb5a-169829043110"},
-                {"id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"}
-            ]
-        }
-
-+ Response 204 (application/json)
-
-### DEPRECATED Remove SubGroups [POST /twirp/resonate.api.user.UserGroupService/RemoveSubGroups]
-
-For labels to remove artists as subgroups.
-For distributors to remove labels as subgroups.
-user_groups array contain user groups' ids to remove.
-
-+ Request (application/json)
-
-        {
-            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "user_groups": [
-                {"id": "b19cd642-9df8-4f44-bb5a-169829043110"},
-                {"id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"}
-            ]
-        }
-
-+ Response 204 (application/json)
-
 ### Add Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
 
 For artists to add user profiles (e.g. band members). You can define their roles within this artist using `tags` (with role as type) and set `display_name` (if not set it'll be the added user_group display_name).
@@ -428,6 +369,8 @@ For labels to add artists.
 For distributors to add labels.
 
 members array contains user groups to add.
+
+Can also be used for an artist (members array only contains 1 element with artist id) to add itself as a member of a label (user_group_id).
 
 + Request (application/json)
 
@@ -464,13 +407,15 @@ members array contains user groups to add.
 
 + Response 204 (application/json)
 
-### Remove Members [POST /twirp/resonate.api.user.UserGroupService/AddMembers]
+### Delete Members [POST /twirp/resonate.api.user.UserGroupService/DeleteMembers]
 
 For artists to remove user profiles (e.g. band members).
 For labels to remove artists.
 For distributors to remove labels.
 
 members array contains user groups to remove.
+
+Can also be used for an artist (members array only contains 1 element with artist id) to remove itself as a member of a label (user_group_id).
 
 + Request (application/json)
 
