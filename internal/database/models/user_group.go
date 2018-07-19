@@ -3,6 +3,7 @@ package models
 import (
   "time"
   // "fmt"
+  // "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/satori/go.uuid"
 )
@@ -63,3 +64,39 @@ func (u *UserGroup) BeforeInsert(db orm.DB) error {
 
   return nil
 }
+
+// func (u *UserGroup) Delete(db *pg.DB) (error, string) {
+//   var table string
+//   tx, err := db.Begin()
+//   if err != nil {
+//     return err, table
+//   }
+//   defer tx.Rollback()
+//
+//   userGroup := new(UserGroup)
+//   pgerr := tx.Model(userGroup).
+//     Column("user_group.followers", "StreetAddress", "Privacy"). // TODO delete track and track group
+//     Where("id = ?", u.Id).
+//     Select()
+//   if pgerr != nil {
+//     return pgerr, "user_group"
+//   }
+//
+//   if len(userGroup.Followers) > 0 {
+//     _, pgerr = tx.ExecOne(`
+//       UPDATE users
+//       SET followed_groups = array_remove(followed_groups, ?)
+//       WHERE id IN (?)
+//     `, u.Id, pg.In(userGroup.Followers))
+//     if pgerr != nil {
+//       return pgerr, "user"
+//     }
+//   }
+//
+//   pgerr = s.db.Delete(u)
+//   if pgerr != nil {
+//     return pgerr, "user_group"
+//   }
+//
+//   return tx.Commit(), table
+// }
