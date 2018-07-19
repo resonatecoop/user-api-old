@@ -246,12 +246,12 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		// Update privacy
 		privacyId, twerr := internal.GetUuidFromString(userGroup.Privacy.Id)
 		if twerr != nil {
-			return twerr, "privacy"
+			return twerr, "user_group_privacy"
 		}
 		privacy := &models.UserGroupPrivacy{Id: privacyId, Private: userGroup.Privacy.Private, OwnedTracks: userGroup.Privacy.OwnedTracks, SupportedArtists: userGroup.Privacy.SupportedArtists}
 		_, pgerr = tx.Model(privacy).WherePK().Returning("*").UpdateNotNull()
 		if pgerr != nil {
-			return pgerr, "privacy"
+			return pgerr, "user_group_privacy"
 		}
 
 		// Update tags
@@ -317,50 +317,13 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 }
 
 func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*userpb.Empty, error) {
-	// Delete related Links, Tracks, TrackGroups
-	// member_of_groups
-	deleteUserGroup := func(db *pg.DB, u *models.UserGroup) (error, string) {
-		var table string
-		tx, err := db.Begin()
-		if err != nil {
-			return err, table
-		}
-		defer tx.Rollback()
-
-		userGroup := new(models.UserGroup)
-		pgerr := tx.Model(userGroup).
-			Column("user_group.followers", "StreetAddress", "Privacy"). // TODO delete track and track group
-			Where("id = ?", u.Id).
-			Select()
-		if pgerr != nil {
-			return pgerr, "user_group"
-		}
-
-		if len(userGroup.Followers) > 0 {
-			_, pgerr = tx.ExecOne(`
-				UPDATE users
-				SET followed_groups = array_remove(followed_groups, ?)
-				WHERE id IN (?)
-			`, u.Id, pg.In(userGroup.Followers))
-			if pgerr != nil {
-				return pgerr, "user"
-			}
-		}
-
-		pgerr = tx.Delete(u)
-		if pgerr != nil {
-			return pgerr, "user_group"
-		}
-
-		return tx.Commit(), table
-	}
 	id, err := internal.GetUuidFromString(userGroup.Id)
 	if err != nil {
 		return nil, err
 	}
 	u := &models.UserGroup{Id: id}
 
-	if pgerr, table := deleteUserGroup(s.db, u); pgerr != nil {
+	if pgerr, table := u.Delete(s.db); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
 

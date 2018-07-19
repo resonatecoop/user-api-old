@@ -147,7 +147,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		err = db.Model(newArtist).
-			Column("Privacy").
+			Column("Privacy", "Address").
 			WherePK().
 			Select()
 		Expect(err).NotTo(HaveOccurred())
@@ -200,11 +200,11 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all links
-	var links []models.Link
-	err = db.Model(&links).Select()
-	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&links).Delete()
-	Expect(err).NotTo(HaveOccurred())
+	// var links []models.Link
+	// err = db.Model(&links).Select()
+	// Expect(err).NotTo(HaveOccurred())
+	// _, err = db.Model(&links).Delete()
+	// Expect(err).NotTo(HaveOccurred())
 
 	// Delete all tags
 	var tags []models.Tag

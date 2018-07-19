@@ -5,6 +5,8 @@ import (
 	// "reflect"
 	"context"
 	"net/url"
+
+	"github.com/go-pg/pg"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/twitchtv/twirp"
@@ -522,13 +524,50 @@ var _ = Describe("UserGroup server", func() {
 		})
 	})
 
-	XDescribe("DeleteUserGroup", func() {
+	Describe("DeleteUserGroup", func() {
 		Context("with valid uuid", func() {
 			It("should delete user_group if it exists", func() {
 				userGroup := &pb.UserGroup{Id: newArtist.Id.String()}
-				_, err := service.DeleteUserGroup(context.Background(), userGroup)
 
+				userGroupToDelete := new(models.UserGroup)
+				err := db.Model(userGroupToDelete).Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
+
+				_, err = service.DeleteUserGroup(context.Background(), userGroup)
+				Expect(err).NotTo(HaveOccurred())
+
+				var links []*models.Link
+				err = db.Model(&links).
+					Where("id in (?)", pg.In(userGroupToDelete.Links)).
+					Select()
+				Expect(len(links)).To(Equal(0))
+
+				var privacies []*models.UserGroupPrivacy
+				err = db.Model(&privacies).
+					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.PrivacyId})).
+					Select()
+				Expect(len(privacies)).To(Equal(0))
+
+				var addresses []*models.StreetAddress
+				err = db.Model(&addresses).
+					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.AddressId})).
+					Select()
+				Expect(len(privacies)).To(Equal(0))
+
+				var userGroupMembers []models.UserGroupMember
+				err = db.Model(&userGroupMembers).
+					Where("user_group_id = ?", newArtist.Id).
+					WhereOr("member_id = ?", newArtist.Id).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(userGroupMembers)).To(Equal(0))
+
+				var userGroups []models.UserGroup
+				err = db.Model(&userGroups).
+					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.Id})).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(userGroups)).To(Equal(0))
 			})
 			It("should respond with not_found error if user_group does not exist", func() {
 				id := uuid.NewV4()

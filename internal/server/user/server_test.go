@@ -4,6 +4,8 @@ import (
 	// "fmt"
 	// "reflect"
 	"context"
+
+	"github.com/go-pg/pg"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/twitchtv/twirp"
@@ -75,7 +77,7 @@ var _ = Describe("User server", func() {
 				user := new(models.User)
 				err = db.Model(user).Where("id = ?", newUser.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(user.FavoriteTracks).To(HaveLen(1))
+				Expect(user.FavoriteTracks).To(HaveLen(2))
 				Expect(user.FavoriteTracks).To(ContainElement(newTrack.Id))
 
 				track := new(models.Track)
@@ -150,7 +152,7 @@ var _ = Describe("User server", func() {
 				user := new(models.User)
 				err = db.Model(user).Where("id = ?", newUser.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(user.FavoriteTracks).To(HaveLen(0))
+				Expect(user.FavoriteTracks).To(HaveLen(1))
 				Expect(user.FavoriteTracks).NotTo(ContainElement(newTrack.Id))
 
 				track := new(models.Track)
@@ -225,7 +227,7 @@ var _ = Describe("User server", func() {
 				user := new(models.User)
 				err = db.Model(user).Where("id = ?", newUser.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(user.FollowedGroups).To(HaveLen(1))
+				Expect(user.FollowedGroups).To(HaveLen(2))
 				Expect(user.FollowedGroups).To(ContainElement(newUserGroup.Id))
 
 				userGroup := new(models.UserGroup)
@@ -300,7 +302,7 @@ var _ = Describe("User server", func() {
 				user := new(models.User)
 				err = db.Model(user).Where("id = ?", newUser.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(user.FollowedGroups).To(HaveLen(0))
+				Expect(user.FollowedGroups).To(HaveLen(1))
 				Expect(user.FollowedGroups).NotTo(ContainElement(newUserGroup.Id))
 
 				userGroup := new(models.UserGroup)
@@ -482,9 +484,50 @@ var _ = Describe("User server", func() {
 		Context("with valid uuid", func() {
 			It("should delete user if it exists", func() {
 				user := &pb.User{Id: newUser.Id.String()}
-				_, err := service.DeleteUser(context.Background(), user)
+
+				userToDelete := new(models.User)
+				err := db.Model(userToDelete).Column("user.*","OwnerOfGroups").Where("id = ?", newUser.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = service.DeleteUser(context.Background(), user)
 
 				Expect(err).NotTo(HaveOccurred())
+
+				var followedGroups []models.UserGroup
+				err = db.Model(&followedGroups).
+					Where("id in (?)", pg.In(userToDelete.FollowedGroups)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				for _, group := range followedGroups {
+					Expect(group.Followers).NotTo(ContainElement(userToDelete.Id))
+				}
+
+				var favoriteTracks []models.Track
+				err = db.Model(&favoriteTracks).
+					Where("id in (?)", pg.In(userToDelete.FavoriteTracks)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				for _, track := range favoriteTracks {
+					Expect(track.FavoriteOfUsers).NotTo(ContainElement(userToDelete.Id))
+				}
+
+				ownerOfGroupIds := make([]uuid.UUID, len(userToDelete.OwnerOfGroups))
+				for i, group := range userToDelete.OwnerOfGroups {
+					ownerOfGroupIds[i] = group.Id
+				}
+				var ownerOfGroups []models.UserGroup
+				err = db.Model(&ownerOfGroups).
+					Where("id in (?)", pg.In(ownerOfGroupIds)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(ownerOfGroups)).To(Equal(0))
+
+				var users []models.User
+				err = db.Model(&users).
+					Where("id in (?)", pg.In([]uuid.UUID{userToDelete.Id})).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(users)).To(Equal(0))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
