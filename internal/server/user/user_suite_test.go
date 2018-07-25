@@ -2,7 +2,7 @@ package userserver_test
 
 import (
 	"testing"
-	"time"
+	// "time"
 
 	// pb "user-api/rpc/user"
 	. "github.com/onsi/ginkgo"
@@ -15,14 +15,16 @@ import (
 	userserver "user-api/internal/server/user"
 )
 
-var db *pg.DB
-var service *userserver.Server
-var ownerOfFollowedUserGroup *models.User
-var newUser *models.User
-var newTrack *models.Track
-var newUserGroup *models.UserGroup
-var newFavoriteTrack *models.Track
-var newFollowedUserGroup *models.UserGroup
+var (
+	db *pg.DB
+	service *userserver.Server
+	ownerOfFollowedUserGroup *models.User
+	newUser *models.User
+	newTrack *models.Track
+	newUserGroup *models.UserGroup
+	newFavoriteTrack *models.Track
+	newFollowedUserGroup *models.UserGroup
+)
 
 func TestUser(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -38,15 +40,8 @@ var _ = BeforeSuite(func() {
 		err := db.Insert(newAddress)
 		Expect(err).NotTo(HaveOccurred())
 
-		// Create a new tracks
-		duration, _ := time.ParseDuration("10m10s")
-		cover := make([]byte, 5)
-		newTrack = &models.Track{PublishDate: time.Now(), Title: "track title", Duration: duration, Status: "free", Cover: cover}
-		err = db.Insert(newTrack)
-		Expect(err).NotTo(HaveOccurred())
-
-		// Create a new users
-		ownerOfFollowedUserGroup = &models.User{Username: "ownerOfFollowedUserGroup", FullName: "Owner", DisplayName: "ownerOfFollowedUserGroup", Email: "owner@fake.com"}
+		// Create a new user
+		ownerOfFollowedUserGroup = &models.User{Username: "ownerOfFollowedUserGroup", FullName: "Owner", Email: "owner@fake.com"}
 		err = db.Insert(ownerOfFollowedUserGroup)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -55,12 +50,8 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 		avatar := make([]byte, 5)
 
-		newUser = &models.User{Username: "username", FullName: "full name", DisplayName: "display name", Email: "email@fake.com"}
+		newUser = &models.User{Username: "username", FullName: "full name", Email: "email@fake.com"}
 		err = db.Insert(newUser)
-		Expect(err).NotTo(HaveOccurred())
-
-		newFavoriteTrack = &models.Track{PublishDate: time.Now(), Title: "fav track title", Duration: duration, Status: "free", Cover: cover, FavoriteOfUsers: []uuid.UUID{newUser.Id}}
-		err = db.Insert(newFavoriteTrack)
 		Expect(err).NotTo(HaveOccurred())
 
 		followers := []uuid.UUID{newUser.Id}
@@ -75,34 +66,38 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newFollowedUserGroup)
 		Expect(err).NotTo(HaveOccurred())
 
+		newFavoriteTrack = &models.Track{CreatorId: ownerOfFollowedUserGroup.Id, UserGroupId: newFollowedUserGroup.Id, Title: "fav track title", Status: "free", FavoriteOfUsers: []uuid.UUID{newUser.Id}}
+		err = db.Insert(newFavoriteTrack)
+		Expect(err).NotTo(HaveOccurred())
+
+		newTrack = &models.Track{CreatorId: ownerOfFollowedUserGroup.Id, UserGroupId: newFollowedUserGroup.Id, Title: "track title", Status: "free"}
+		err = db.Insert(newTrack)
+		Expect(err).NotTo(HaveOccurred())
+
 		newUser.FollowedGroups = []uuid.UUID{newFollowedUserGroup.Id}
 		newUser.FavoriteTracks = []uuid.UUID{newFavoriteTrack.Id}
 		_, err = db.Model(newUser).Column("followed_groups", "favorite_tracks").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
+		userGroupAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}
+		err = db.Insert(userGroupAddress)
+		Expect(err).NotTo(HaveOccurred())
 		// Create a new user_group
 		newUserGroup = &models.UserGroup{
 			DisplayName: "artist",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
 			TypeId: newGroupTaxonomy.Id,
-			AddressId: newAddress.Id,
+			AddressId: userGroupAddress.Id,
 		}
 		err = db.Insert(newUserGroup)
 		Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
-	// Delete all users
-	var users []models.User
-  err := db.Model(&users).Select()
-	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&users).Delete()
-	Expect(err).NotTo(HaveOccurred())
-
 	// Delete all tracks
 	var tracks []models.Track
-	err = db.Model(&tracks).Select()
+	err := db.Model(&tracks).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&tracks).Delete()
 	Expect(err).NotTo(HaveOccurred())
@@ -114,10 +109,33 @@ var _ = AfterSuite(func() {
 	_, err = db.Model(&userGroups).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
+	// Delete all streetAddresses
+	var streetAddresses []models.StreetAddress
+	err = db.Model(&streetAddresses).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&streetAddresses).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all users
+	var users []models.User
+	err = db.Model(&users).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&users).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
 	// Delete all groupTaxonomies
 	var groupTaxonomies []models.GroupTaxonomy
 	err = db.Model(&groupTaxonomies).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&groupTaxonomies).Delete()
 	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all tags
+	var tags []models.Tag
+	err = db.Model(&tags).Select()
+	Expect(err).NotTo(HaveOccurred())
+	if len(tags) > 0 {
+		_, err = db.Model(&tags).Delete()
+		Expect(err).NotTo(HaveOccurred())
+	}
 })

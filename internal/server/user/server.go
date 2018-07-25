@@ -43,7 +43,7 @@ func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	return &pb.User{
 		Id: u.Id.String(),
 		Username: u.Username,
-		DisplayName: u.DisplayName,
+		// DisplayName: u.DisplayName,
 		FullName: u.FullName,
 		Email: u.Email,
 		FirstName: u.FirstName,
@@ -66,7 +66,7 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 		Username: user.Username,
 		FullName: user.FullName,
 		Email: user.Email,
-		DisplayName: user.DisplayName,
+		// DisplayName: user.DisplayName,
 	}
 	_, err := s.db.Model(newUser).Returning("*").Insert()
 
@@ -78,7 +78,7 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	return &pb.User{
 		Id: newUser.Id.String(),
 		Username: newUser.Username,
-		DisplayName: newUser.DisplayName,
+		// DisplayName: newUser.DisplayName,
 		FullName: newUser.FullName,
 		Email: newUser.Email,
 	}, nil
@@ -385,7 +385,7 @@ func getUserModel(user *pb.User) (*models.User, twirp.Error) {
 	return &models.User{
 		Id: id,
 		Username: user.Username,
-		DisplayName: user.DisplayName,
+		// DisplayName: user.DisplayName,
 		FullName: user.FullName,
 		Email: user.Email,
 		FirstName: user.FirstName,
@@ -396,8 +396,17 @@ func getUserModel(user *pb.User) (*models.User, twirp.Error) {
 }
 
 func checkRequiredAttributes(user *pb.User) (twirp.Error) {
-	if user.Email == "" {
-		return twirp.RequiredArgumentError("email")
+	if user.Email == ""	|| user.Username == "" || user.FullName == "" {
+		var argument string
+		switch {
+		case user.Email == "":
+			argument = "email"
+		case user.Username == "":
+			argument = "username"
+		case user.FullName == "":
+			argument = "full_name"
+		}
+		return twirp.RequiredArgumentError(argument)
 	}
 	return nil
 }

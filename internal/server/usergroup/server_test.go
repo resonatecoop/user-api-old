@@ -41,6 +41,8 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.Type.Id).To(Equal(newArtistGroupTaxonomy.Id.String()))
 				Expect(resp.Type.Type).To(Equal("artist"))
 
+				Expect(resp.Address.Id).To(Equal(artistAddress.Id.String()))
+
 				Expect(len(resp.Tags)).To(Equal(1))
 				Expect(resp.Tags[0].Id).To(Equal(newGenreTag.Id.String()))
 				Expect(resp.Tags[0].Type).To(Equal(newGenreTag.Type))
@@ -123,7 +125,7 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "new display name",
 					Description: "new description",
 					Avatar: newArtist.Avatar,
-					Address: &userpb.StreetAddress{Id: newAddress.Id.String(), Data: map[string]string{"some": "new data"}},
+					Address: &userpb.StreetAddress{Id: artistAddress.Id.String(), Data: map[string]string{"some": "new data"}},
 					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
 					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
 					OwnerId: newArtist.OwnerId.String(),
@@ -136,7 +138,7 @@ var _ = Describe("UserGroup server", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				address := new(models.StreetAddress)
-				err = db.Model(address).Where("id = ?", newAddress.Id).Select()
+				err = db.Model(address).Where("id = ?", artistAddress.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(address.Data).To(Equal(map[string]string{"some": "new data"}))
 
@@ -180,7 +182,7 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "new display name",
 					Description: "new description",
 					Avatar: newArtist.Avatar,
-					Address: &userpb.StreetAddress{Id: newAddress.Id.String(), Data: map[string]string{"some": "data"}},
+					Address: &userpb.StreetAddress{Id: artistAddress.Id.String(), Data: map[string]string{"some": "data"}},
 					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
 					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String()},
 					OwnerId: newArtist.OwnerId.String(),
@@ -202,7 +204,7 @@ var _ = Describe("UserGroup server", func() {
 					DisplayName: "new display name",
 					Description: "new description",
 					Avatar: newArtist.Avatar,
-					Address: &userpb.StreetAddress{Id: newAddress.Id.String(), Data: map[string]string{"some": "data"}},
+					Address: &userpb.StreetAddress{Id: artistAddress.Id.String(), Data: map[string]string{"some": "data"}},
 					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
 					OwnerId: newArtist.OwnerId.String(),
 					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String()},

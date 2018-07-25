@@ -50,17 +50,17 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 			}
 		}
 
-		linkIds, pgerr := getLinkIds(userGroup, tx)
+		linkIds, pgerr := getLinkIds(userGroup.Links, tx)
 		if pgerr != nil {
 			return pgerr, "link", nil
 		}
 
-		tagIds, pgerr := getTagIds(userGroup, tx)
+		tagIds, pgerr := models.GetTagIds(userGroup.Tags, tx)
 		if pgerr != nil {
 			return pgerr, "tag", nil
 		}
 
-		recommendedArtistIds, pgerr := getRelatedUserGroupIds(userGroup.RecommendedArtists, tx)
+		recommendedArtistIds, pgerr := models.GetRelatedUserGroupIds(userGroup.RecommendedArtists, tx)
 		if pgerr != nil {
 			return pgerr, "user_group", nil
 		}
@@ -135,6 +135,8 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 }
 
 // TODO handle privacy settings
+// add FeaturedTrackGroup
+// add TrackGroups (id, title, cover)
 func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb.UserGroup, error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)
 	if err != nil {
@@ -217,8 +219,8 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		Members: members,
 		MemberOfGroups: memberOfGroups,
 
-		// Tracks
-		// TrackGroups
+		// Tracks?
+		// TrackGroups: releases if artist/label or owner playlist if user
 	}, nil
 }
 
@@ -255,13 +257,13 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		}
 
 		// Update tags
-		tagIds, pgerr := getTagIds(userGroup, tx)
+		tagIds, pgerr := models.GetTagIds(userGroup.Tags, tx)
 		if pgerr != nil {
 			return pgerr, "tag"
 		}
 
 		// Update links
-		linkIds, pgerr := getLinkIds(userGroup, tx)
+		linkIds, pgerr := getLinkIds(userGroup.Links, tx)
 		if pgerr != nil {
 			return pgerr, "link"
 		}
@@ -281,7 +283,7 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		}
 
 		// Update recommended artists
-		recommendedArtistIds, pgerr := getRelatedUserGroupIds(userGroup.RecommendedArtists, tx)
+		recommendedArtistIds, pgerr := models.GetRelatedUserGroupIds(userGroup.RecommendedArtists, tx)
 		if pgerr != nil {
 			return pgerr, "user_group"
 		}
@@ -426,7 +428,7 @@ func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupM
 			}
 
 			// create tags
-			tagIds, pgerr := getTagIds(member, tx)
+			tagIds, pgerr := models.GetTagIds(member.Tags, tx)
 			if pgerr != nil {
 				return pgerr, "tag"
 			}
@@ -569,31 +571,6 @@ func getUserGroupMembers(userGroupId uuid.UUID, userGroups []models.UserGroup, m
 	return userGroupsResponse, nil, ""
 }
 
-// Select user groups in db with given ids in 'userGroups'
-// Return ids slice
-// Used in CreateUserGroup/UpdateUserGroup to add/update ids slice to recommended Artists
-func getRelatedUserGroupIds(userGroups []*pb.UserGroup, db *pg.Tx) ([]uuid.UUID, error) {
-	relatedUserGroups := make([]*models.UserGroup, len(userGroups))
-	relatedUserGroupIds := make([]uuid.UUID, len(userGroups))
-	for i, userGroup := range userGroups {
-		id, twerr := internal.GetUuidFromString(userGroup.Id)
-		if twerr != nil {
-			return nil, twerr.(error)
-		}
-		relatedUserGroups[i] = &models.UserGroup{Id: id}
-		pgerr := db.Model(relatedUserGroups[i]).
-			WherePK().
-			Returning("id", "display_name", "avatar").
-			Select()
-		if pgerr != nil {
-			return nil, pgerr
-		}
-		userGroup.DisplayName = relatedUserGroups[i].DisplayName
-		userGroup.Avatar = relatedUserGroups[i].Avatar
-		relatedUserGroupIds[i] = relatedUserGroups[i].Id
-	}
-	return relatedUserGroupIds, nil
-}
 
 // Select user groups in db with given 'ids'
 // Return slice of UserGroup response
@@ -617,37 +594,10 @@ func getRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*pb.UserGroup, twirp.Er
 	return groupsResponse, nil
 }
 
-func getTagIds(userGroup *pb.UserGroup, db *pg.Tx) ([]uuid.UUID, error) {
-	tags := make([]*models.Tag, len(userGroup.Tags))
-	tagIds := make([]uuid.UUID, len(userGroup.Tags))
-	for i, tag := range(userGroup.Tags) {
-		if tag.Id == "" { // new tag to create and add
-			tags[i] = &models.Tag{Type: tag.Type, Name: tag.Name}
-			_, pgerr := db.Model(tags[i]).
-				Where("type = ?", tags[i].Type).
-				Where("lower(name) = lower(?)", tags[i].Name).
-				Returning("*").
-				SelectOrInsert()
-			if pgerr != nil {
-				return nil, pgerr
-			}
-			tagIds[i] = tags[i].Id
-			tag.Id = tags[i].Id.String()
-		} else {
-			tagId, twerr := internal.GetUuidFromString(tag.Id)
-			if twerr != nil {
-				return nil, twerr.(error)
-			}
-			tagIds[i] = tagId
-		}
-	}
-	return tagIds, nil
-}
-
-func getLinkIds(userGroup *pb.UserGroup, db *pg.Tx) ([]uuid.UUID, error) {
-	links := make([]*models.Link, len(userGroup.Links))
-	linkIds := make([]uuid.UUID, len(userGroup.Links))
-	for i, link := range userGroup.Links {
+func getLinkIds(l []*pb.Link, db *pg.Tx) ([]uuid.UUID, error) {
+	links := make([]*models.Link, len(l))
+	linkIds := make([]uuid.UUID, len(l))
+	for i, link := range l {
 		if link.Id == "" {
 			links[i] = &models.Link{Platform: link.Platform, Uri: link.Uri}
 			_, pgerr := db.Model(links[i]).Returning("*").Insert()

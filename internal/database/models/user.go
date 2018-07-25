@@ -10,6 +10,7 @@ type User struct {
   Id uuid.UUID `sql:"type:uuid,default:uuid_generate_v4()"`
   CreatedAt time.Time `sql:"default:now()"`
   UpdatedAt time.Time
+  Username string `sql:",notnull,unique"`
   FullName string `sql:",notnull"`
   FirstName string
   LastName string
@@ -22,10 +23,4 @@ type User struct {
   // Playlists
 
   OwnerOfGroups []UserGroup `pg:"fk:owner_id"`
-
-  // remove, unused fields
-  Username string `sql:",unique"`
-  DisplayName string `sql:",unique"`
-  ResidenceAddressId uuid.UUID  `sql:"type:uuid,notnull"`
-  ResidenceAddress *StreetAddress
 }

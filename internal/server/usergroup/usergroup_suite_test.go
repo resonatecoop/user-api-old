@@ -15,23 +15,26 @@ import (
 	usergroupserver "user-api/internal/server/usergroup"
 )
 
-var db *pg.DB
-var service *usergroupserver.Server
-var newUser *models.User
-var newArtist *models.UserGroup
-var newUserProfile *models.UserGroup
-var newRecommendedArtist *models.UserGroup
-var newLabel *models.UserGroup
-var newDistributor *models.UserGroup
-var newArtistUserGroupMember *models.UserGroupMember
-var newLabelUserGroupMember *models.UserGroupMember
-var newUserGroupTaxonomy *models.GroupTaxonomy
-var newArtistGroupTaxonomy *models.GroupTaxonomy
-var newLabelGroupTaxonomy *models.GroupTaxonomy
-var newLink *models.Link
-var newGenreTag *models.Tag
-var newRoleTag *models.Tag
-var newAddress *models.StreetAddress
+var (
+	db *pg.DB
+	service *usergroupserver.Server
+	newUser *models.User
+	newArtist *models.UserGroup
+	newUserProfile *models.UserGroup
+	newRecommendedArtist *models.UserGroup
+	newLabel *models.UserGroup
+	newDistributor *models.UserGroup
+	newArtistUserGroupMember *models.UserGroupMember
+	newLabelUserGroupMember *models.UserGroupMember
+	newUserGroupTaxonomy *models.GroupTaxonomy
+	newArtistGroupTaxonomy *models.GroupTaxonomy
+	newLabelGroupTaxonomy *models.GroupTaxonomy
+	newLink *models.Link
+	newGenreTag *models.Tag
+	newRoleTag *models.Tag
+	newAddress *models.StreetAddress
+	artistAddress *models.StreetAddress
+)
 
 func TestUsergroup(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -44,7 +47,7 @@ var _ = BeforeSuite(func() {
 		service = usergroupserver.NewServer(db)
 
 		// Create a new user (users table's empty)
-		newUser = &models.User{Username: "username", FullName: "full name", DisplayName: "displayname", Email: "email@fake.com"}
+		newUser = &models.User{Username: "username", FullName: "full name", Email: "email@fake.com"}
 		err := db.Insert(newUser)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -106,12 +109,15 @@ var _ = BeforeSuite(func() {
 
 		links := []uuid.UUID{newLink.Id}
 		genreTags := []uuid.UUID{newGenreTag.Id}
+		artistAddress = &models.StreetAddress{Data: map[string]string{"some": "artist data"}}
+		err = db.Insert(artistAddress)
+		Expect(err).NotTo(HaveOccurred())
 		newArtist = &models.UserGroup{
 			DisplayName: "best artist ever",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
 			TypeId: newArtistGroupTaxonomy.Id,
-			AddressId: newAddress.Id,
+			AddressId: artistAddress.Id,
 			Links: links,
 			Tags: genreTags,
 		}
@@ -164,16 +170,9 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	// Delete all users
-	var users []models.User
-  err := db.Model(&users).Select()
-	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&users).Delete()
-	Expect(err).NotTo(HaveOccurred())
-
 	// Delete all userGroupMembers
 	var userGroupMembers []models.UserGroupMember
-	err = db.Model(&userGroupMembers).Select()
+	err := db.Model(&userGroupMembers).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&userGroupMembers).Delete()
 	Expect(err).NotTo(HaveOccurred())
@@ -185,18 +184,32 @@ var _ = AfterSuite(func() {
 	_, err = db.Model(&userGroups).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
-	// Delete all groupTaxonomies
-	var groupTaxonomies []models.GroupTaxonomy
-	err = db.Model(&groupTaxonomies).Select()
-	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&groupTaxonomies).Delete()
-	Expect(err).NotTo(HaveOccurred())
-
 	// Delete all streetAddresses
 	var streetAddresses []models.StreetAddress
 	err = db.Model(&streetAddresses).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&streetAddresses).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all user group privacies
+	var privacies []models.UserGroupPrivacy
+	err = db.Model(&privacies).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&privacies).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all users
+	var users []models.User
+	err = db.Model(&users).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&users).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all groupTaxonomies
+	var groupTaxonomies []models.GroupTaxonomy
+	err = db.Model(&groupTaxonomies).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&groupTaxonomies).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all links
@@ -211,12 +224,5 @@ var _ = AfterSuite(func() {
 	err = db.Model(&tags).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&tags).Delete()
-	Expect(err).NotTo(HaveOccurred())
-
-	// Delete all user group privacies
-	var privacies []models.UserGroupPrivacy
-	err = db.Model(&privacies).Select()
-	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&privacies).Delete()
 	Expect(err).NotTo(HaveOccurred())
 })

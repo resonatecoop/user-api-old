@@ -1,0 +1,101 @@
+package trackserver
+
+import (
+	// "fmt"
+	// "time"
+	"context"
+
+	"github.com/go-pg/pg"
+	"github.com/twitchtv/twirp"
+	// "github.com/satori/go.uuid"
+
+  userpb "user-api/rpc/user"
+	pb "user-api/rpc/track"
+	"user-api/internal"
+	"user-api/internal/database/models"
+)
+
+type Server struct {
+	db *pg.DB
+}
+
+func NewServer(db *pg.DB) *Server {
+	return &Server{db: db}
+}
+
+func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, error) {
+  // \Get artists (id, name, avatar)
+  // Get track_groups (id, title, cover)
+  return &pb.Track{}, nil
+}
+
+func (s *Server) CreateTrack(ctx context.Context, track *pb.Track) (*pb.Track, error) {
+  // Track is created then added to a TrackGroup on track group creation
+  err := checkRequiredAttributes(track)
+  if err != nil {
+    return nil, err
+  }
+
+  t := &models.Track{
+    Title: track.Title,
+    Status: track.Status,
+    Enabled: track.Enabled,
+    TrackNumber: track.TrackNumber,
+    Duration: track.Duration,
+  }
+
+  if pgerr, table := t.Create(s.db, track); pgerr != nil {
+    return nil, internal.CheckError(pgerr, table)
+  }
+
+  return track, nil
+}
+
+func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*userpb.Empty, error) {
+  // Add trackserverid
+  return &userpb.Empty{}, nil
+}
+
+func (s *Server) DeleteTrack(ctx context.Context, track *pb.Track) (*userpb.Empty, error) {
+  // func with Tx in track.go
+  // Delete track from artists tracks array
+  // Delete track from track_groups tracks array
+  // Delete track from user favorite_tracks
+  // Delete from track server
+  return &userpb.Empty{}, nil
+}
+
+func getTrackModel(track *pb.Track) (*models.Track, twirp.Error) {
+  id, err := internal.GetUuidFromString(track.Id)
+  if err != nil {
+    return nil, err
+  }
+  return &models.Track{
+    Id: id,
+    Title: track.Title,
+    Status: track.Status,
+    Enabled: track.Enabled,
+    TrackNumber: track.TrackNumber,
+		Duration: track.Duration,
+  }, nil
+}
+
+func checkRequiredAttributes(track *pb.Track) (twirp.Error) {
+	if track.Title == "" || track.Status == "" || track.TrackNumber == 0 || track.CreatorId == "" || track.UserGroupId == "" { // track.Artists?
+		var argument string
+		switch {
+		case track.Title == "":
+			argument = "title"
+		case track.Status == "":
+			argument = "status"
+		case track.CreatorId == "":
+			argument = "creator_id"
+		case track.UserGroupId == "":
+			argument = "user_group_id"
+		case track.TrackNumber == 0:
+			argument = "track_number"
+		}
+		return twirp.RequiredArgumentError(argument)
+	}
+	return nil
+}

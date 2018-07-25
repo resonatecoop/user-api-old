@@ -435,7 +435,6 @@ var _ = Describe("User server", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Username).To(Equal("janed"))
 				Expect(resp.FullName).To(Equal("jane d"))
-				Expect(resp.DisplayName).To(Equal("jad"))
 				Expect(resp.Email).To(Equal("jane@d.com"))
 				Expect(resp.Id).NotTo(Equal(""))
 			})
@@ -477,6 +476,28 @@ var _ = Describe("User server", func() {
 				Expect(twerr.Code()).To(Equal(invalid_argument_code))
 				Expect(twerr.Meta("argument")).To(Equal("email"))
 			})
+			It("should not create a user without username", func() {
+				user := &pb.User{Username: "", FullName: "john doe", DisplayName: "john", Email: "john@doe.com"}
+				resp, err := service.CreateUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("username"))
+			})
+			It("should not create a user without full_name", func() {
+				user := &pb.User{Username: "johnd", FullName: "", DisplayName: "john", Email: "john@doe.com"}
+				resp, err := service.CreateUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("full_name"))
+			})
 		})
 	})
 
@@ -486,7 +507,7 @@ var _ = Describe("User server", func() {
 				user := &pb.User{Id: newUser.Id.String()}
 
 				userToDelete := new(models.User)
-				err := db.Model(userToDelete).Column("user.*","OwnerOfGroups").Where("id = ?", newUser.Id).Select()
+				err := db.Model(userToDelete).Column("user.*", "OwnerOfGroups").Where("id = ?", newUser.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 
 				_, err = service.DeleteUser(context.Background(), user)

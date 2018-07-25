@@ -24,6 +24,8 @@ TODO: add scope for restricted access (public/private user profile).
             "created_at": "2015-08-05T08:40:51.620Z",
             "updated_at": "2015-08-05T09:40:51.620Z",
             "email": "john@doe.com",
+            "full_name": "john doe",
+
             "member": false,
             "owner_of_groups": [{
               "id": "d09cd642-9df8-4f44-bb5a-169829043110",
@@ -158,7 +160,7 @@ To add members/memberOfGroups, refer to dedicated endpoint.
             "address": {
               "data": {"some": "address"}
             },
-            "tags": ]
+            "tags": [
               {"type": "genre", "name": "ambient"},
               {"type": "genre", "name": "experimental"}
             ],
@@ -311,11 +313,11 @@ scope private/public.
                     "avatar": "blob",
                     "tags": [
                         {
-                          "type": "role",
+                          "type": "user_group_role",
                           "name": "guitarist"
                         },
                         {
-                          "type": "role",
+                          "type": "user_group_role",
                           "name": "singer"
                         }
                     ]
@@ -382,11 +384,11 @@ Can also be used for an artist (members array only contains 1 element with artis
                     "display_name": "John Doe",
                     "tags": [
                         {
-                          "type": "role",
+                          "type": "user_group_role",
                           "name": "guitarist"
                         },
                         {
-                          "type": "role",
+                          "type": "user_group_role",
                           "name": "singer"
                         }
                     ]
@@ -396,7 +398,7 @@ Can also be used for an artist (members array only contains 1 element with artis
                     "display_name": "Jane Doe",
                     "tags": [
                         {
-                          "type": "role",
+                          "type": "user_group_role",
                           "name": "bassist"
                         }
                     ]
@@ -434,59 +436,49 @@ Can also be used for an artist (members array only contains 1 element with artis
 + Response 204 (application/json)
 
 ## Tracks Collection [/twirp/resonate.api.user.Track]
-
-### Add Tracks [POST /twirp/resonate.api.user.Track/AddTracks]
-
-Upload tracks (track server) and create tracks.
+TODO
+### Create Track [POST /twirp/resonate.api.user.Track/CreateTrack]
+Used by track server API.
+Tracks are created and only after the TrackGroup they are part of is created.
 
 + Request (application/json)
-
         {
-            "performers": [
-                {
-                    "id": "c09cd642-9df8-4f44-bb5a-169829043110"
-                }
-            ],
-            "labels": [
-                {
-                    "id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
-                }
-            ],
-            "rights": [],
-            "publish_date": "2015-08-05",
-            "tags": [],
             "title": "Greatest track in the world",
             "status": "free",
-            "cover": ""
+            "track_number": 1,
+            "duration": "3:30",
+            "creator_id": "b19cd642-9df8-4f44-bb5a-166529043111",
+            "user_group_id": "b19cd642-9df8-4f44-bb5a-166529043112",
+            "artists": [
+              {"id": "b19cd642-9df8-4f44-bb5a-166529043113"},
+              {"id": "b20cd642-9df8-4f44-bb5a-166529043113"}
+            ],
+            "track_server_id": "",
+            "tags": [
+              {"type": "genre", "name": "ambient"},
+              {"type": "genre", "name": "experimental"}
+            ]
         }
 
 + Response 201 (application/json)
 
         {
             "id": "b19cd642-9df8-4f44-bb5a-166529043110",
-            "created_at": "2015-08-05T08:40:51.620Z",
-            "updated_at": "2015-08-05T08:40:51.620Z",
-            "performers": [
-                {
-                    "id": "c09cd642-9df8-4f44-bb5a-169829043110"
-                }
-            ],
-            "labels": [
-                {
-                    "id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
-                }
-            ],
-            "rights": [],
-            "publish_date": "2015-08-05",
-            "audiofile": {
-                "id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378"
-            },
-            "tags": [],
             "title": "Greatest track in the world",
-            "duration": "2m2s",
-            "links": [],
             "status": "free",
-            "cover": ""
+            "track_number": 1,
+            "duration": "3:30",
+            "creator_id": "b19cd642-9df8-4f44-bb5a-166529043111",
+            "user_group_id": "b19cd642-9df8-4f44-bb5a-166529043112",
+            "artists": [
+              {"id": "b19cd642-9df8-4f44-bb5a-166529043113", "display_name": "c19cd642-9df8-4f44-bb5a-166529043113", "avatar": "blob"},
+              {"id": "b20cd642-9df8-4f44-bb5a-166529043113", "display_name": "d19cd642-9df8-4f44-bb5a-166529043113", "avatar": "blob"}
+            ],
+            "track_server_id": "",
+            "tags": [
+              {"id": "z20cd642-9df8-4f44-bb5a-166529043113", "type": "genre", "name": "ambient"},
+              {"id": "c90cd642-9df8-4f44-bb5a-166529043113", "type": "genre", "name": "experimental"}
+            ]
         }
 
 ### Update Track [POST /twirp/resonate.api.user.Track/UpdateTrack]
@@ -510,86 +502,30 @@ Upload tracks (track server) and create tracks.
 
 + Response 204 (application/json)
 
-### Get Tracks [POST /twirp/resonate.api.user.Track/GetTracks]
+### Get Track [POST /twirp/resonate.api.user.Track/GetTrack]
 
-For a given user group
 
 + Request (application/json)
 
         {
-            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110"
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
         }
 
 + Response 200 (application/json)
 
-        [
             {
                 "id": "b19cd642-9df8-4f44-bb5a-166529043110",
                 "created_at": "2015-08-05T08:40:51.620Z",
                 "updated_at": "2015-08-05T08:40:51.620Z",
-                "performers": [
-                    {
-                        "id": "c09cd642-9df8-4f44-bb5a-169829043110"
-                    }
-                ],
-                "labels": [
-                    {
-                        "id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
-                    }
-                ],
-                "rights": [],
-                "publish_date": "2015-08-05",
                 "audiofile": {
                     "id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378"
                 },
-                "tags": [],
                 "title": "Greatest track in the world",
-                "duration": "2m2s",
-                "links": [],
                 "status": "free",
-                "cover": ""
             }
-        ]
-
-### Get Random Tracks [POST /twirp/resonate.api.user.Track/GetRandomTracks]
-
-Respond with x (to be defined) random tracks.
-
-+ Response 200 (application/json)
-
-        [
-            {
-                "id": "b19cd642-9df8-4f44-bb5a-166529043110",
-                "created_at": "2015-08-05T08:40:51.620Z",
-                "updated_at": "2015-08-05T08:40:51.620Z",
-                "performers": [
-                    {
-                        "id": "c09cd642-9df8-4f44-bb5a-169829043110"
-                    }
-                ],
-                "labels": [
-                    {
-                        "id": "b7b47086-3212-40c6-b9ec-c9b9cc29e378"
-                    }
-                ],
-                "rights": [],
-                "publish_date": "2015-08-05",
-                "audiofile": {
-                    "id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378"
-                },
-                "tags": [],
-                "title": "Greatest track in the world",
-                "duration": "2m2s",
-                "links": [],
-                "status": "free",
-                "cover": ""
-            }
-        ]
-
-
 
 ## TrackGroups Collection [/twirp/resonate.api.user.TrackGroup]
-
+TODO
 ### Create TrackGroup [POST /twirp/resonate.api.user.Track/CreateTrackGroup]
 
 artist EP, LP, user playlist...
@@ -642,9 +578,12 @@ artist EP, LP, user playlist...
 
 ### Add Track To TrackGroup [POST /twirp/resonate.api.user.Track/AddTrackToTrackGroup]
 
+Can be used to add a track to a playlist.
+
 + Request (application/json)
 
         {
+            "track_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d",
             "track_id": "ad3f89f6-e7d8-4e10-9926-a32b6bff125d"
         }
 
@@ -655,6 +594,7 @@ artist EP, LP, user playlist...
 + Request (application/json)
 
         {
+            "track_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d",
             "track_id": "ad3f89f6-e7d8-4e10-9926-a32b6bff125d"
         }
 

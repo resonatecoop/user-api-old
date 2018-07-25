@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+import "user-api/rpc/user/service.proto";
+import "user-api/rpc/usergroup/service.proto";
+
+package resonate.api.user;
+option go_package = "track";
+
+service TrackService {
+  rpc CreateTrack(Track) returns (Track);
+  rpc GetTrack(Track) returns (Track);
+  rpc UpdateTrack(Track) returns (Empty);
+  rpc DeleteTrack(Track) returns (Empty);
+}
+
+message Track {
+  string id = 1; // required
+
+  string title = 2; // required
+  string status = 3; // required
+  bool enabled = 4;
+  int32 track_number = 5;
+
+  repeated TrackGroup track_groups = 6;
+  string creator_id = 7;
+  string user_group_id = 8;
+  repeated UserGroup artists = 9;
+  string track_server_id = 10;
+  repeated Tag tags = 11;
+  float duration = 12;
+}
+
+message TrackGroup {
+  // TODO put in trackgroup/service.proto
+  string id = 1;
+  string title = 2;
+  bytes cover = 3;
+}

@@ -6,6 +6,8 @@ import (
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/satori/go.uuid"
+  pb "user-api/rpc/usergroup"
+  "user-api/internal"
 )
 
 type UserGroup struct {
@@ -35,7 +37,9 @@ type UserGroup struct {
   Tags []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   RecommendedArtists []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   HighlightedTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
-  // FeaturedTrackGroup uuid.UUID  `sql:"type:uuid"`
+
+  FeaturedTrackGroupId uuid.UUID  `sql:"type:uuid,notnull"`
+  // FeaturedTrackGroup *TrackGroup
 
   Kvstore map[string]string `pg:",hstore"`
   Followers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
@@ -48,10 +52,9 @@ type UserGroup struct {
   Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   TrackGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
-  // TODO remove
-  SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  // SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // artist
-  Labels []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  // Labels []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 }
 
 func (u *UserGroup) BeforeInsert(db orm.DB) error {
@@ -102,6 +105,20 @@ func (u *UserGroup) Delete(db *pg.DB) (error, string) {
     }
   }
 
+  var userGroupMembers []UserGroupMember
+  _, pgerr = tx.Model(&userGroupMembers).
+    Where("user_group_id = ?", u.Id).
+    WhereOr("member_id = ?", u.Id).
+    Delete()
+  if pgerr != nil {
+    return pgerr, "user_group_member"
+  }
+
+  _, pgerr = tx.Model(u).WherePK().Delete()
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
   _, pgerr = tx.Model(u.Address).WherePK().Delete()
   if pgerr != nil {
     return pgerr, "street_address"
@@ -112,19 +129,31 @@ func (u *UserGroup) Delete(db *pg.DB) (error, string) {
     return pgerr, "user_group_privacy"
   }
 
-  var userGroupMembers []UserGroupMember
-  _, pgerr = tx.Model(&userGroupMembers).
-    Where("user_group_id = ?", u.Id).
-    WhereOr("member_id = ?", u.Id).
-    Delete()
-  if pgerr != nil {
-    return pgerr, "user_group_member"
-  }
-
-  pgerr = tx.Delete(u)
-  if pgerr != nil {
-    return pgerr, "user_group"
-  }
-
   return tx.Commit(), table
+}
+
+// Select user groups in db with given ids in 'userGroups'
+// Return ids slice
+// Used in CreateUserGroup/UpdateUserGroup to add/update ids slice to recommended Artists
+func GetRelatedUserGroupIds(userGroups []*pb.UserGroup, db *pg.Tx) ([]uuid.UUID, error) {
+	relatedUserGroups := make([]*UserGroup, len(userGroups))
+	relatedUserGroupIds := make([]uuid.UUID, len(userGroups))
+	for i, userGroup := range userGroups {
+		id, twerr := internal.GetUuidFromString(userGroup.Id)
+		if twerr != nil {
+			return nil, twerr.(error)
+		}
+		relatedUserGroups[i] = &UserGroup{Id: id}
+		pgerr := db.Model(relatedUserGroups[i]).
+			WherePK().
+			Returning("id", "display_name", "avatar").
+			Select()
+		if pgerr != nil {
+			return nil, pgerr
+		}
+		userGroup.DisplayName = relatedUserGroups[i].DisplayName
+		userGroup.Avatar = relatedUserGroups[i].Avatar
+		relatedUserGroupIds[i] = relatedUserGroups[i].Id
+	}
+	return relatedUserGroupIds, nil
 }

@@ -25,8 +25,6 @@ Add following postgres extensions: "hstore" and "uuid-ossp"
 $ go run *.go
 ```
 
-**Note:** This is temporary database setup until we start using Docker.
-
 ## Dependencies
 
 [Dep](https://github.com/golang/dep) is used as dependency management tool.
