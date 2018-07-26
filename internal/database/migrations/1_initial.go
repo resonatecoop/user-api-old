@@ -3,7 +3,7 @@ package main
 import (
 
   "github.com/go-pg/migrations"
-	"github.com/go-pg/pg/orm"
+  "github.com/go-pg/pg/orm"
 
   "user-api/internal/database/models"
 )
@@ -66,9 +66,9 @@ func init() {
 
       } {
       _, err := orm.DropTable(db, model, &orm.DropTableOptions{
-  			IfExists: true,
-  			Cascade:  true,
-  		})
+        IfExists: true,
+        Cascade:  true,
+      })
       if err != nil {
         return err
       }

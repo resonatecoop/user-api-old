@@ -6,6 +6,8 @@ import (
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/satori/go.uuid"
+  "github.com/twitchtv/twirp"
+
   pb "user-api/rpc/usergroup"
   "user-api/internal"
 )
@@ -37,9 +39,7 @@ type UserGroup struct {
   Tags []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   RecommendedArtists []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   HighlightedTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
-
-  FeaturedTrackGroupId uuid.UUID  `sql:"type:uuid,notnull"`
-  // FeaturedTrackGroup *TrackGroup
+  FeaturedTrackGroupId uuid.NullUUID `sql:"type:uuid,default:uuid_nil()"`
 
   Kvstore map[string]string `pg:",hstore"`
   Followers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
@@ -56,7 +56,6 @@ type UserGroup struct {
   // artist
   // Labels []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 }
-
 func (u *UserGroup) BeforeInsert(db orm.DB) error {
   newPrivacy := &UserGroupPrivacy{Private: false, OwnedTracks: true, SupportedArtists: true}
   _, pgerr := db.Model(newPrivacy).Returning("*").Insert()
@@ -130,6 +129,26 @@ func (u *UserGroup) Delete(db *pg.DB) (error, string) {
   }
 
   return tx.Commit(), table
+}
+
+// Select user groups in db with given 'ids'
+// Return slice of UserGroup response
+func GetRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*pb.UserGroup, twirp.Error) {
+	groupsResponse := make([]*pb.UserGroup, len(ids))
+	if len(ids) > 0 {
+		var groups []UserGroup
+		pgerr := db.Model(&groups).
+			Where("id in (?)", pg.In(ids)).
+			Select()
+		if pgerr != nil {
+			return nil, internal.CheckError(pgerr, "user_group")
+		}
+		for i, group := range groups {
+			groupsResponse[i] = &pb.UserGroup{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
+		}
+	}
+
+	return groupsResponse, nil
 }
 
 // Select user groups in db with given ids in 'userGroups'

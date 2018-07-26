@@ -2,6 +2,7 @@ package trackserver_test
 
 import (
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -18,10 +19,13 @@ var (
 	service *trackserver.Server
 	newUser *models.User
 	newTrack *models.Track
+	newAlbum *models.TrackGroup
+	newPlaylist *models.TrackGroup
 	newArtistGroupTaxonomy *models.GroupTaxonomy
 	newLabelGroupTaxonomy *models.GroupTaxonomy
 	newArtistUserGroup *models.UserGroup
 	newLabelUserGroup *models.UserGroup
+	newGenreTag *models.Tag
 )
 
 func TestTrack(t *testing.T) {
@@ -34,8 +38,12 @@ var _ = BeforeSuite(func() {
 	db = database.Connect(testing)
 	service = trackserver.NewServer(db)
 
+	newGenreTag = &models.Tag{Type: "genre", Name: "pop"}
+	err := db.Insert(newGenreTag)
+	Expect(err).NotTo(HaveOccurred())
+
 	newAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}
-	err := db.Insert(newAddress)
+	err = db.Insert(newAddress)
 	Expect(err).NotTo(HaveOccurred())
 
 	newArtistGroupTaxonomy = &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
@@ -62,7 +70,6 @@ var _ = BeforeSuite(func() {
 	err = db.Insert(newArtistUserGroup)
 	Expect(err).NotTo(HaveOccurred())
 
-
 	newLabelUserGroup = &models.UserGroup{
 		DisplayName: "label",
 		Avatar: avatar,
@@ -74,8 +81,50 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Create a new track
-	newTrack = &models.Track{CreatorId: newUser.Id, UserGroupId: newArtistUserGroup.Id, Title: "track title", Status: "free"} // TODO add other attr
+	tagIds := []uuid.UUID{newGenreTag.Id}
+	newTrack = &models.Track{
+		CreatorId: newUser.Id,
+		UserGroupId: newArtistUserGroup.Id,
+		Artists: []uuid.UUID{newArtistUserGroup.Id},
+		Title: "track title",
+		Status: "free",
+		Tags: tagIds,
+	}
 	err = db.Insert(newTrack)
+	Expect(err).NotTo(HaveOccurred())
+
+	// Create track groups
+	tracks := map[string]string{
+		"1": newTrack.Id.String(),
+	}
+	newAlbum = &models.TrackGroup{
+		CreatorId: newUser.Id,
+		UserGroupId: newArtistUserGroup.Id,
+		LabelId: newLabelUserGroup.Id,
+		Title: "album title",
+		ReleaseDate: time.Now(),
+		Type: "lp",
+		Cover: avatar,
+		Tracks: tracks,
+	}
+	err = db.Insert(newAlbum)
+	Expect(err).NotTo(HaveOccurred())
+
+	newPlaylist = &models.TrackGroup{
+		CreatorId: newUser.Id,
+		// UserGroupId: uuid.UUID{},
+		// LabelId: uuid.UUID{},
+		Title: "playlist title",
+		ReleaseDate: time.Now(),
+		Type: "playlist",
+		Cover: avatar,
+		Tracks: tracks,
+	}
+	err = db.Insert(newPlaylist)
+	Expect(err).NotTo(HaveOccurred())
+
+	newTrack.TrackGroups = []uuid.UUID{newAlbum.Id, newPlaylist.Id}
+	_, err = db.Model(newTrack).Column("track_groups").WherePK().Update()
 	Expect(err).NotTo(HaveOccurred())
 
 	newArtistUserGroup.Tracks = []uuid.UUID{newTrack.Id}
@@ -89,6 +138,13 @@ var _ = AfterSuite(func() {
 	err := db.Model(&tracks).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&tracks).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all track groups
+	var trackGroups []models.TrackGroup
+	err = db.Model(&trackGroups).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&trackGroups).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all userGroups

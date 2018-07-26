@@ -9,7 +9,7 @@ import (
 	"github.com/twitchtv/twirp"
 	// "github.com/satori/go.uuid"
 
-  userpb "user-api/rpc/user"
+	userpb "user-api/rpc/user"
 	pb "user-api/rpc/track"
 	"user-api/internal"
 	"user-api/internal/database/models"
@@ -24,9 +24,48 @@ func NewServer(db *pg.DB) *Server {
 }
 
 func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, error) {
-  // \Get artists (id, name, avatar)
-  // Get track_groups (id, title, cover)
-  return &pb.Track{}, nil
+	t, err := getTrackModel(track)
+	if err != nil {
+		return nil, err
+	}
+
+	pgerr := s.db.Model(t).
+			Column("track.*").
+			WherePK().
+			Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user_group")
+	}
+	track.UserGroupId = t.UserGroupId.String()
+	track.CreatorId = t.CreatorId.String()
+	track.Title = t.Title
+	track.Status = t.Status
+	track.Enabled = t.Enabled
+	track.TrackNumber = t.TrackNumber
+	track.Duration = t.Duration
+
+	// Get tags
+	tags, twerr := models.GetTags(t.Tags, s.db)
+	if twerr != nil {
+		return nil, twerr
+	}
+	track.Tags = tags
+
+  // Get artists (id, name, avatar)
+	artists, twerr := models.GetRelatedUserGroups(t.Artists, s.db)
+	if twerr != nil {
+		return nil, twerr
+	}
+	track.Artists = artists
+
+  // Get track_groups (id, title, cover) that are not playlists (i.e. LP, EP or Single)
+	trackGroups, twerr := models.GetTrackGroups(t.TrackGroups, s.db, false)
+	if twerr != nil {
+		return nil, twerr
+	}
+	track.TrackGroups = trackGroups
+
+	return track, nil
 }
 
 func (s *Server) CreateTrack(ctx context.Context, track *pb.Track) (*pb.Track, error) {

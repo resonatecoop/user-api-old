@@ -21,9 +21,36 @@ var _ = Describe("Track server", func() {
 	const invalid_argument_code twirp.ErrorCode = "invalid_argument"
 	const not_found_code twirp.ErrorCode = "not_found"
 
-	XDescribe("GetTrack", func() {
+	Describe("GetTrack", func() {
 		Context("with valid uuid", func() {
 			It("should respond with track if it exists", func() {
+				track := &pb.Track{Id: newTrack.Id.String()}
+
+				res, err := service.GetTrack(context.Background(), track)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(res.Title).To(Equal(newTrack.Title))
+				Expect(res.Status).To(Equal(newTrack.Status))
+				Expect(res.Duration).To(Equal(newTrack.Duration))
+				Expect(res.Enabled).To(Equal(newTrack.Enabled))
+				Expect(res.TrackNumber).To(Equal(newTrack.TrackNumber))
+				Expect(res.CreatorId).To(Equal(newTrack.CreatorId.String()))
+				Expect(res.UserGroupId).To(Equal(newTrack.UserGroupId.String()))
+
+				Expect(len(res.Tags)).To(Equal(1))
+				Expect(res.Tags[0].Id).To(Equal(newGenreTag.Id.String()))
+				Expect(res.Tags[0].Type).To(Equal(newGenreTag.Type))
+				Expect(res.Tags[0].Name).To(Equal(newGenreTag.Name))
+
+				Expect(len(res.Artists)).To(Equal(1))
+				Expect(res.Artists[0].Id).To(Equal(newArtistUserGroup.Id.String()))
+				Expect(res.Artists[0].Avatar).To(Equal(newArtistUserGroup.Avatar))
+				Expect(res.Artists[0].DisplayName).To(Equal(newArtistUserGroup.DisplayName))
+
+				Expect(len(res.TrackGroups)).To(Equal(1))
+				Expect(res.TrackGroups[0].Id).To(Equal(newAlbum.Id.String()))
+				Expect(res.TrackGroups[0].Cover).To(Equal(newAlbum.Cover))
+				Expect(res.TrackGroups[0].Title).To(Equal(newAlbum.Title))
 			})
 			It("should respond with not_found error if track does not exist", func() {
 				id := uuid.NewV4()

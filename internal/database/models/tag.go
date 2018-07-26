@@ -5,12 +5,31 @@ import (
   "github.com/satori/go.uuid"
   pb "user-api/rpc/usergroup"
   "github.com/go-pg/pg"
+  "github.com/twitchtv/twirp"
+
 )
 
 type Tag struct {
   Id uuid.UUID `sql:"type:uuid,default:uuid_generate_v4()"`
   Type string `sql:",notnull"`
   Name string `sql:",notnull"`
+}
+
+func GetTags(tagIds []uuid.UUID, db *pg.DB) ([]*pb.Tag, twirp.Error) {
+  tags := make([]*pb.Tag, len(tagIds))
+  if len(tags) > 0 {
+    var t []Tag
+    pgerr := db.Model(&t).
+      Where("id in (?)", pg.In(tagIds)).
+      Select()
+    if pgerr != nil {
+      return nil, internal.CheckError(pgerr, "tag")
+    }
+    for i, tag := range t {
+      tags[i] = &pb.Tag{Id: tag.Id.String(), Type: tag.Type, Name: tag.Name}
+    }
+  }
+  return tags, nil
 }
 
 func GetTagIds(t []*pb.Tag, db *pg.Tx) ([]uuid.UUID, error) {

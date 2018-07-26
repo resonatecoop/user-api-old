@@ -168,23 +168,13 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	}
 
 	// Get user group tags
-	// TODO refacto using interface
-	tags := make([]*pb.Tag, len(u.Tags))
-	if len(tags) > 0 {
-		var groupTags []models.Tag
-		pgerr = s.db.Model(&groupTags).
-			Where("id in (?)", pg.In(u.Tags)).
-			Select()
-		if pgerr != nil {
-			return nil, internal.CheckError(pgerr, "tag")
-		}
-		for i, tag := range groupTags {
-			tags[i] = &pb.Tag{Id: tag.Id.String(), Type: tag.Type, Name: tag.Name}
-		}
+	tags, twerr := models.GetTags(u.Tags, s.db)
+	if twerr != nil {
+		return nil, twerr
 	}
 
 	// Get related user groups
-	recommendedArtists, twerr := getRelatedUserGroups(u.RecommendedArtists, s.db)
+	recommendedArtists, twerr := models.GetRelatedUserGroups(u.RecommendedArtists, s.db)
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -569,29 +559,6 @@ func getUserGroupMembers(userGroupId uuid.UUID, userGroups []models.UserGroup, m
 		userGroupsResponse[i] = u
 	}
 	return userGroupsResponse, nil, ""
-}
-
-
-// Select user groups in db with given 'ids'
-// Return slice of UserGroup response
-// Used in GetUserGroup to respond with info about related recommended_artists
-func getRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*pb.UserGroup, twirp.Error) {
-	groupsResponse := make([]*pb.UserGroup, len(ids))
-
-	if len(ids) > 0 {
-		var groups []models.UserGroup
-		pgerr := db.Model(&groups).
-			Where("id in (?)", pg.In(ids)).
-			Select()
-		if pgerr != nil {
-			return nil, internal.CheckError(pgerr, "user_group")
-		}
-		for i, group := range groups {
-			groupsResponse[i] = &pb.UserGroup{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
-		}
-	}
-
-	return groupsResponse, nil
 }
 
 func getLinkIds(l []*pb.Link, db *pg.Tx) ([]uuid.UUID, error) {

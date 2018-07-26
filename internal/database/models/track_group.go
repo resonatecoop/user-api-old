@@ -6,6 +6,7 @@ import (
   "github.com/satori/go.uuid"
   "user-api/internal"
   "github.com/go-pg/pg"
+  "github.com/twitchtv/twirp"
   pb "user-api/rpc/track" // TODO change to trackgroup
 )
 
@@ -24,11 +25,8 @@ type TrackGroup struct {
   CreatorId uuid.UUID `sql:"type:uuid,notnull"`
   Creator *User
 
-  TrackGroupID uuid.UUID `sql:"type:uuid"`
-  TrackGroup *TrackGroup // track group belongs to user group
-
-  LabelId uuid.UUID `sql:"type:uuid"`
-  Label *UserGroup
+  UserGroupId uuid.UUID `sql:"type:uuid,default:uuid_nil()"` // track group belongs to user group
+  LabelId uuid.UUID `sql:"type:uuid,default:uuid_nil()"`
 
   Tracks map[string]string `pg:",hstore"` // {...key:track_number,value:track_id}
   Tags []uuid.UUID `sql:",type:uuid[]" pg:",array"`
@@ -41,6 +39,31 @@ type TrackGroup struct {
   // RightExpiryDate time.Time
   // TotalVolumes int
   // CatalogNumber string
+}
+
+func GetTrackGroups(ids []uuid.UUID, db *pg.DB, playlists bool) ([]*pb.TrackGroup, twirp.Error) {
+	var tracksResponse []*pb.TrackGroup
+	if len(ids) > 0 {
+		var t []TrackGroup
+    var types []string
+    if playlists == true {
+      types = []string{"playlist"}
+    } else {
+      types = []string{"lp", "ep", "single"}
+    }
+		pgerr := db.Model(&t).
+			Where("id in (?)", pg.In(ids)).
+      Where("type in (?)", pg.In(types)).
+			Select()
+		if pgerr != nil {
+			return nil, internal.CheckError(pgerr, "track_group")
+		}
+		for _, trackGroup := range t {
+			tracksResponse = append(tracksResponse, &pb.TrackGroup{Id: trackGroup.Id.String(), Title: trackGroup.Title, Cover: trackGroup.Cover})
+		}
+	}
+
+	return tracksResponse, nil
 }
 
 func GetTrackGroupIds(t []*pb.TrackGroup, db *pg.Tx) ([]uuid.UUID, error) {
