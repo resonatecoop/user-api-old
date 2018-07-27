@@ -36,6 +36,7 @@ var _ = Describe("Track server", func() {
 				Expect(res.TrackNumber).To(Equal(newTrack.TrackNumber))
 				Expect(res.CreatorId).To(Equal(newTrack.CreatorId.String()))
 				Expect(res.UserGroupId).To(Equal(newTrack.UserGroupId.String()))
+				Expect(res.TrackServerId).To(Equal(newTrack.TrackServerId.String()))
 
 				Expect(len(res.Tags)).To(Equal(1))
 				Expect(res.Tags[0].Id).To(Equal(newGenreTag.Id.String()))
@@ -83,9 +84,39 @@ var _ = Describe("Track server", func() {
 		})
 	})
 
-	XDescribe("UpdateTrack", func() {
+	Describe("UpdateTrack", func() {
 		Context("with valid uuid", func() {
 			It("should update track if it exists", func() {
+				trackServerId := uuid.NewV4()
+				track := &pb.Track{
+					Id: newTrack.Id.String(),
+					Title: "best track ever",
+					TrackNumber: 1,
+					Status: "paid",
+					Duration: 250.12,
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+					TrackServerId: trackServerId.String(),
+				}
+				_, err := service.UpdateTrack(context.Background(), track)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				t := new(models.Track)
+				err = db.Model(t).Where("id = ?", newTrack.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(t.Title).To(Equal(track.Title))
+				Expect(t.TrackNumber).To(Equal(track.TrackNumber))
+				Expect(t.Status).To(Equal(track.Status))
+				Expect(t.Duration).To(Equal(track.Duration))
+				Expect(t.TrackServerId.String()).To(Equal(track.TrackServerId))
+
+				// unchanged
+				Expect(t.CreatorId.String()).To(Equal(track.CreatorId))
+				Expect(t.UserGroupId.String()).To(Equal(track.UserGroupId))
+				Expect(len(t.Tags)).To(Equal(1))
+				Expect(len(t.Artists)).To(Equal(1))
+				Expect(len(t.TrackGroups)).To(Equal(2))
 			})
 			It("should respond with not_found error if track does not exist", func() {
 				id := uuid.NewV4()
@@ -94,6 +125,12 @@ var _ = Describe("Track server", func() {
 				}
 				track := &pb.Track{
 					Id: id.String(),
+					Title: "best track ever",
+					TrackNumber: 1,
+					Status: "paid",
+					Duration: 250.12,
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
 				}
 				resp, err := service.UpdateTrack(context.Background(), track)
 
@@ -109,6 +146,12 @@ var _ = Describe("Track server", func() {
 				id := "45"
 				track := &pb.Track{
 					Id: id,
+					Title: "best track ever",
+					TrackNumber: 1,
+					Status: "paid",
+					Duration: 250.12,
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
 				}
 				resp, err := service.UpdateTrack(context.Background(), track)
 

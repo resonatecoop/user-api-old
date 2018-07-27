@@ -38,6 +38,7 @@ func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, erro
 	}
 	track.UserGroupId = t.UserGroupId.String()
 	track.CreatorId = t.CreatorId.String()
+	track.TrackServerId = t.TrackServerId.String()
 	track.Title = t.Title
 	track.Status = t.Status
 	track.Enabled = t.Enabled
@@ -91,7 +92,14 @@ func (s *Server) CreateTrack(ctx context.Context, track *pb.Track) (*pb.Track, e
 }
 
 func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*userpb.Empty, error) {
-  // Add trackserverid
+	t, err := getTrackModel(track)
+	if err != nil {
+		return nil, err
+	}
+
+	if pgerr, table := t.Update(s.db, track); pgerr != nil {
+    return nil, internal.CheckError(pgerr, table)
+  }
   return &userpb.Empty{}, nil
 }
 

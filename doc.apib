@@ -313,11 +313,11 @@ scope private/public.
                     "avatar": "blob",
                     "tags": [
                         {
-                          "type": "user_group_role",
+                          "type": "role",
                           "name": "guitarist"
                         },
                         {
-                          "type": "user_group_role",
+                          "type": "role",
                           "name": "singer"
                         }
                     ]
@@ -384,11 +384,11 @@ Can also be used for an artist (members array only contains 1 element with artis
                     "display_name": "John Doe",
                     "tags": [
                         {
-                          "type": "user_group_role",
+                          "type": "role",
                           "name": "guitarist"
                         },
                         {
-                          "type": "user_group_role",
+                          "type": "role",
                           "name": "singer"
                         }
                     ]
@@ -398,7 +398,7 @@ Can also be used for an artist (members array only contains 1 element with artis
                     "display_name": "Jane Doe",
                     "tags": [
                         {
-                          "type": "user_group_role",
+                          "type": "role",
                           "name": "bassist"
                         }
                     ]
@@ -467,12 +467,12 @@ Tracks are created and only after the TrackGroup they are part of is created.
             "title": "Greatest track in the world",
             "status": "free",
             "track_number": 1,
-            "duration": "3:30",
+            "duration": 250.15,
             "creator_id": "b19cd642-9df8-4f44-bb5a-166529043111",
             "user_group_id": "b19cd642-9df8-4f44-bb5a-166529043112",
             "artists": [
-              {"id": "b19cd642-9df8-4f44-bb5a-166529043113", "display_name": "c19cd642-9df8-4f44-bb5a-166529043113", "avatar": "blob"},
-              {"id": "b20cd642-9df8-4f44-bb5a-166529043113", "display_name": "d19cd642-9df8-4f44-bb5a-166529043113", "avatar": "blob"}
+              {"id": "b19cd642-9df8-4f44-bb5a-166529043113", "display_name": "artist name 1", "avatar": "blob"},
+              {"id": "b20cd642-9df8-4f44-bb5a-166529043113", "display_name": "artist name 2", "avatar": "blob"}
             ],
             "track_server_id": "",
             "tags": [
@@ -515,13 +515,25 @@ Tracks are created and only after the TrackGroup they are part of is created.
 
             {
                 "id": "b19cd642-9df8-4f44-bb5a-166529043110",
-                "created_at": "2015-08-05T08:40:51.620Z",
-                "updated_at": "2015-08-05T08:40:51.620Z",
-                "audiofile": {
-                    "id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378"
-                },
+                "track_server_id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378",
+                "owner_id": "d9b47086-3212-40c6-b9ec-c9b9cc29e378",
+                "user_group_id": "e9b47086-3212-40c6-b9ec-c9b9cc29e378",
                 "title": "Greatest track in the world",
                 "status": "free",
+                "duration": 250.25,
+                "track_number": 1,
+                "enabled": true,
+                "tags": [
+                  {"id": "z20cd642-9df8-4f44-bb5a-166529043113", "type": "genre", "name": "ambient"},
+                  {"id": "c90cd642-9df8-4f44-bb5a-166529043113", "type": "genre", "name": "experimental"}
+                ],
+                "artists": [
+                  {"id": "b19cd642-9df8-4f44-bb5a-166529043113", "display_name": "artist name 1", "avatar": "blob"},
+                  {"id": "b20cd642-9df8-4f44-bb5a-166529043113", "display_name": "artist name 2", "avatar": "blob"}
+                ],
+                "track_groups": [
+                  {"id": "c19cd642-9df8-4f44-bb5a-166529043113", "title": "album name", "cover": "blob"},
+                ]
             }
 
 ## TrackGroups Collection [/twirp/resonate.api.user.TrackGroup]
@@ -576,15 +588,15 @@ artist EP, LP, user playlist...
 
 + Response 204 (application/json)
 
-### Add Track To TrackGroup [POST /twirp/resonate.api.user.Track/AddTrackToTrackGroup]
+### Add Tracks To TrackGroup [POST /twirp/resonate.api.user.Track/AddTracksToTrackGroup]
 
-Can be used to add a track to a playlist.
+Can be used to add a track to a playlist, lp, ep, single (all types of track group).
 
 + Request (application/json)
 
         {
             "track_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d",
-            "track_id": "ad3f89f6-e7d8-4e10-9926-a32b6bff125d"
+            "tracks": "TODO"
         }
 
 + Response 204 (application/json)

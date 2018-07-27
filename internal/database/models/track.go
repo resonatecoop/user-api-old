@@ -40,6 +40,34 @@ type Track struct {
   // Performers with IPI
 }
 
+func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
+  // Update tags? artists?
+  // tracks can be added to a track group from dedicated endpoint in TrackGroup Service AddTracksToTrackGroup
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  err, table = t.GetIds(track)
+  if err != nil {
+    return err, table
+  }
+
+  t.UpdatedAt = time.Now()
+  _, pgerr := tx.Model(t).
+    Column("title", "updated_at", "status", "track_number", "duration", "track_server_id").
+    WherePK().
+    Returning("*").
+    Update()
+  if pgerr != nil {
+    return pgerr, "track"
+  }
+
+  return tx.Commit(), table
+}
+
 func (t *Track) Create(db *pg.DB, track *pb.Track) (error, string) {
   var table string
   tx, err := db.Begin()
@@ -48,26 +76,14 @@ func (t *Track) Create(db *pg.DB, track *pb.Track) (error, string) {
   }
   defer tx.Rollback()
 
-  creatorId, err := internal.GetUuidFromString(track.CreatorId)
+  err, table = t.GetIds(track)
   if err != nil {
-    return err, "user"
+    return err, table
   }
 
-  userGroupId, err := internal.GetUuidFromString(track.UserGroupId)
-  if err != nil {
-    return err, "user_group"
-  }
   artistIds, pgerr := GetRelatedUserGroupIds(track.Artists, tx)
   if pgerr != nil {
     return pgerr, "user_group"
-  }
-
-  if track.TrackServerId != "" {
-    trackServerId, err := internal.GetUuidFromString(track.TrackServerId)
-    if err != nil {
-      return err, "track_server"
-    }
-    t.TrackServerId = trackServerId
   }
 
   // Select or create tags
@@ -77,8 +93,6 @@ func (t *Track) Create(db *pg.DB, track *pb.Track) (error, string) {
   }
 
   t.Tags = tagIds
-  t.UserGroupId = userGroupId
-  t.CreatorId = creatorId
   t.Artists = artistIds
 
   _, pgerr = tx.Model(t).Returning("*").Insert()
@@ -91,7 +105,7 @@ func (t *Track) Create(db *pg.DB, track *pb.Track) (error, string) {
   // Add track to involved user groups
   // userGroupId can be part of artistIds (artist adding his/her track)
   // or not (label adding a track for one or more artists)
-  userGroupIds := internal.RemoveDuplicates(append(artistIds, userGroupId))
+  userGroupIds := internal.RemoveDuplicates(append(artistIds, t.UserGroupId))
   trackIdArr := []uuid.UUID{t.Id}
   _, pgerr = tx.ExecOne(`
     UPDATE user_groups
@@ -103,4 +117,30 @@ func (t *Track) Create(db *pg.DB, track *pb.Track) (error, string) {
   }
 
   return tx.Commit(), table
+}
+
+// Get track OwnerId, UserGroupId and TrackServerId as UUID
+func (t *Track) GetIds(track *pb.Track) (error, string) {
+  creatorId, err := internal.GetUuidFromString(track.CreatorId)
+  if err != nil {
+    return err, "owner"
+  }
+
+  userGroupId, err := internal.GetUuidFromString(track.UserGroupId)
+  if err != nil {
+    return err, "user_group"
+  }
+
+  if track.TrackServerId != "" {
+    trackServerId, err := internal.GetUuidFromString(track.TrackServerId)
+    if err != nil {
+      return err, "track_server"
+    }
+    t.TrackServerId = trackServerId
+  }
+
+  t.UserGroupId = userGroupId
+  t.CreatorId = creatorId
+
+  return nil, ""
 }

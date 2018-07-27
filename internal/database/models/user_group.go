@@ -56,6 +56,7 @@ type UserGroup struct {
   // artist
   // Labels []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 }
+
 func (u *UserGroup) BeforeInsert(db orm.DB) error {
   newPrivacy := &UserGroupPrivacy{Private: false, OwnedTracks: true, SupportedArtists: true}
   _, pgerr := db.Model(newPrivacy).Returning("*").Insert()

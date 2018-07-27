@@ -283,7 +283,7 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		u.Links = linkIds
 		u.RecommendedArtists = recommendedArtistIds
 		u.UpdatedAt = time.Now()
-		_, pgerr = tx.Model(u).WherePK().Returning("*").Update()
+		_, pgerr = tx.Model(u).WherePK().Returning("*").UpdateNotNull()
 		if pgerr != nil {
 			return pgerr, "user_group"
 		}
