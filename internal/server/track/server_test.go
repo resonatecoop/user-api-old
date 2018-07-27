@@ -5,7 +5,7 @@ import (
 	// "reflect"
 	"context"
 
-	// "github.com/go-pg/pg"
+	"github.com/go-pg/pg"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/twitchtv/twirp"
@@ -443,7 +443,7 @@ var _ = Describe("Track server", func() {
 		})
 	})
 
-	XDescribe("DeleteTrack", func() {
+	Describe("DeleteTrack", func() {
 		Context("with valid uuid", func() {
 			It("should delete track if it exists", func() {
 				track := &pb.Track{Id: newTrack.Id.String()}
@@ -455,6 +455,42 @@ var _ = Describe("Track server", func() {
 				_, err = service.DeleteTrack(context.Background(), track)
 
 				Expect(err).NotTo(HaveOccurred())
+
+				owner := new(models.UserGroup)
+				err = db.Model(owner).Where("id = ?", trackToDelete.UserGroupId).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(owner.Tracks).NotTo(ContainElement(trackToDelete.Id))
+
+				var users []*models.User
+				err = db.Model(&users).
+					Where("id in (?)", pg.In(trackToDelete.FavoriteOfUsers)).
+					Select()
+				for _, user := range users {
+					Expect(user.FavoriteTracks).NotTo(ContainElement(trackToDelete.Id))
+				}
+
+				var artists []*models.UserGroup
+				err = db.Model(&artists).
+					Where("id in (?)", pg.In(trackToDelete.Artists)).
+					Select()
+				for _, artist := range artists {
+					Expect(artist.Tracks).NotTo(ContainElement(trackToDelete.Id))
+				}
+
+				var trackGroups []*models.TrackGroup
+				err = db.Model(&trackGroups).
+					Where("id in (?)", pg.In(trackToDelete.TrackGroups)).
+					Select()
+				for _, trackGroup := range trackGroups {
+					Expect(trackGroup.Tracks).NotTo(ContainElement(trackToDelete.Id))
+				}
+
+				var tracks []models.Track
+				err = db.Model(&tracks).
+					Where("id in (?)", pg.In([]uuid.UUID{trackToDelete.Id})).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(tracks)).To(Equal(0))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()

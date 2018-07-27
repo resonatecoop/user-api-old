@@ -104,11 +104,14 @@ func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*userpb.Empt
 }
 
 func (s *Server) DeleteTrack(ctx context.Context, track *pb.Track) (*userpb.Empty, error) {
-  // func with Tx in track.go
-  // Delete track from artists tracks array
-  // Delete track from track_groups tracks array
-  // Delete track from user favorite_tracks
-  // Delete from track server
+	t, err := getTrackModel(track)
+	if err != nil {
+		return nil, err
+	}
+
+	if pgerr, table := t.Delete(s.db, track); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
   return &userpb.Empty{}, nil
 }
 

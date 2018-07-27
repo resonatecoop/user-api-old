@@ -123,7 +123,7 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 		}
 
 		if len(u.FavoriteTracks) > 0 {
-			_, pgerr = tx.ExecOne(`
+			_, pgerr = tx.Exec(`
 				UPDATE tracks
 				SET favorite_of_users = array_remove(favorite_of_users, ?)
 				WHERE id IN (?)
@@ -134,7 +134,7 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 		}
 
 		if len(u.FollowedGroups) > 0 {
-			_, pgerr = tx.ExecOne(`
+			_, pgerr = tx.Exec(`
 				UPDATE user_groups
 				SET followers = array_remove(followers, ?)
 				WHERE id IN (?)
@@ -152,7 +152,7 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 			}
 		}
 
-		pgerr = s.db.Delete(u)
+		pgerr = tx.Delete(u)
 		if pgerr != nil {
 			return pgerr, "user"
 		}

@@ -25,10 +25,10 @@ type TrackGroup struct {
   CreatorId uuid.UUID `sql:"type:uuid,notnull"`
   Creator *User
 
-  UserGroupId uuid.UUID `sql:"type:uuid,default:uuid_nil()"` // track group belongs to user group
+  UserGroupId uuid.UUID `sql:"type:uuid,default:uuid_nil()"` // track group belongs to user group, can be null if playlist
   LabelId uuid.UUID `sql:"type:uuid,default:uuid_nil()"`
 
-  Tracks map[string]string `pg:",hstore"` // {...key:track_number,value:track_id}
+  Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   Tags []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   // TerritoriesIncl []string `pg:",array"`

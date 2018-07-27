@@ -49,7 +49,8 @@ type UserGroup struct {
   Members []UserGroup `pg:"many2many:user_group_members,fk:user_group_id,joinFK:member_id"`
   MemberOfGroups []UserGroup `pg:"many2many:user_group_members,fk:member_id,joinFK:user_group_id"`
 
-  Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  OwnerOfTracks []Track `pg:"fk:user_group_id"` // user group gets paid for these tracks
+  Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group owner or displayed as artist on these tracks
   TrackGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   // SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
@@ -95,7 +96,7 @@ func (u *UserGroup) Delete(db *pg.DB) (error, string) {
   }
 
   if len(u.Followers) > 0 {
-    _, pgerr = tx.ExecOne(`
+    _, pgerr = tx.Exec(`
       UPDATE users
       SET followed_groups = array_remove(followed_groups, ?)
       WHERE id IN (?)

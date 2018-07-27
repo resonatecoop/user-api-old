@@ -93,10 +93,15 @@ var _ = BeforeSuite(func() {
 	err = db.Insert(newTrack)
 	Expect(err).NotTo(HaveOccurred())
 
+	favoritingUser := &models.User{Username: "fav", FullName: "fav name", Email: "fav@fake.com", FavoriteTracks: []uuid.UUID{newTrack.Id}}
+	err = db.Insert(favoritingUser)
+	Expect(err).NotTo(HaveOccurred())
+
 	// Create track groups
-	tracks := map[string]string{
-		"1": newTrack.Id.String(),
-	}
+	// tracks := map[string]string{
+	// 	"1": newTrack.Id.String(),
+	// }
+	tracks := []uuid.UUID{newTrack.Id}
 	newAlbum = &models.TrackGroup{
 		CreatorId: newUser.Id,
 		UserGroupId: newArtistUserGroup.Id,
@@ -124,6 +129,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	newTrack.TrackGroups = []uuid.UUID{newAlbum.Id, newPlaylist.Id}
+	newTrack.FavoriteOfUsers = []uuid.UUID{favoritingUser.Id}
 	_, err = db.Model(newTrack).Column("track_groups").WherePK().Update()
 	Expect(err).NotTo(HaveOccurred())
 

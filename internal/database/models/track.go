@@ -42,7 +42,8 @@ type Track struct {
 
 func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
   // Update tags? artists?
-  // tracks can be added to a track group from dedicated endpoint in TrackGroup Service AddTracksToTrackGroup
+  // tracks can be added to a track group from dedicated endpoint
+  // in TrackGroup Service AddTracksToTrackGroup
   var table string
   tx, err := db.Begin()
   if err != nil {
@@ -57,10 +58,10 @@ func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
 
   t.UpdatedAt = time.Now()
   _, pgerr := tx.Model(t).
-    Column("title", "updated_at", "status", "track_number", "duration", "track_server_id").
+    // Column("title", "updated_at", "status", "track_number", "duration", "track_server_id").
     WherePK().
     Returning("*").
-    Update()
+    UpdateNotNull()
   if pgerr != nil {
     return pgerr, "track"
   }
@@ -107,13 +108,70 @@ func (t *Track) Create(db *pg.DB, track *pb.Track) (error, string) {
   // or not (label adding a track for one or more artists)
   userGroupIds := internal.RemoveDuplicates(append(artistIds, t.UserGroupId))
   trackIdArr := []uuid.UUID{t.Id}
-  _, pgerr = tx.ExecOne(`
+  _, pgerr = tx.Exec(`
     UPDATE user_groups
     SET tracks = (select array_agg(distinct e) from unnest(tracks || ?) e)
     WHERE id IN (?)
   `, pg.Array(trackIdArr), pg.In(userGroupIds))
   if pgerr != nil {
     return pgerr, "user_group"
+  }
+
+  return tx.Commit(), table
+}
+
+func (t *Track) Delete(db *pg.DB, track *pb.Track) (error, string) {
+  // Delete from track server?
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  pgerr := tx.Model(t).WherePK().Select()
+  if pgerr != nil {
+    return pgerr, "track"
+  }
+
+  // Delete track from user_group/artists tracks array
+  userGroupIds := internal.RemoveDuplicates(append(t.Artists, t.UserGroupId))
+  _, pgerr = tx.Exec(`
+    UPDATE user_groups
+    SET tracks = array_remove(tracks, ?)
+    WHERE id IN (?)
+  `, t.Id, pg.In(userGroupIds))
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  // Delete track from track_groups tracks array
+  if len(t.TrackGroups) > 0 {
+    _, pgerr = tx.Exec(`
+      UPDATE track_groups
+      SET tracks = array_remove(tracks, ?)
+      WHERE id IN (?)
+    `, t.Id, pg.In(t.TrackGroups))
+    if pgerr != nil {
+      return pgerr, "track_group"
+    }
+  }
+
+  // Delete track from user favorite_tracks array
+  if len(t.FavoriteOfUsers) > 0 {
+    _, pgerr = tx.Exec(`
+      UPDATE users
+			SET favorite_tracks = array_remove(favorite_tracks, ?)
+			WHERE id IN (?)
+    `, t.Id, pg.In(t.FavoriteOfUsers))
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
+  }
+
+  pgerr = tx.Delete(t)
+  if pgerr != nil {
+    return pgerr, "track"
   }
 
   return tx.Commit(), table
