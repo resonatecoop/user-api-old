@@ -17,7 +17,7 @@ type Track struct {
 	UpdatedAt time.Time
 
   Title string `sql:",notnull"`
-  Status string  `sql:"type:status,notnull"`
+  Status string  `sql:"type:track_status,notnull"`
   Enabled bool `sql:",notnull"`
   TrackNumber int32 `sql:",notnull"`
   Duration float32
@@ -58,10 +58,10 @@ func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
 
   t.UpdatedAt = time.Now()
   _, pgerr := tx.Model(t).
-    // Column("title", "updated_at", "status", "track_number", "duration", "track_server_id").
+    Column("title", "updated_at", "status", "track_number", "duration", "track_server_id").
     WherePK().
     Returning("*").
-    UpdateNotNull()
+    Update()
   if pgerr != nil {
     return pgerr, "track"
   }

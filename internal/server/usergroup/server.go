@@ -14,6 +14,7 @@ import (
 
   userpb "user-api/rpc/user"
 	pb "user-api/rpc/usergroup"
+	trackpb "user-api/rpc/track"
 	"user-api/internal"
 	"user-api/internal/database/models"
 )
@@ -553,7 +554,7 @@ func getUserGroupMembers(userGroupId uuid.UUID, userGroups []models.UserGroup, m
 				return nil, err, "tag"
 			}
 			for _, tag := range tags {
-				u.Tags = append(u.Tags, &pb.Tag{Id: tag.Id.String(), Type: tag.Type, Name: tag.Name})
+				u.Tags = append(u.Tags, &trackpb.Tag{Id: tag.Id.String(), Type: tag.Type, Name: tag.Name})
 			}
 		}
 		userGroupsResponse[i] = u

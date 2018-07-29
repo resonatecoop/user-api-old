@@ -14,6 +14,7 @@ import (
 
 	pb "user-api/rpc/usergroup"
 	userpb "user-api/rpc/user"
+	trackpb "user-api/rpc/track"
 	// "user-api/internal"
 	"user-api/internal/database/models"
 )
@@ -117,9 +118,9 @@ var _ = Describe("UserGroup server", func() {
 	Describe("UpdateUserGroup", func() {
 		Context("with valid uuid", func() {
 			It("should update user_group if it exists", func() {
-				tags := []*pb.Tag{&pb.Tag{Type: "genre", Name: "experimental"}}
+				tags := []*trackpb.Tag{&trackpb.Tag{Type: "genre", Name: "experimental"}}
 				links := []*pb.Link{&pb.Link{Platform: "instagram", Uri: "https://instagram/bestartistever"}}
-				recommendedArtists := []*pb.UserGroup{&pb.UserGroup{Id: newRecommendedArtist.Id.String()}}
+				recommendedArtists := []*trackpb.Artist{&trackpb.Artist{Id: newRecommendedArtist.Id.String()}}
 				userGroup := &pb.UserGroup{
 					Id: newArtist.Id.String(),
 					DisplayName: "new display name",
@@ -230,12 +231,12 @@ var _ = Describe("UserGroup server", func() {
 						&pb.UserGroup{
 							Id: newUserProfile.Id.String(),
 							DisplayName: "John Doe",
-							Tags: []*pb.Tag{
-								&pb.Tag{
+							Tags: []*trackpb.Tag{
+								&trackpb.Tag{
 									Type: "role",
 									Name: "keyboard",
 								},
-								&pb.Tag{
+								&trackpb.Tag{
 									Type: "role",
 									Name: "singer",
 								},
@@ -400,12 +401,12 @@ var _ = Describe("UserGroup server", func() {
 						&pb.UserGroup{
 							Id: newUserProfile.Id.String(),
 							DisplayName: "John Doe",
-							Tags: []*pb.Tag{
-								&pb.Tag{
+							Tags: []*trackpb.Tag{
+								&trackpb.Tag{
 									Type: "role",
 									Name: "keyboard",
 								},
-								&pb.Tag{
+								&trackpb.Tag{
 									Type: "role",
 									Name: "singer",
 								},
@@ -606,8 +607,8 @@ var _ = Describe("UserGroup server", func() {
 		Context("with all required attributes", func() {
 			It("should create a new user_group", func() {
 				avatar := make([]byte, 5)
-				tags := make([]*pb.Tag, 1)
-				tags[0] = &pb.Tag{Type: "genre", Name: "rock"}
+				tags := make([]*trackpb.Tag, 1)
+				tags[0] = &trackpb.Tag{Type: "genre", Name: "rock"}
 				ownerId := newUser.Id.String()
 				userGroup := &pb.UserGroup{
 					DisplayName: "group2",

@@ -17,9 +17,14 @@ func init() {
     // if _, err := db.Exec( /* language=sql */ `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`); err != nil {
     //   return err
     // }
-    if _, err := db.Exec(`CREATE TYPE status AS ENUM ('paid', 'free');`); err != nil {
+    if _, err := db.Exec(`CREATE TYPE track_status AS ENUM ('paid', 'free');`); err != nil {
       return err
     }
+
+    if _, err := db.Exec(`CREATE TYPE track_group_type AS ENUM ('lp', 'ep', 'single', 'playlist');`); err != nil {
+      return err
+    }
+
     for _, model := range []interface{}{
       &models.StreetAddress{},
       &models.Tag{},
@@ -49,7 +54,10 @@ func init() {
     }
 		return nil
 	}, func(db migrations.DB) error {
-    if _, err := db.Exec(`DROP TYPE IF EXISTS status CASCADE;`); err != nil {
+    if _, err := db.Exec(`DROP TYPE IF EXISTS track_status CASCADE;`); err != nil {
+      return err
+    }
+    if _, err := db.Exec(`DROP TYPE IF EXISTS track_group_type CASCADE;`); err != nil {
       return err
     }
     for _, model := range []interface{}{

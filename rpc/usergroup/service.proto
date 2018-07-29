@@ -1,6 +1,8 @@
 syntax = "proto3";
 
 import "user-api/rpc/user/service.proto";
+import "user-api/rpc/trackgroup/service.proto";
+import "user-api/rpc/track/service.proto";
 
 package resonate.api.user;
 option go_package = "usergroup";
@@ -37,15 +39,13 @@ message UserGroup {
   StreetAddress address = 14;
   Privacy privacy = 16;
 
-  repeated UserGroup recommended_artists = 17;
+  repeated Artist recommended_artists = 17;
 
-  repeated string highlighted_tracks = 18; // TODO change type once track rpc implemented
-  string featured_track_group = 19;  // TODO change type once trackgroup rpc implemented
+  TrackGroup featured_track_group = 18;
+  repeated RelatedTrackGroup track_groups = 19;
+  repeated Track highlighted_tracks = 20;
 
-  string group_email_address = 20;
-  // tracks
-  // track_groups
-  // labels
+  string group_email_address = 22;
 }
 
 message UserGroupMembers {
@@ -71,11 +71,11 @@ message Link {
   bool personal_data = 5;
 }
 
-message Tag {
-  string id = 1;
-  string type = 2;
-  string name = 3;
-}
+// message Tag {
+//   string id = 1;
+//   string type = 2;
+//   string name = 3;
+// }
 
 message Privacy {
   string id = 1;

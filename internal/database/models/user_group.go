@@ -8,7 +8,9 @@ import (
   "github.com/satori/go.uuid"
   "github.com/twitchtv/twirp"
 
-  pb "user-api/rpc/usergroup"
+  // pb "user-api/rpc/usergroup"
+  trackpb "user-api/rpc/track"
+
   "user-api/internal"
 )
 
@@ -135,8 +137,8 @@ func (u *UserGroup) Delete(db *pg.DB) (error, string) {
 
 // Select user groups in db with given 'ids'
 // Return slice of UserGroup response
-func GetRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*pb.UserGroup, twirp.Error) {
-	groupsResponse := make([]*pb.UserGroup, len(ids))
+func GetRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*trackpb.Artist, twirp.Error) {
+	groupsResponse := make([]*trackpb.Artist, len(ids))
 	if len(ids) > 0 {
 		var groups []UserGroup
 		pgerr := db.Model(&groups).
@@ -146,7 +148,11 @@ func GetRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*pb.UserGroup, twirp.Er
 			return nil, internal.CheckError(pgerr, "user_group")
 		}
 		for i, group := range groups {
-			groupsResponse[i] = &pb.UserGroup{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
+			groupsResponse[i] = &trackpb.Artist{
+        Id: group.Id.String(),
+        DisplayName: group.DisplayName,
+        Avatar: group.Avatar,
+      }
 		}
 	}
 
@@ -156,7 +162,7 @@ func GetRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*pb.UserGroup, twirp.Er
 // Select user groups in db with given ids in 'userGroups'
 // Return ids slice
 // Used in CreateUserGroup/UpdateUserGroup to add/update ids slice to recommended Artists
-func GetRelatedUserGroupIds(userGroups []*pb.UserGroup, db *pg.Tx) ([]uuid.UUID, error) {
+func GetRelatedUserGroupIds(userGroups []*trackpb.Artist, db *pg.Tx) ([]uuid.UUID, error) {
 	relatedUserGroups := make([]*UserGroup, len(userGroups))
 	relatedUserGroupIds := make([]uuid.UUID, len(userGroups))
 	for i, userGroup := range userGroups {

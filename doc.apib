@@ -436,7 +436,7 @@ Can also be used for an artist (members array only contains 1 element with artis
 + Response 204 (application/json)
 
 ## Tracks Collection [/twirp/resonate.api.user.Track]
-TODO
+
 ### Create Track [POST /twirp/resonate.api.user.Track/CreateTrack]
 Used by track server API.
 Tracks are created and only after the TrackGroup they are part of is created.
@@ -446,7 +446,7 @@ Tracks are created and only after the TrackGroup they are part of is created.
             "title": "Greatest track in the world",
             "status": "free",
             "track_number": 1,
-            "duration": "3:30",
+            "duration": 250.15,
             "creator_id": "b19cd642-9df8-4f44-bb5a-166529043111",
             "user_group_id": "b19cd642-9df8-4f44-bb5a-166529043112",
             "artists": [
@@ -483,11 +483,20 @@ Tracks are created and only after the TrackGroup they are part of is created.
 
 ### Update Track [POST /twirp/resonate.api.user.Track/UpdateTrack]
 
+CreatorId and UserGroupId are immutable.
+Tracks can be added to a track group from dedicated endpoint in TrackGroup Service AddTracksToTrackGroup
+
 + Request (application/json)
 
         {
-            "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "title": "Worst track in the world"
+          "id": "b19cd642-9df8-4f44-bb5a-166529043110",
+          "title": "Worst track in the world",
+          "status": "paid",
+          "track_number": 1,
+          "duration": 250.15,
+          "creator_id": "b19cd642-9df8-4f44-bb5a-166529043111",
+          "user_group_id": "b19cd642-9df8-4f44-bb5a-166529043112",
+          "track_server_id": "c29cd642-9df8-4f44-bb5a-166529043112",
         }
 
 + Response 204 (application/json)
@@ -601,13 +610,13 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 
 + Response 204 (application/json)
 
-### Delete Track From TrackGroup [POST /twirp/resonate.api.user.Track/DeleteTrackFromTrackGroup]
+### Delete Tracks From TrackGroup [POST /twirp/resonate.api.user.Track/DeletesTrackFromTrackGroup]
 
 + Request (application/json)
 
         {
             "track_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d",
-            "track_id": "ad3f89f6-e7d8-4e10-9926-a32b6bff125d"
+            "tracks": "TODO"
         }
 
 + Response 204 (application/json)
@@ -622,14 +631,12 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 
 + Response 204 (application/json)
 
-### Get TrackGroups [POST /twirp/resonate.api.user.Track/GetTrackGroups]
-
-For a given user group
-
+### Get TrackGroup [POST /twirp/resonate.api.user.Track/GetTrackGroup]
+TODO
 + Request (application/json)
 
         {
-            "user_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d"
+            "track_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d"
         }
 
 + Response 200 (application/json)

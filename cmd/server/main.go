@@ -7,8 +7,10 @@ import (
 	"github.com/rs/cors"
 	userServer "user-api/internal/server/user"
 	userGroupServer "user-api/internal/server/usergroup"
+	trackServer "user-api/internal/server/track"
 	userRpc "user-api/rpc/user"
 	userGroupRpc "user-api/rpc/usergroup"
+	trackRpc "user-api/rpc/track"
 	"user-api/internal/database"
 )
 
@@ -39,9 +41,13 @@ func main() {
 	newUserGroupServer := userGroupServer.NewServer(db)
 	userGroupTwirpHandler := WithURLQuery(userGroupRpc.NewUserGroupServiceServer(newUserGroupServer, nil))
 
+	newTrackServer := trackServer.NewServer(db)
+	trackTwirpHandler := trackRpc.NewTrackServiceServer, nil)
+
 	mux := http.NewServeMux()
 	mux.Handle(userRpc.UserServicePathPrefix, userTwirpHandler)
 	mux.Handle(userGroupRpc.UserGroupServicePathPrefix, userGroupTwirpHandler)
+	mux.Handle(trackRpc.TrackServicePathPrefix, trackTwirpHandler)
 
 	// cors.Default() setup the middleware with default options being
 	// all origins accepted with simple methods (GET, POST).

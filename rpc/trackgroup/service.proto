@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+import "user-api/rpc/user/service.proto";
+import "user-api/rpc/track/service.proto";
+// import "user-api/rpc/usergroup/service.proto";
+
+package resonate.api.user;
+option go_package = "trackgroup";
+
+service TrackGroupService {
+  rpc CreateTrackGroup(TrackGroup) returns (TrackGroup);
+  rpc GetTrackGroup(TrackGroup) returns (TrackGroup);
+  rpc UpdateTrackGroup(TrackGroup) returns (Empty);
+  rpc DeleteTrackGroup(TrackGroup) returns (Empty);
+  rpc AddTracksToTrackGroup(TracksToTrackGroup) returns (Empty);
+  rpc DeleteTracksFromTrackGroup(TracksToTrackGroup) returns (Empty);
+}
+
+message TrackGroup {
+  string id = 1; // required
+  string title = 2; // required
+  bytes cover = 3; // required
+  google.protobuf.Timestamp release_date = 4;
+  enum Type {
+    lp = 0;
+    ep = 1;
+    single = 2;
+    playlist = 3;
+  }
+  Type type = 5; // required
+  string display_artist = 6;
+  bool multiple_composers = 7;
+  string creator_id = 8;
+  string user_group_id = 9;
+  string label_id = 10;
+  repeated Track tracks = 11;
+  repeated Tag tags = 12;
+}
+
+message TracksToTrackGroup {
+  string track_group_id = 1; // required
+  repeated Track tracks = 2; // required
+}

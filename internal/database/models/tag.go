@@ -3,7 +3,7 @@ package models
 import (
   "user-api/internal"
   "github.com/satori/go.uuid"
-  pb "user-api/rpc/usergroup"
+  pb "user-api/rpc/track"
   "github.com/go-pg/pg"
   "github.com/twitchtv/twirp"
 
