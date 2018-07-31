@@ -6,7 +6,7 @@ import (
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/satori/go.uuid"
-  "github.com/twitchtv/twirp"
+  // "github.com/twitchtv/twirp"
 
   // pb "user-api/rpc/usergroup"
   trackpb "user-api/rpc/track"
@@ -137,7 +137,7 @@ func (u *UserGroup) Delete(db *pg.DB) (error, string) {
 
 // Select user groups in db with given 'ids'
 // Return slice of UserGroup response
-func GetRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*trackpb.RelatedUserGroup, twirp.Error) {
+func GetRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*trackpb.RelatedUserGroup, error) {
 	groupsResponse := make([]*trackpb.RelatedUserGroup, len(ids))
 	if len(ids) > 0 {
 		var groups []UserGroup
@@ -145,7 +145,7 @@ func GetRelatedUserGroups(ids []uuid.UUID, db *pg.DB) ([]*trackpb.RelatedUserGro
 			Where("id in (?)", pg.In(ids)).
 			Select()
 		if pgerr != nil {
-			return nil, internal.CheckError(pgerr, "user_group")
+			return nil, pgerr
 		}
 		for i, group := range groups {
 			groupsResponse[i] = &trackpb.RelatedUserGroup{

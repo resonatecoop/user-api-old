@@ -94,3 +94,133 @@ func GetTrackGroupIds(t []*pb.TrackGroup, db *pg.Tx) ([]uuid.UUID, error) {
 	}
 	return trackGroupIds, nil
 }
+
+func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  err, table = t.GetIds(trackGroup)
+  if err != nil {
+    return err, table
+  }
+
+  // Select or create tags
+  tagIds, pgerr := GetTagIds(trackGroup.Tags, tx)
+  if pgerr != nil {
+    return pgerr, "tag"
+  }
+  t.Tags = tagIds
+
+  // Add tracks
+  trackIds, pgerr, table := GetTrackIds(trackGroup.Tracks, tx)
+  if pgerr != nil {
+    return pgerr, table
+  }
+  t.Tracks = trackIds
+
+  // Insert track group
+  _, pgerr = tx.Model(t).Returning("*").Insert()
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
+  trackGroup.Id = t.Id.String()
+
+  trackGroupIdArr := []uuid.UUID{t.Id}
+  // Add track group to owner user group/label track_groups if exist
+  if trackGroup.UserGroupId != "" || trackGroup.LabelId != "" {
+    var userGroupIds []uuid.UUID
+    if trackGroup.UserGroupId != "" {
+      userGroupIds = append(userGroupIds, t.UserGroupId)
+    }
+    if trackGroup.LabelId != "" {
+      userGroupIds = append(userGroupIds, t.LabelId)
+    }
+    userGroupIds = internal.RemoveDuplicates(userGroupIds)
+    _, pgerr = tx.Exec(`
+      UPDATE user_groups
+      SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
+      WHERE id IN (?)
+    `, pg.Array(trackGroupIdArr), pg.In(userGroupIds))
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
+  }
+
+  // Add track group to user playlists if of type playlist
+  if trackGroup.Type == "playlist" {
+    _, pgerr = tx.Exec(`
+      UPDATE users
+      SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
+      WHERE id = ?
+    `, pg.Array(trackGroupIdArr), t.CreatorId)
+    if pgerr != nil {
+      return pgerr, "user"
+    }
+  }
+
+  // Add track group to tracks
+  if len(trackGroup.Tracks) > 0 {
+    _, pgerr = tx.Exec(`
+      UPDATE tracks
+      SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
+      WHERE id IN ((?))
+    `, pg.Array(trackGroupIdArr), trackIds)
+    if pgerr != nil {
+      return pgerr, "user"
+    }
+  }
+
+  return tx.Commit(), table
+}
+
+func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  return tx.Commit(), table
+}
+
+func (t *TrackGroup) Delete(db *pg.DB, trackGroup *pb.TrackGroup) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  return tx.Commit(), table
+}
+
+func (t *TrackGroup) GetIds(trackGroup *pb.TrackGroup) (error, string) {
+  creatorId, err := internal.GetUuidFromString(trackGroup.CreatorId)
+  if err != nil {
+    return err, "owner"
+  }
+
+  if trackGroup.UserGroupId != "" {
+    userGroupId, err := internal.GetUuidFromString(trackGroup.UserGroupId)
+    if err != nil {
+      return err, "user_group"
+    }
+    t.UserGroupId = userGroupId
+  }
+
+  if trackGroup.LabelId != "" {
+    labelId, err := internal.GetUuidFromString(trackGroup.LabelId)
+    if err != nil {
+      return err, "user_group"
+    }
+    t.LabelId = labelId
+  }
+
+  t.CreatorId = creatorId
+  return nil, ""
+}

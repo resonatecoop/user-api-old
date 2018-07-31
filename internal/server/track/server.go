@@ -53,9 +53,9 @@ func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, erro
 	track.Tags = tags
 
   // Get artists (id, name, avatar)
-	artists, twerr := models.GetRelatedUserGroups(t.Artists, s.db)
-	if twerr != nil {
-		return nil, twerr
+	artists, pgerr := models.GetRelatedUserGroups(t.Artists, s.db)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user_group")
 	}
 	track.Artists = artists
 

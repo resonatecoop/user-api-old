@@ -20,7 +20,7 @@ type User struct {
 
   FavoriteTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   FollowedGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
-  // Playlists
+  Playlists []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   OwnerOfGroups []UserGroup `pg:"fk:owner_id"`
 }

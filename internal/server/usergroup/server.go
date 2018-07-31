@@ -175,9 +175,9 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	}
 
 	// Get related user groups
-	recommendedArtists, twerr := models.GetRelatedUserGroups(u.RecommendedArtists, s.db)
-	if twerr != nil {
-		return nil, twerr
+	recommendedArtists, pgerr := models.GetRelatedUserGroups(u.RecommendedArtists, s.db)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user_group")
 	}
 	members, pgerr, table := getUserGroupMembers(id, u.Members, true, s.db)
 	if pgerr != nil {

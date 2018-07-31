@@ -6,6 +6,7 @@ import (
   "github.com/go-pg/pg"
   "github.com/twitchtv/twirp"
   "github.com/satori/go.uuid"
+  // "github.com/golang/protobuf/ptypes/timestamp"
   "github.com/golang/protobuf/ptypes"
 
   userpb "user-api/rpc/user"
@@ -62,16 +63,16 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
 
   // Get UserGroup and Label if exists
   if trackGroup.UserGroupId != "" {
-    userGroup, twerr := models.GetRelatedUserGroups([]uuid.UUID{t.UserGroupId}, s.db)
-    if twerr != nil {
-      return nil, twerr
+    userGroup, pgerr := models.GetRelatedUserGroups([]uuid.UUID{t.UserGroupId}, s.db)
+    if pgerr != nil {
+      return nil, internal.CheckError(pgerr, "user_group")
     }
     trackGroup.UserGroup = userGroup[0]
   }
   if trackGroup.LabelId != "" {
-    label, twerr := models.GetRelatedUserGroups([]uuid.UUID{t.LabelId}, s.db)
-    if twerr != nil {
-      return nil, twerr
+    label, pgerr := models.GetRelatedUserGroups([]uuid.UUID{t.LabelId}, s.db)
+    if pgerr != nil {
+      return nil, internal.CheckError(pgerr, "user_group")
     }
     trackGroup.Label = label[0]
   }
@@ -88,7 +89,25 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
 }
 
 func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*pb.TrackGroup, error) {
-  return &pb.TrackGroup{}, nil
+  err := checkRequiredAttributes(trackGroup)
+  if err != nil {
+    return nil, err
+  }
+
+  t := &models.TrackGroup{
+    Title: trackGroup.Title,
+    Type: trackGroup.Type,
+    Cover: trackGroup.Cover,
+    DisplayArtist: trackGroup.DisplayArtist,
+    MultipleComposers: trackGroup.MultipleComposers,
+    Private: trackGroup.Private,
+  }
+
+  if pgerr, table := t.Create(s.db, trackGroup); pgerr != nil {
+    return nil, internal.CheckError(pgerr, table)
+  }
+
+  return trackGroup, nil
 }
 
 func (s *Server) UpdateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*userpb.Empty, error) {
@@ -105,6 +124,32 @@ func (s *Server) AddTracksToTrackGroup(ctx context.Context, tracksToTrackGroup *
 
 func (s *Server) DeleteTracksFromTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*userpb.Empty, error) {
   return &userpb.Empty{}, nil
+}
+
+func checkRequiredAttributes(trackGroup *pb.TrackGroup) (twirp.Error) {
+  if trackGroup.Title == "" || (trackGroup.ReleaseDate == nil) || trackGroup.Type == "" || len(trackGroup.Cover) == 0 || trackGroup.CreatorId == "" {
+    var argument string
+    switch {
+    case trackGroup.Title == "":
+      argument = "title"
+    case trackGroup.ReleaseDate == nil:
+      argument = "release_date"
+    case trackGroup.Type == "":
+      argument = "type"
+    case len(trackGroup.Cover) == 0:
+      argument = "cover"
+    case trackGroup.CreatorId == "":
+      argument = "creator_id"
+    }
+    return twirp.RequiredArgumentError(argument)
+  }
+  // A playlist does not have necessarily a owner user group (with id UserGroupId)
+  // if it is a private user playlist
+  // But other types of track groups (lp, ep, single) have to belong to a user group
+  if trackGroup.Type != "playlist" && trackGroup.UserGroupId == "" {
+    return twirp.RequiredArgumentError("user_group_id")
+  }
+  return nil
 }
 
 func getTrackGroupModel(trackGroup *pb.TrackGroup) (*models.TrackGroup, twirp.Error) {

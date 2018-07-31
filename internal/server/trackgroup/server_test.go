@@ -7,7 +7,7 @@ import (
   . "github.com/onsi/ginkgo"
   . "github.com/onsi/gomega"
   "github.com/twitchtv/twirp"
-  // "github.com/satori/go.uuid"
+  "github.com/satori/go.uuid"
   "github.com/golang/protobuf/ptypes"
 
   pb "user-api/rpc/trackgroup"
@@ -106,6 +106,34 @@ var _ = Describe("TrackGroup server", func() {
         Expect(res.Tracks[0].TrackGroups[0].Id).To(Equal(newAlbum.Id.String()))
         Expect(res.Tracks[0].TrackGroups[0].Title).To(Equal(newAlbum.Title))
         Expect(res.Tracks[0].TrackGroups[0].Cover).To(Equal(newAlbum.Cover))
+      })
+      It("should respond with not_found error if track group does not exist", func() {
+        id := uuid.NewV4()
+        for id == newPlaylist.Id || id == newAlbum.Id {
+          id = uuid.NewV4()
+        }
+        trackGroup := &pb.TrackGroup{Id: id.String()}
+        resp, err := service.GetTrackGroup(context.Background(), trackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(not_found_code))
+      })
+    })
+    Context("with invalid uuid", func() {
+      It("should respond with invalid_argument error", func() {
+        id := "45"
+        trackGroup := &pb.TrackGroup{Id: id}
+        resp, err := service.GetTrackGroup(context.Background(), trackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+        Expect(twerr.Meta("argument")).To(Equal("id"))
       })
     })
   })

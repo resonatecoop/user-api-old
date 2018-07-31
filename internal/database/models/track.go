@@ -61,9 +61,9 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, playlist bool) ([]*pb.Track, twirp.Er
         Status: track.Status,
         TrackNumber: track.TrackNumber,
       }
-      artists, twerr := GetRelatedUserGroups(track.Artists, db)
-      if twerr != nil {
-        return  nil, twerr
+      artists, pgerr := GetRelatedUserGroups(track.Artists, db)
+      if pgerr != nil {
+        return  nil, internal.CheckError(pgerr, "user_group")
       }
       trackResponse.Artists = artists
       if playlist == true {
@@ -78,6 +78,36 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, playlist bool) ([]*pb.Track, twirp.Er
 	}
 
 	return tracksResponse, nil
+}
+
+func GetTrackIds (t []*pb.Track, tx *pg.Tx) ([]uuid.UUID, error, string) {
+  tracks := make([]*Track, len(t))
+  trackIds := make([]uuid.UUID, len(t))
+  for i, track := range t {
+    id, twerr := internal.GetUuidFromString(track.Id)
+    if twerr != nil {
+      return nil, twerr.(error), "track"
+    }
+    tracks[i] = &Track{Id: id}
+    pgerr := tx.Model(tracks[i]).
+      WherePK().
+      Select()
+    if pgerr != nil {
+      return nil, pgerr, "track"
+    }
+    artists, pgerr := GetRelatedUserGroups(tracks[i].Artists, tx.DB())
+    if pgerr != nil {
+      return  nil, pgerr, "user_group"
+    }
+    track.Artists = artists
+    track.Title = tracks[i].Title
+    track.TrackServerId = tracks[i].TrackServerId.String()
+    track.Duration = tracks[i].Duration
+    track.TrackNumber = tracks[i].TrackNumber
+    track.Status = tracks[i].Status
+    trackIds[i] = tracks[i].Id
+  }
+  return trackIds, nil, ""
 }
 
 func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
