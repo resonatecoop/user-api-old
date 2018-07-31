@@ -12,7 +12,6 @@ import (
 	"github.com/satori/go.uuid"
 
 	pb "user-api/rpc/track"
-	trackpb "user-api/rpc/track"
 	"user-api/internal/database/models"
 )
 
@@ -27,8 +26,8 @@ var _ = Describe("Track server", func() {
 				track := &pb.Track{Id: newTrack.Id.String()}
 
 				res, err := service.GetTrack(context.Background(), track)
+				
 				Expect(err).NotTo(HaveOccurred())
-
 				Expect(res.Title).To(Equal(newTrack.Title))
 				Expect(res.Status).To(Equal(newTrack.Status))
 				Expect(res.Duration).To(Equal(newTrack.Duration))
@@ -174,13 +173,13 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*pb.Tag{
+						&pb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -225,8 +224,8 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -247,8 +246,8 @@ var _ = Describe("Track server", func() {
 					Status: "",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -268,8 +267,8 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					CreatorId: "",
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -290,8 +289,8 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: "",
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -311,8 +310,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -335,8 +334,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: "12a",
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -355,8 +354,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: "abc1",
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -379,8 +378,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: userId.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -403,8 +402,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: userGroupId.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -427,8 +426,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: userGroupId.String(),
-					Artists: []*trackpb.Artist{
-						&trackpb.Artist{
+					Artists: []*pb.RelatedUserGroup{
+						&pb.RelatedUserGroup{
 							Id: userGroupId.String(),
 						},
 					},

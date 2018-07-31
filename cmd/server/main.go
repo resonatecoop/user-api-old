@@ -8,9 +8,11 @@ import (
 	userServer "user-api/internal/server/user"
 	userGroupServer "user-api/internal/server/usergroup"
 	trackServer "user-api/internal/server/track"
+	trackGroupServer "user-api/internal/server/trackgroup"
 	userRpc "user-api/rpc/user"
 	userGroupRpc "user-api/rpc/usergroup"
 	trackRpc "user-api/rpc/track"
+	trackGroupRpc "user-api/rpc/trackgroup"
 	"user-api/internal/database"
 )
 
@@ -42,12 +44,16 @@ func main() {
 	userGroupTwirpHandler := WithURLQuery(userGroupRpc.NewUserGroupServiceServer(newUserGroupServer, nil))
 
 	newTrackServer := trackServer.NewServer(db)
-	trackTwirpHandler := trackRpc.NewTrackServiceServer, nil)
+	trackTwirpHandler := trackRpc.NewTrackServiceServer(newTrackServer, nil)
+
+	newTrackGroupServer := trackGroupServer.NewServer(db)
+	trackGroupTwirpHandler := trackGroupRpc.NewTrackGroupServiceServer(newTrackGroupServer, nil)
 
 	mux := http.NewServeMux()
 	mux.Handle(userRpc.UserServicePathPrefix, userTwirpHandler)
 	mux.Handle(userGroupRpc.UserGroupServicePathPrefix, userGroupTwirpHandler)
 	mux.Handle(trackRpc.TrackServicePathPrefix, trackTwirpHandler)
+	mux.Handle(trackGroupRpc.TrackGroupServicePathPrefix, trackGroupTwirpHandler)
 
 	// cors.Default() setup the middleware with default options being
 	// all origins accepted with simple methods (GET, POST).

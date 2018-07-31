@@ -7,6 +7,8 @@ import (
   "github.com/satori/go.uuid"
   pb "user-api/rpc/track"
   "github.com/go-pg/pg"
+  "github.com/twitchtv/twirp"
+
   "user-api/internal"
 )
 
@@ -38,6 +40,44 @@ type Track struct {
 
   // Composers with IPI
   // Performers with IPI
+}
+
+func GetTracks(ids []uuid.UUID, db *pg.DB, playlist bool) ([]*pb.Track, twirp.Error) {
+	var tracksResponse []*pb.Track
+	if len(ids) > 0 {
+		var t []Track
+		pgerr := db.Model(&t).
+			Where("id in (?)", pg.In(ids)).
+			Select()
+		if pgerr != nil {
+			return nil, internal.CheckError(pgerr, "track")
+		}
+		for _, track := range t {
+      trackResponse := &pb.Track{
+        Id: track.Id.String(),
+        Title: track.Title,
+        TrackServerId: track.TrackServerId.String(),
+        Duration: track.Duration,
+        Status: track.Status,
+        TrackNumber: track.TrackNumber,
+      }
+      artists, twerr := GetRelatedUserGroups(track.Artists, db)
+      if twerr != nil {
+        return  nil, twerr
+      }
+      trackResponse.Artists = artists
+      if playlist == true {
+        trackGroups, twerr := GetTrackGroups(track.TrackGroups, db, false)
+        if twerr != nil {
+          return  nil, twerr
+        }
+        trackResponse.TrackGroups = trackGroups
+      }
+			tracksResponse = append(tracksResponse, trackResponse)
+		}
+	}
+
+	return tracksResponse, nil
 }
 
 func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {

@@ -23,20 +23,17 @@ message TrackGroup {
   string title = 2; // required
   bytes cover = 3; // required
   google.protobuf.Timestamp release_date = 4;
-  enum Type {
-    lp = 0;
-    ep = 1;
-    single = 2;
-    playlist = 3;
-  }
-  Type type = 5; // required
+  string type = 5; // required
   string display_artist = 6;
   bool multiple_composers = 7;
-  string creator_id = 8;
-  string user_group_id = 9;
-  string label_id = 10;
-  repeated Track tracks = 11;
-  repeated Tag tags = 12;
+  bool private = 8;
+  string creator_id = 9;
+  string user_group_id = 10;
+  RelatedUserGroup UserGroup = 11;
+  string label_id = 12;
+  RelatedUserGroup Label = 13;
+  repeated Track tracks = 14;
+  repeated Tag tags = 15;
 }
 
 message TracksToTrackGroup {

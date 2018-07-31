@@ -34,7 +34,7 @@ func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, erro
 			WherePK().
 			Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user_group")
+		return nil, internal.CheckError(pgerr, "track")
 	}
 	track.UserGroupId = t.UserGroupId.String()
 	track.CreatorId = t.CreatorId.String()

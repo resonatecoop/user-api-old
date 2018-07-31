@@ -23,13 +23,13 @@ message Track {
   repeated RelatedTrackGroup track_groups = 6;
   string creator_id = 7;
   string user_group_id = 8;
-  repeated Artist artists = 9;
+  repeated RelatedUserGroup artists = 9;
   string track_server_id = 10;
   repeated Tag tags = 11;
   float duration = 12;
 }
 
-message Artist {
+message RelatedUserGroup {
   string id = 1;
   string display_name = 2;
   bytes avatar = 3;

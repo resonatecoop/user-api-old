@@ -39,7 +39,7 @@ message UserGroup {
   StreetAddress address = 14;
   Privacy privacy = 16;
 
-  repeated Artist recommended_artists = 17;
+  repeated RelatedUserGroup recommended_artists = 17;
 
   TrackGroup featured_track_group = 18;
   repeated RelatedTrackGroup track_groups = 19;

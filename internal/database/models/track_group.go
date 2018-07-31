@@ -22,11 +22,12 @@ type TrackGroup struct {
   Cover []byte `sql:",notnull"`
   DisplayArtist string // for display purposes, e.g. "Various" for compilation
   MultipleComposers bool `sql:",notnull"`
+  Private bool `sql:",notnull"`
 
   CreatorId uuid.UUID `sql:"type:uuid,notnull"`
   Creator *User
 
-  UserGroupId uuid.UUID `sql:"type:uuid,default:uuid_nil()"` // track group belongs to user group, can be null if playlist
+  UserGroupId uuid.UUID `sql:"type:uuid,default:uuid_nil()"` // track group belongs to user group, can be null if user playlist
   LabelId uuid.UUID `sql:"type:uuid,default:uuid_nil()"`
 
   Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
@@ -43,7 +44,7 @@ type TrackGroup struct {
 }
 
 func GetTrackGroups(ids []uuid.UUID, db *pg.DB, playlists bool) ([]*trackpb.RelatedTrackGroup, twirp.Error) {
-	var tracksResponse []*trackpb.RelatedTrackGroup
+	var trackGroupsResponse []*trackpb.RelatedTrackGroup
 	if len(ids) > 0 {
 		var t []TrackGroup
     var types []string
@@ -60,7 +61,7 @@ func GetTrackGroups(ids []uuid.UUID, db *pg.DB, playlists bool) ([]*trackpb.Rela
 			return nil, internal.CheckError(pgerr, "track_group")
 		}
 		for _, trackGroup := range t {
-			tracksResponse = append(tracksResponse, &trackpb.RelatedTrackGroup{
+			trackGroupsResponse = append(trackGroupsResponse, &trackpb.RelatedTrackGroup{
         Id: trackGroup.Id.String(),
         Title: trackGroup.Title,
         Cover: trackGroup.Cover,
@@ -68,7 +69,7 @@ func GetTrackGroups(ids []uuid.UUID, db *pg.DB, playlists bool) ([]*trackpb.Rela
 		}
 	}
 
-	return tracksResponse, nil
+	return trackGroupsResponse, nil
 }
 
 func GetTrackGroupIds(t []*pb.TrackGroup, db *pg.Tx) ([]uuid.UUID, error) {

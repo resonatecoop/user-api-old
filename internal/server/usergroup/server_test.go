@@ -120,7 +120,7 @@ var _ = Describe("UserGroup server", func() {
 			It("should update user_group if it exists", func() {
 				tags := []*trackpb.Tag{&trackpb.Tag{Type: "genre", Name: "experimental"}}
 				links := []*pb.Link{&pb.Link{Platform: "instagram", Uri: "https://instagram/bestartistever"}}
-				recommendedArtists := []*trackpb.Artist{&trackpb.Artist{Id: newRecommendedArtist.Id.String()}}
+				recommendedArtists := []*trackpb.RelatedUserGroup{&trackpb.RelatedUserGroup{Id: newRecommendedArtist.Id.String()}}
 				userGroup := &pb.UserGroup{
 					Id: newArtist.Id.String(),
 					DisplayName: "new display name",
