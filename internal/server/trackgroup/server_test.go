@@ -2,7 +2,8 @@ package trackgroupserver_test
 
 import (
   "context"
-
+  "time"
+  // "fmt"
   // "github.com/go-pg/pg"
   . "github.com/onsi/ginkgo"
   . "github.com/onsi/gomega"
@@ -11,8 +12,8 @@ import (
   "github.com/golang/protobuf/ptypes"
 
   pb "user-api/rpc/trackgroup"
-  // trackpb "user-api/rpc/track"
-  // "user-api/internal/database/models"
+  trackpb "user-api/rpc/track"
+  "user-api/internal/database/models"
 )
 
 
@@ -151,8 +152,584 @@ var _ = Describe("TrackGroup server", func() {
   })
 
   Describe("CreateTrackGroup", func() {
+		Context("with all required attributes", func() {
+			It("should create a new track group (not playlist)", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
 
-  })
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp).NotTo(BeNil())
+
+				Expect(resp.Id).NotTo(BeNil())
+				Expect(resp.Title).To(Equal(trackGroup.Title))
+				Expect(resp.CreatorId).To(Equal(trackGroup.CreatorId))
+        Expect(resp.UserGroupId).To(Equal(trackGroup.UserGroupId))
+        Expect(resp.LabelId).To(Equal(trackGroup.LabelId))
+        Expect(resp.ReleaseDate).To(Equal(trackGroup.ReleaseDate))
+        Expect(resp.Type).To(Equal(trackGroup.Type))
+        Expect(resp.Cover).To(Equal(trackGroup.Cover))
+        Expect(resp.DisplayArtist).To(Equal(trackGroup.DisplayArtist))
+        Expect(resp.MultipleComposers).To(Equal(trackGroup.MultipleComposers))
+				Expect(resp.Private).To(Equal(trackGroup.Private))
+
+				Expect(len(resp.Tags)).To(Equal(1))
+				Expect(resp.Tags[0].Id).NotTo(Equal(""))
+				Expect(resp.Tags[0].Type).To(Equal("genre"))
+				Expect(resp.Tags[0].Name).To(Equal("rock"))
+
+				Expect(len(resp.Tracks)).To(Equal(1))
+				Expect(resp.Tracks[0].Id).To(Equal(newTrack.Id.String()))
+				Expect(resp.Tracks[0].Title).To(Equal(newTrack.Title))
+        Expect(resp.Tracks[0].TrackServerId).To(Equal(newTrack.TrackServerId.String()))
+        Expect(resp.Tracks[0].Duration).To(Equal(newTrack.Duration))
+        Expect(resp.Tracks[0].TrackNumber).To(Equal(newTrack.TrackNumber))
+        Expect(resp.Tracks[0].Status).To(Equal(newTrack.Status))
+        Expect(len(resp.Tracks[0].Artists)).To(Equal(1))
+        Expect(resp.Tracks[0].Artists[0].Id).To(Equal(newArtistUserGroup.Id.String()))
+        Expect(resp.Tracks[0].Artists[0].DisplayName).To(Equal(newArtistUserGroup.DisplayName))
+				Expect(resp.Tracks[0].Artists[0].Avatar).To(Equal(newArtistUserGroup.Avatar))
+
+				artist := new(models.UserGroup)
+				err = db.Model(artist).Where("id = ?", newArtistUserGroup.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(artist.TrackGroups)).To(Equal(2))
+
+        label := new(models.UserGroup)
+        err = db.Model(label).Where("id = ?", newLabelUserGroup.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(len(label.TrackGroups)).To(Equal(2))
+
+				trackGroupId, err := uuid.FromString(resp.Id)
+				Expect(err).NotTo(HaveOccurred())
+        Expect(artist.TrackGroups).To(ContainElement(trackGroupId))
+				Expect(label.TrackGroups).To(ContainElement(trackGroupId))
+
+        track := new(models.Track)
+        err = db.Model(track).Where("id = ?", newTrack.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(len(track.TrackGroups)).To(Equal(3))
+        Expect(track.TrackGroups).To(ContainElement(trackGroupId))
+
+        newTrackGroup := new(models.TrackGroup)
+        err = db.Model(newTrackGroup).Where("id = ?", trackGroupId).Select()
+        Expect(newTrackGroup.Tracks).To(ContainElement(newTrack.Id))
+			})
+      It("should create a new track group (playlist)", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best playlist ever",
+					CreatorId: newUser.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "playlist",
+          Cover: cover,
+          Private: true,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp).NotTo(BeNil())
+
+				Expect(resp.Id).NotTo(BeNil())
+				Expect(resp.Title).To(Equal(trackGroup.Title))
+				Expect(resp.CreatorId).To(Equal(trackGroup.CreatorId))
+        Expect(resp.UserGroupId).To(Equal(trackGroup.UserGroupId))
+        Expect(resp.LabelId).To(Equal(trackGroup.LabelId))
+        Expect(resp.ReleaseDate).To(Equal(trackGroup.ReleaseDate))
+        Expect(resp.Type).To(Equal(trackGroup.Type))
+        Expect(resp.Cover).To(Equal(trackGroup.Cover))
+        Expect(resp.DisplayArtist).To(Equal(trackGroup.DisplayArtist))
+        Expect(resp.MultipleComposers).To(Equal(trackGroup.MultipleComposers))
+				Expect(resp.Private).To(Equal(trackGroup.Private))
+
+				Expect(len(resp.Tags)).To(Equal(1))
+				Expect(resp.Tags[0].Id).NotTo(Equal(""))
+				Expect(resp.Tags[0].Type).To(Equal("genre"))
+				Expect(resp.Tags[0].Name).To(Equal("rock"))
+
+				Expect(len(resp.Tracks)).To(Equal(1))
+				Expect(resp.Tracks[0].Id).To(Equal(newTrack.Id.String()))
+				Expect(resp.Tracks[0].Title).To(Equal(newTrack.Title))
+        Expect(resp.Tracks[0].TrackServerId).To(Equal(newTrack.TrackServerId.String()))
+        Expect(resp.Tracks[0].Duration).To(Equal(newTrack.Duration))
+        Expect(resp.Tracks[0].TrackNumber).To(Equal(newTrack.TrackNumber))
+        Expect(resp.Tracks[0].Status).To(Equal(newTrack.Status))
+        Expect(len(resp.Tracks[0].Artists)).To(Equal(1))
+        Expect(resp.Tracks[0].Artists[0].Id).To(Equal(newArtistUserGroup.Id.String()))
+        Expect(resp.Tracks[0].Artists[0].DisplayName).To(Equal(newArtistUserGroup.DisplayName))
+				Expect(resp.Tracks[0].Artists[0].Avatar).To(Equal(newArtistUserGroup.Avatar))
+
+				user := new(models.User)
+				err = db.Model(user).Where("id = ?", newUser.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(user.Playlists)).To(Equal(2))
+
+				trackGroupId, err := uuid.FromString(resp.Id)
+				Expect(err).NotTo(HaveOccurred())
+        Expect(user.Playlists).To(ContainElement(trackGroupId))
+
+        track := new(models.Track)
+        err = db.Model(track).Where("id = ?", newTrack.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(len(track.TrackGroups)).To(Equal(4))
+        Expect(track.TrackGroups).To(ContainElement(trackGroupId))
+
+        newTrackGroup := new(models.TrackGroup)
+        err = db.Model(newTrackGroup).Where("id = ?", trackGroupId).Select()
+        Expect(newTrackGroup.Tracks).To(ContainElement(newTrack.Id))
+			})
+		})
+
+		Context("with missing required attributes", func() {
+			It("should not create a track group without title", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "",
+					CreatorId: newUser.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "playlist",
+          Cover: cover,
+          Private: true,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("title"))
+			})
+			It("should not create a track group without release date", func() {
+        cover := make([]byte, 5)
+        // releaseDate, err := ptypes.TimestampProto(time.Now())
+        // Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best playlist ever",
+					CreatorId: newUser.Id.String(),
+          // ReleaseDate: releaseDate,
+          Type: "playlist",
+          Cover: cover,
+          Private: true,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("release_date"))
+			})
+			It("should not create a track group without creator_id", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best playlist ever",
+					CreatorId: "",
+          ReleaseDate: releaseDate,
+          Type: "playlist",
+          Cover: cover,
+          Private: true,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("creator_id"))
+			})
+			It("should not create a track group without type", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best playlist ever",
+					CreatorId: newUser.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "",
+          Cover: cover,
+          Private: true,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("type"))
+			})
+			It("should not create a track group without cover", func() {
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best playlist ever",
+					CreatorId: newUser.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "playlist",
+          // Cover: cover,
+          Private: true,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("cover"))
+			})
+      It("should not create a track group (release) without user group id", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					// UserGroupId: newArtistUserGroup.Id.String(),
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+        resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+        Expect(twerr.Meta("argument")).To(Equal("user_group_id"))
+      })
+		})
+
+		Context("with invalid attributes", func() {
+			It("should not create a track group if creator_id is invalid", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best album ever",
+					CreatorId: "123",
+					UserGroupId: newArtistUserGroup.Id.String(),
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+			It("should not create a track group if user_group_id is invalid", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					UserGroupId: "123",
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+      It("should not create a track group if label_id is invalid", func() {
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+          LabelId: "456",
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+			It("should not create a track group if creator does not exist", func() {
+				userId := uuid.NewV4()
+				for userId == newUser.Id {
+					userId = uuid.NewV4()
+				}
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best album ever",
+					CreatorId: userId.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should not create a track group if user_group does not exist", func() {
+				userGroupId := uuid.NewV4()
+				for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id {
+					userGroupId = uuid.NewV4()
+				}
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					UserGroupId: userGroupId.String(),
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+      It("should not create a track group if label does not exist", func() {
+				userGroupId := uuid.NewV4()
+				for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id {
+					userGroupId = uuid.NewV4()
+				}
+        cover := make([]byte, 5)
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					LabelId: userGroupId.String(),
+          UserGroupId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+					Tags: []*trackpb.Tag{
+						&trackpb.Tag{
+							Type: "genre",
+							Name: "rock",
+						},
+					},
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{
+              Id: newTrack.Id.String(),
+            },
+          },
+				}
+				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+	})
 
   Describe("DeleteTrackGroup", func() {
 

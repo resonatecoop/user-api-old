@@ -108,6 +108,24 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
     return err, table
   }
 
+  // make sure owner user group (with UserGroupId) and label (LabelId) exists if specified
+  var userGroupIds []uuid.UUID
+  if trackGroup.UserGroupId != "" {
+    userGroupIds = append(userGroupIds, t.UserGroupId)
+  }
+  if trackGroup.LabelId != "" {
+    userGroupIds = append(userGroupIds, t.LabelId)
+  }
+  userGroupIds = internal.RemoveDuplicates(userGroupIds)
+
+  for _, id := range userGroupIds {
+    u := &UserGroup{Id: id}
+    pgerr := tx.Model(u).WherePK().Select()
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
+  }
+
   // Select or create tags
   tagIds, pgerr := GetTagIds(trackGroup.Tags, tx)
   if pgerr != nil {
@@ -132,14 +150,6 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
   trackGroupIdArr := []uuid.UUID{t.Id}
   // Add track group to owner user group/label track_groups if exist
   if trackGroup.UserGroupId != "" || trackGroup.LabelId != "" {
-    var userGroupIds []uuid.UUID
-    if trackGroup.UserGroupId != "" {
-      userGroupIds = append(userGroupIds, t.UserGroupId)
-    }
-    if trackGroup.LabelId != "" {
-      userGroupIds = append(userGroupIds, t.LabelId)
-    }
-    userGroupIds = internal.RemoveDuplicates(userGroupIds)
     _, pgerr = tx.Exec(`
       UPDATE user_groups
       SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
@@ -154,7 +164,7 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
   if trackGroup.Type == "playlist" {
     _, pgerr = tx.Exec(`
       UPDATE users
-      SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
+      SET playlists = (select array_agg(distinct e) from unnest(playlists || ?) e)
       WHERE id = ?
     `, pg.Array(trackGroupIdArr), t.CreatorId)
     if pgerr != nil {
@@ -167,8 +177,8 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
     _, pgerr = tx.Exec(`
       UPDATE tracks
       SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
-      WHERE id IN ((?))
-    `, pg.Array(trackGroupIdArr), trackIds)
+      WHERE id IN (?)
+    `, pg.Array(trackGroupIdArr), pg.In(trackIds))
     if pgerr != nil {
       return pgerr, "user"
     }

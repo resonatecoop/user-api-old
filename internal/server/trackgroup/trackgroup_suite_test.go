@@ -129,13 +129,22 @@ var _ = BeforeSuite(func() {
 	err = db.Insert(newPlaylist)
 	Expect(err).NotTo(HaveOccurred())
 
+	newUser.Playlists = []uuid.UUID{newPlaylist.Id}
+	_, err = db.Model(newUser).Column("playlists").WherePK().Update()
+	Expect(err).NotTo(HaveOccurred())
+
 	newTrack.TrackGroups = []uuid.UUID{newAlbum.Id, newPlaylist.Id}
 	newTrack.FavoriteOfUsers = []uuid.UUID{favoritingUser.Id}
-	_, err = db.Model(newTrack).Column("track_groups").WherePK().Update()
+	_, err = db.Model(newTrack).Column("track_groups", "favorite_of_users").WherePK().Update()
 	Expect(err).NotTo(HaveOccurred())
 
 	newArtistUserGroup.Tracks = []uuid.UUID{newTrack.Id}
-	_, err = db.Model(newArtistUserGroup).Column("tracks").WherePK().Update()
+	newArtistUserGroup.TrackGroups = []uuid.UUID{newAlbum.Id}
+	_, err = db.Model(newArtistUserGroup).Column("tracks", "track_groups").WherePK().Update()
+	Expect(err).NotTo(HaveOccurred())
+
+	newLabelUserGroup.TrackGroups = []uuid.UUID{newAlbum.Id}
+	_, err = db.Model(newLabelUserGroup).Column("tracks", "track_groups").WherePK().Update()
 	Expect(err).NotTo(HaveOccurred())
 })
 

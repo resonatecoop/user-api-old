@@ -52,8 +52,9 @@ type UserGroup struct {
   MemberOfGroups []UserGroup `pg:"many2many:user_group_members,fk:member_id,joinFK:user_group_id"`
 
   OwnerOfTracks []Track `pg:"fk:user_group_id"` // user group gets paid for these tracks
-  Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group owner or displayed as artist on these tracks
-  TrackGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  OwnerOfTrackGroups []TrackGroup `pg:"fk:user_group_id"`
+  Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group owner or displayed as artist for these tracks
+  TrackGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group owner or label for these track groups
 
   // SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   // artist

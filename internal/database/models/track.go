@@ -80,7 +80,7 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, playlist bool) ([]*pb.Track, twirp.Er
 	return tracksResponse, nil
 }
 
-func GetTrackIds (t []*pb.Track, tx *pg.Tx) ([]uuid.UUID, error, string) {
+func GetTrackIds(t []*pb.Track, tx *pg.Tx) ([]uuid.UUID, error, string) {
   tracks := make([]*Track, len(t))
   trackIds := make([]uuid.UUID, len(t))
   for i, track := range t {
