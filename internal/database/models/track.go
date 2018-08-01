@@ -111,9 +111,10 @@ func GetTrackIds(t []*pb.Track, tx *pg.Tx) ([]uuid.UUID, error, string) {
 }
 
 func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
-  // Update tags? artists?
+  // Update tags? artists? might not need tx here if not
   // tracks can be added to a track group from dedicated endpoint
   // in TrackGroup Service AddTracksToTrackGroup
+  // or on TrackGroup creation (TrackGroup Service CreateTrackGroup)
   var table string
   tx, err := db.Begin()
   if err != nil {

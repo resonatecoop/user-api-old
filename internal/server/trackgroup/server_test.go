@@ -140,7 +140,110 @@ var _ = Describe("TrackGroup server", func() {
   })
 
   Describe("UpdateTrackGroup", func() {
+    Context("with valid uuid", func() {
+			It("should update track if it exists", func() {
+        cover := make([]byte, 5)
+        cover[0] = '1'
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+          Id: newAlbum.Id.String(),
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+				}
+				_, err = service.UpdateTrackGroup(context.Background(), trackGroup)
 
+				Expect(err).NotTo(HaveOccurred())
+
+				t := new(models.TrackGroup)
+				err = db.Model(t).Where("id = ?", newAlbum.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(t.Title).To(Equal(trackGroup.Title))
+        updatedReleaseDate, err := ptypes.TimestampProto(t.ReleaseDate)
+        Expect(err).NotTo(HaveOccurred())
+				Expect(updatedReleaseDate.Seconds).To(Equal(trackGroup.ReleaseDate.Seconds))
+				Expect(t.DisplayArtist).To(Equal(trackGroup.DisplayArtist))
+				Expect(t.Cover).To(Equal(trackGroup.Cover))
+        Expect(t.MultipleComposers).To(Equal(trackGroup.MultipleComposers))
+				Expect(t.Private).To(Equal(trackGroup.Private))
+
+				// unchanged
+				Expect(t.CreatorId).To(Equal(newAlbum.CreatorId))
+        Expect(t.UserGroupId).To(Equal(newAlbum.UserGroupId))
+        Expect(t.LabelId).To(Equal(newAlbum.LabelId))
+				Expect(t.Type).To(Equal(newAlbum.Type))
+				Expect(len(t.Tags)).To(Equal(1))
+				Expect(len(t.Tracks)).To(Equal(1))
+			})
+			It("should respond with not_found error if track does not exist", func() {
+				id := uuid.NewV4()
+				for id == newAlbum.Id || id == newPlaylist.Id {
+					id = uuid.NewV4()
+				}
+        cover := make([]byte, 5)
+        cover[0] = '1'
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+          Id: id.String(),
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+				}
+				resp, err := service.UpdateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error", func() {
+				id := "45"
+        cover := make([]byte, 5)
+        cover[0] = '1'
+        releaseDate, err := ptypes.TimestampProto(time.Now())
+        Expect(err).NotTo(HaveOccurred())
+				trackGroup := &pb.TrackGroup{
+          Id: id,
+					Title: "best album ever",
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+          LabelId: newLabelUserGroup.Id.String(),
+          ReleaseDate: releaseDate,
+          Type: "lp",
+          Cover: cover,
+          DisplayArtist: "Various",
+          MultipleComposers: true,
+          Private: false,
+				}
+				resp, err := service.UpdateTrackGroup(context.Background(), trackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
   })
 
   Describe("AddTracksToTrackGroup", func() {
@@ -238,6 +341,10 @@ var _ = Describe("TrackGroup server", func() {
         newTrackGroup := new(models.TrackGroup)
         err = db.Model(newTrackGroup).Where("id = ?", trackGroupId).Select()
         Expect(newTrackGroup.Tracks).To(ContainElement(newTrack.Id))
+
+        createdReleaseDate, err := ptypes.TimestampProto(newTrackGroup.ReleaseDate)
+        Expect(err).NotTo(HaveOccurred())
+        Expect(createdReleaseDate.Seconds).To(Equal(releaseDate.Seconds))
 			})
       It("should create a new track group (playlist)", func() {
         cover := make([]byte, 5)

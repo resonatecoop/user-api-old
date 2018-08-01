@@ -89,9 +89,9 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
 }
 
 func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*pb.TrackGroup, error) {
-  err := checkRequiredAttributes(trackGroup)
-  if err != nil {
-    return nil, err
+  twerr := checkRequiredAttributes(trackGroup)
+  if twerr != nil {
+    return nil, twerr
   }
 
   t := &models.TrackGroup{
@@ -103,6 +103,12 @@ func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
     Private: trackGroup.Private,
   }
 
+  releaseDate, err := ptypes.Timestamp(trackGroup.ReleaseDate)
+  if err != nil {
+    return nil, twirp.InvalidArgumentError("release_date", "must be a valid time")
+  }
+  t.ReleaseDate = releaseDate
+
   if pgerr, table := t.Create(s.db, trackGroup); pgerr != nil {
     return nil, internal.CheckError(pgerr, table)
   }
@@ -111,6 +117,19 @@ func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
 }
 
 func (s *Server) UpdateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*userpb.Empty, error) {
+  t, twerr := getTrackGroupModel(trackGroup)
+	if twerr != nil {
+		return nil, twerr
+	}
+  releaseDate, err := ptypes.Timestamp(trackGroup.ReleaseDate)
+  if err != nil {
+    return nil, twirp.InvalidArgumentError("release_date", "must be a valid time")
+  }
+  t.ReleaseDate = releaseDate
+
+	if pgerr, table := t.Update(s.db, trackGroup); pgerr != nil {
+    return nil, internal.CheckError(pgerr, table)
+  }
   return &userpb.Empty{}, nil
 }
 

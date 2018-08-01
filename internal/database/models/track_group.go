@@ -188,12 +188,28 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
 }
 
 func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string) {
+  // Update tags? might not need tx here if not
   var table string
   tx, err := db.Begin()
   if err != nil {
     return err, table
   }
   defer tx.Rollback()
+
+  err, table = t.GetIds(trackGroup)
+  if err != nil {
+    return err, table
+  }
+
+  t.UpdatedAt = time.Now()
+  _, pgerr := tx.Model(t).
+    Column("title", "updated_at", "release_date", "cover", "display_artist", "multiple_composers", "private").
+    WherePK().
+    Returning("*").
+    Update()
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
 
   return tx.Commit(), table
 }
