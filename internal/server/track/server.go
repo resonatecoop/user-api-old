@@ -104,15 +104,25 @@ func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*userpb.Empt
 }
 
 func (s *Server) DeleteTrack(ctx context.Context, track *pb.Track) (*userpb.Empty, error) {
-	t, err := getTrackModel(track)
-	if err != nil {
-		return nil, err
+	t, twerr := getTrackModel(track)
+	if twerr != nil {
+		return nil, twerr
 	}
 
-	if pgerr, table := t.Delete(s.db, track); pgerr != nil {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, internal.CheckError(err, "")
+	}
+	defer tx.Rollback()
+
+	if pgerr, table := t.Delete(tx); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
-  return &userpb.Empty{}, nil
+	err = tx.Commit()
+  if err != nil {
+    return nil, internal.CheckError(err, "")
+  }
+	return &userpb.Empty{}, nil
 }
 
 func getTrackModel(track *pb.Track) (*models.Track, twirp.Error) {

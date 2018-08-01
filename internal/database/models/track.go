@@ -190,15 +190,9 @@ func (t *Track) Create(db *pg.DB, track *pb.Track) (error, string) {
   return tx.Commit(), table
 }
 
-func (t *Track) Delete(db *pg.DB, track *pb.Track) (error, string) {
-  // Delete from track server?
+func (t *Track) Delete(tx *pg.Tx) (error, string) {
   var table string
-  tx, err := db.Begin()
-  if err != nil {
-    return err, table
-  }
-  defer tx.Rollback()
-
+  // Delete from track server?
   pgerr := tx.Model(t).WherePK().Select()
   if pgerr != nil {
     return pgerr, "track"
@@ -244,7 +238,7 @@ func (t *Track) Delete(db *pg.DB, track *pb.Track) (error, string) {
     return pgerr, "track"
   }
 
-  return tx.Commit(), table
+  return nil, table
 }
 
 // Get track OwnerId, UserGroupId and TrackServerId as UUID

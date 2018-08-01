@@ -26,7 +26,7 @@ var _ = Describe("Track server", func() {
 				track := &pb.Track{Id: newTrack.Id.String()}
 
 				res, err := service.GetTrack(context.Background(), track)
-				
+
 				Expect(err).NotTo(HaveOccurred())
 				Expect(res.Title).To(Equal(newTrack.Title))
 				Expect(res.Status).To(Equal(newTrack.Status))
@@ -491,7 +491,7 @@ var _ = Describe("Track server", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(tracks)).To(Equal(0))
 			})
-			It("should respond with not_found error if user does not exist", func() {
+			It("should respond with not_found error if track does not exist", func() {
 				id := uuid.NewV4()
 				for id == newTrack.Id {
 					id = uuid.NewV4()

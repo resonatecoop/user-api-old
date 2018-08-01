@@ -4,7 +4,7 @@ import (
   "context"
   "time"
   // "fmt"
-  // "github.com/go-pg/pg"
+  "github.com/go-pg/pg"
   . "github.com/onsi/ginkgo"
   . "github.com/onsi/gomega"
   "github.com/twitchtv/twirp"
@@ -732,6 +732,103 @@ var _ = Describe("TrackGroup server", func() {
 	})
 
   Describe("DeleteTrackGroup", func() {
+    Context("with valid uuid", func() {
+      It("should delete trackGroup (playlist) if it exists and remove it from user playlists", func() {
+        trackGroup := &pb.TrackGroup{Id: newPlaylist.Id.String()}
 
+        trackGroupToDelete := new(models.TrackGroup)
+        err := db.Model(trackGroupToDelete).Where("id = ?", newPlaylist.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+
+        _, err = service.DeleteTrackGroup(context.Background(), trackGroup)
+
+        Expect(err).NotTo(HaveOccurred())
+
+        user := new(models.User)
+        err = db.Model(user).Where("id = ?", trackGroupToDelete.CreatorId).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(user.Playlists).NotTo(ContainElement(trackGroupToDelete.Id))
+
+        var tracks []models.Track
+        err = db.Model(&tracks).
+          Where("id in (?)", pg.In(trackGroupToDelete.Tracks)).
+          Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(len(tracks)).To(Equal(1))
+        for _, track := range tracks {
+          Expect(track.TrackGroups).NotTo(ContainElement(trackGroupToDelete.Id))
+        }
+
+        var trackGroups []models.Track
+        err = db.Model(&trackGroups).
+          Where("id in (?)", pg.In([]uuid.UUID{trackGroupToDelete.Id})).
+          Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(len(trackGroups)).To(Equal(0))
+      })
+      It("should delete trackGroup (release) if it exists and associated tracks", func() {
+        trackGroup := &pb.TrackGroup{Id: newAlbum.Id.String()}
+
+        trackGroupToDelete := new(models.TrackGroup)
+        err := db.Model(trackGroupToDelete).Where("id = ?", newAlbum.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+
+        _, err = service.DeleteTrackGroup(context.Background(), trackGroup)
+
+        Expect(err).NotTo(HaveOccurred())
+
+        owner := new(models.UserGroup)
+        err = db.Model(owner).Where("id = ?", trackGroupToDelete.UserGroupId).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(owner.TrackGroups).NotTo(ContainElement(trackGroupToDelete.Id))
+
+        label := new(models.UserGroup)
+        err = db.Model(label).Where("id = ?", trackGroupToDelete.LabelId).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(label.TrackGroups).NotTo(ContainElement(trackGroupToDelete.Id))
+
+        var tracks []models.Track
+        err = db.Model(&tracks).
+          Where("id in (?)", pg.In(trackGroupToDelete.Tracks)).
+          Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(len(tracks)).To(Equal(0))
+
+        var trackGroups []models.Track
+        err = db.Model(&trackGroups).
+          Where("id in (?)", pg.In([]uuid.UUID{trackGroupToDelete.Id})).
+          Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(len(trackGroups)).To(Equal(0))
+      })
+      It("should respond with not_found error if track group does not exist", func() {
+        id := uuid.NewV4()
+        for id == newPlaylist.Id || id == newAlbum.Id {
+          id = uuid.NewV4()
+        }
+        trackGroup := &pb.TrackGroup{Id: id.String()}
+        resp, err := service.DeleteTrackGroup(context.Background(), trackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(not_found_code))
+      })
+    })
+    Context("with invalid uuid", func() {
+      It("should respond with invalid_argument error", func() {
+        id := "45"
+        trackGroup := &pb.TrackGroup{Id: id}
+        resp, err := service.DeleteTrackGroup(context.Background(), trackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+        Expect(twerr.Meta("argument")).To(Equal("id"))
+      })
+    })
   })
 })

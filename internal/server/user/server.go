@@ -146,7 +146,7 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 
 		if len(u.OwnerOfGroups) > 0 {
 			for _, group := range u.OwnerOfGroups {
-				if pgerr, table := group.Delete(db); pgerr != nil {
+				if pgerr, table := group.Delete(tx); pgerr != nil {
 					return pgerr, table
 				}
 			}

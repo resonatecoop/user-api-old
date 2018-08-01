@@ -115,6 +115,25 @@ func (s *Server) UpdateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
 }
 
 func (s *Server) DeleteTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*userpb.Empty, error) {
+  t, twerr := getTrackGroupModel(trackGroup)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+  tx, err := s.db.Begin()
+  if err != nil {
+    return nil, internal.CheckError(err, "")
+  }
+  defer tx.Rollback()
+
+	if pgerr, table := t.Delete(tx); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
+
+  err = tx.Commit()
+  if err != nil {
+    return nil, internal.CheckError(err, "")
+  }
   return &userpb.Empty{}, nil
 }
 

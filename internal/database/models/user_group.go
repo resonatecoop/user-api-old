@@ -73,14 +73,8 @@ func (u *UserGroup) BeforeInsert(db orm.DB) error {
 }
 
 // TODO delete track and track group
-func (u *UserGroup) Delete(db *pg.DB) (error, string) {
-  var table string
-  tx, err := db.Begin()
-  if err != nil {
-    return err, table
-  }
-  defer tx.Rollback()
-
+// delete from recommended artists
+func (u *UserGroup) Delete(tx *pg.Tx) (error, string) {
   pgerr := tx.Model(u).
     Column("user_group.links","user_group.followers", "Address", "Privacy").
     WherePK().
@@ -133,7 +127,7 @@ func (u *UserGroup) Delete(db *pg.DB) (error, string) {
     return pgerr, "user_group_privacy"
   }
 
-  return tx.Commit(), table
+  return nil, ""
 }
 
 // Select user groups in db with given 'ids'

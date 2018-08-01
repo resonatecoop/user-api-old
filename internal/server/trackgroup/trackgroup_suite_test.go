@@ -153,8 +153,10 @@ var _ = AfterSuite(func() {
 	var tracks []models.Track
 	err := db.Model(&tracks).Select()
 	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&tracks).Delete()
-	Expect(err).NotTo(HaveOccurred())
+	if len(tracks) > 0 {
+		_, err = db.Model(&tracks).Delete()
+		Expect(err).NotTo(HaveOccurred())
+	}
 
 	// Delete all track groups
 	var trackGroups []models.TrackGroup

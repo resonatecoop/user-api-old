@@ -310,14 +310,25 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 }
 
 func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*userpb.Empty, error) {
-	id, err := internal.GetUuidFromString(userGroup.Id)
-	if err != nil {
-		return nil, err
+	id, twerr := internal.GetUuidFromString(userGroup.Id)
+	if twerr != nil {
+		return nil, twerr
 	}
 	u := &models.UserGroup{Id: id}
 
-	if pgerr, table := u.Delete(s.db); pgerr != nil {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, internal.CheckError(err, "")
+	}
+	defer tx.Rollback()
+
+	if pgerr, table := u.Delete(tx); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, internal.CheckError(err, "")
 	}
 
 	return &userpb.Empty{}, nil

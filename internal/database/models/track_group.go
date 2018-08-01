@@ -2,7 +2,7 @@ package models
 
 import (
   "time"
-
+  // "fmt"
   "github.com/satori/go.uuid"
   "user-api/internal"
   "github.com/go-pg/pg"
@@ -198,15 +198,60 @@ func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
   return tx.Commit(), table
 }
 
-func (t *TrackGroup) Delete(db *pg.DB, trackGroup *pb.TrackGroup) (error, string) {
+func (t *TrackGroup) Delete(tx *pg.Tx) (error, string) {
   var table string
-  tx, err := db.Begin()
-  if err != nil {
-    return err, table
-  }
-  defer tx.Rollback()
 
-  return tx.Commit(), table
+  pgerr := tx.Model(t).WherePK().Select()
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
+
+  // Delete track group from user group/label track_groups array
+  userGroupIds := internal.RemoveDuplicates([]uuid.UUID{t.LabelId, t.UserGroupId})
+  _, pgerr = tx.Exec(`
+    UPDATE user_groups
+    SET track_groups = array_remove(track_groups, ?)
+    WHERE id IN (?)
+  `, t.Id, pg.In(userGroupIds))
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  // Delete playlist track group from user (CreatorId) playlists and tracks track group
+  if t.Type == "playlist" {
+    _, pgerr = tx.Exec(`
+      UPDATE users
+      SET playlists = array_remove(playlists, ?)
+      WHERE id = ?
+    `, t.Id, t.CreatorId)
+    if pgerr != nil {
+      return pgerr, "user"
+    }
+
+    _, pgerr = tx.Exec(`
+      UPDATE tracks
+      SET track_groups = array_remove(track_groups, ?)
+      WHERE id IN (?)
+    `, t.Id, pg.In(t.Tracks))
+    if pgerr != nil {
+      return pgerr, "track"
+    }
+  } else { // Delete tracks if track group not of type playlist
+    for _, id := range(t.Tracks) {
+      track := &Track{Id: id}
+      pgerr, table := track.Delete(tx)
+      if pgerr != nil {
+        return pgerr, table
+      }
+    }
+  }
+
+  pgerr = tx.Delete(t)
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
+
+  return nil, table
 }
 
 func (t *TrackGroup) GetIds(trackGroup *pb.TrackGroup) (error, string) {
