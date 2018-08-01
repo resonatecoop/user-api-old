@@ -157,10 +157,28 @@ func (s *Server) DeleteTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
 }
 
 func (s *Server) AddTracksToTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*userpb.Empty, error) {
+  id, twerr := internal.GetUuidFromString(tracksToTrackGroup.TrackGroupId)
+  if twerr != nil {
+    return nil, twerr
+  }
+  t := &models.TrackGroup{Id: id}
+
+  if pgerr, table := t.AddTracks(s.db, tracksToTrackGroup.Tracks); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
   return &userpb.Empty{}, nil
 }
 
-func (s *Server) DeleteTracksFromTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*userpb.Empty, error) {
+func (s *Server) RemoveTracksFromTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*userpb.Empty, error) {
+  id, twerr := internal.GetUuidFromString(tracksToTrackGroup.TrackGroupId)
+  if twerr != nil {
+    return nil, twerr
+  }
+  t := &models.TrackGroup{Id: id}
+
+  if pgerr, table := t.RemoveTracks(s.db, tracksToTrackGroup.Tracks); pgerr != nil {
+    return nil, internal.CheckError(pgerr, table)
+  }
   return &userpb.Empty{}, nil
 }
 

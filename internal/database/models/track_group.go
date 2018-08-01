@@ -180,7 +180,7 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
       WHERE id IN (?)
     `, pg.Array(trackGroupIdArr), pg.In(trackIds))
     if pgerr != nil {
-      return pgerr, "user"
+      return pgerr, "track"
     }
   }
 
@@ -268,6 +268,88 @@ func (t *TrackGroup) Delete(tx *pg.Tx) (error, string) {
   }
 
   return nil, table
+}
+
+func (t *TrackGroup) AddTracks(db *pg.DB, tracks []*trackpb.Track) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  trackIds, pgerr, table := GetTrackIds(tracks, tx)
+  if pgerr != nil {
+    return pgerr, table
+  }
+
+  // Add Tracks to Trackgroup tracks array
+  pgerr = tx.Model(t).WherePK().Select()
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
+  _, pgerr = tx.Exec(`
+    UPDATE track_groups
+    SET tracks = (select array_agg(distinct e) from unnest(tracks || ?) e)
+    WHERE id = ?
+  `, pg.Array(trackIds), t.Id)
+
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
+
+  // Add Trackgroup to Tracks track_groups array
+  _, pgerr = tx.Exec(`
+    UPDATE tracks
+    SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
+    WHERE id IN (?)
+  `, pg.Array([]uuid.UUID{t.Id}), pg.In(trackIds))
+
+  if pgerr != nil {
+    return pgerr, "track"
+  }
+
+  return tx.Commit(), table
+}
+
+func (t *TrackGroup) RemoveTracks(db *pg.DB, tracks []*trackpb.Track) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  trackIds, pgerr, table := GetTrackIds(tracks, tx)
+  if pgerr != nil {
+    return pgerr, table
+  }
+
+  // Remove Tracks from Trackgroup tracks array
+  pgerr = tx.Model(t).WherePK().Select()
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
+  _, pgerr = tx.Exec(`
+    UPDATE track_groups
+    SET tracks = (select array_agg(e) from unnest(tracks) e where e <> all(?))
+    WHERE id = ?
+  `, pg.Array(trackIds), t.Id)
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
+
+  // Remove Trackgroup from Tracks track_groups array
+  _, pgerr = tx.Exec(`
+    UPDATE tracks
+    SET track_groups = array_remove(track_groups, ?)
+    WHERE id IN (?)
+  `, t.Id, pg.In(trackIds))
+  if pgerr != nil {
+    return pgerr, "track"
+  }
+
+  return tx.Commit(), table
 }
 
 func (t *TrackGroup) GetIds(trackGroup *pb.TrackGroup) (error, string) {

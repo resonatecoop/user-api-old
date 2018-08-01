@@ -546,7 +546,7 @@ Tracks can be added to a track group from dedicated endpoint in TrackGroup Servi
             }
 
 ## TrackGroups Collection [/twirp/resonate.api.user.TrackGroup]
-TODO
+
 ### Create TrackGroup [POST /twirp/resonate.api.user.Track/CreateTrackGroup]
 
 artist EP, LP, user playlist...
@@ -592,6 +592,7 @@ artist EP, LP, user playlist...
 + Request (application/json)
 
         {
+            "id": "a3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05",
             "title": "Worst Album"
         }
 
@@ -632,14 +633,15 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 + Response 204 (application/json)
 
 ### Get TrackGroup [POST /twirp/resonate.api.user.Track/GetTrackGroup]
-TODO
+
 + Request (application/json)
 
         {
-            "track_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d"
+            "id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d"
         }
 
 + Response 200 (application/json)
 
-        [
-        ]
+        {
+
+        }

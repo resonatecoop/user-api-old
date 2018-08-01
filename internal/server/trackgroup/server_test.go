@@ -247,11 +247,206 @@ var _ = Describe("TrackGroup server", func() {
   })
 
   Describe("AddTracksToTrackGroup", func() {
+    Context("with track_group_id and track ids", func() {
+      It("should add tracks to track group", func() {
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: newPlaylist.Id.String(),
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: playlistTrack.Id.String()},
+          },
+        }
+        _, err := service.AddTracksToTrackGroup(context.Background(), tracksToTrackGroup)
 
+        trackGroup := new(models.TrackGroup)
+        err = db.Model(trackGroup).Where("id = ?", newPlaylist.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(trackGroup.Tracks).To(HaveLen(2))
+        Expect(trackGroup.Tracks).To(ContainElement(playlistTrack.Id))
+
+        var tracks []models.Track
+        err = db.Model(&tracks).
+          Where("id in (?)", pg.In([]uuid.UUID{playlistTrack.Id})).
+          Select()
+        Expect(err).NotTo(HaveOccurred())
+        for _, track := range tracks {
+          Expect(track.TrackGroups).To(ContainElement(newPlaylist.Id))
+        }
+      })
+      It("should respond with not_found error if track group does not exist", func() {
+        id := uuid.NewV4()
+        for id == newPlaylist.Id || id == newAlbum.Id {
+          id = uuid.NewV4()
+        }
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: id.String(),
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: playlistTrack.Id.String()},
+          },
+        }
+        resp, err := service.AddTracksToTrackGroup(context.Background(), tracksToTrackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(not_found_code))
+      })
+      It("should respond with not_found error if one of the tracks does not exist", func() {
+        id := uuid.NewV4()
+        for id == newTrack.Id || id == playlistTrack.Id {
+          id = uuid.NewV4()
+        }
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: newPlaylist.Id.String(),
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: id.String()},
+          },
+        }
+        resp, err := service.AddTracksToTrackGroup(context.Background(), tracksToTrackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(not_found_code))
+      })
+    })
+    Context("with invalid user_group_id", func() {
+      It("should respond with invalid_argument_code error", func() {
+				tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: "1",
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: playlistTrack.Id.String()},
+          },
+        }
+				resp, err := service.AddTracksToTrackGroup(context.Background(), tracksToTrackGroup)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+    })
+    Context("with invalid track id", func() {
+      It("should respond with invalid_argument_code error", func() {
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: newPlaylist.Id.String(),
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: ""},
+          },
+        }
+        resp, err := service.AddTracksToTrackGroup(context.Background(), tracksToTrackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+      })
+    })
   })
 
-  Describe("DeleteTracksFromTrackGroup", func() {
+  Describe("RemoveTracksFromTrackGroup", func() {
+    Context("with track_group_id and track ids", func() {
+      It("should add tracks to track group", func() {
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: newPlaylist.Id.String(),
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: playlistTrack.Id.String()},
+          },
+        }
+        _, err := service.RemoveTracksFromTrackGroup(context.Background(), tracksToTrackGroup)
 
+        trackGroup := new(models.TrackGroup)
+        err = db.Model(trackGroup).Where("id = ?", newPlaylist.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(trackGroup.Tracks).To(HaveLen(1))
+        Expect(trackGroup.Tracks).NotTo(ContainElement(playlistTrack.Id))
+
+        var tracks []models.Track
+        err = db.Model(&tracks).
+          Where("id in (?)", pg.In([]uuid.UUID{playlistTrack.Id})).
+          Select()
+        Expect(err).NotTo(HaveOccurred())
+        for _, track := range tracks {
+          Expect(track.TrackGroups).NotTo(ContainElement(newPlaylist.Id))
+        }
+      })
+      It("should respond with not_found error if track group does not exist", func() {
+        id := uuid.NewV4()
+        for id == newPlaylist.Id || id == newAlbum.Id {
+          id = uuid.NewV4()
+        }
+
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: id.String(),
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: playlistTrack.Id.String()},
+          },
+        }
+        resp, err := service.RemoveTracksFromTrackGroup(context.Background(), tracksToTrackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(not_found_code))
+      })
+      It("should respond with not_found error if one of the tracks does not exist", func() {
+        id := uuid.NewV4()
+        for id == newTrack.Id || id == playlistTrack.Id {
+          id = uuid.NewV4()
+        }
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: newPlaylist.Id.String(),
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: id.String()},
+          },
+        }
+        resp, err := service.RemoveTracksFromTrackGroup(context.Background(), tracksToTrackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(not_found_code))
+      })
+    })
+    Context("with invalid user_group_id", func() {
+      It("should respond with invalid_argument_code error", func() {
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: "1",
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: playlistTrack.Id.String()},
+          },
+        }
+        resp, err := service.RemoveTracksFromTrackGroup(context.Background(), tracksToTrackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+      })
+    })
+    Context("with invalid track id", func() {
+      It("should respond with invalid_argument_code error", func() {
+        tracksToTrackGroup := &pb.TracksToTrackGroup{
+          TrackGroupId: newPlaylist.Id.String(),
+          Tracks: []*trackpb.Track{
+            &trackpb.Track{Id: ""},
+          },
+        }
+        resp, err := service.RemoveTracksFromTrackGroup(context.Background(), tracksToTrackGroup)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+      })
+    })
   })
 
   Describe("CreateTrackGroup", func() {

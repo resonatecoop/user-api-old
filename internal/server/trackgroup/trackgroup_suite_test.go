@@ -19,6 +19,7 @@ var (
 	service *trackgroupserver.Server
 	newUser *models.User
 	newTrack *models.Track
+	playlistTrack *models.Track
 	newAlbum *models.TrackGroup
 	newPlaylist *models.TrackGroup
 	newArtistGroupTaxonomy *models.GroupTaxonomy
@@ -91,6 +92,16 @@ var _ = BeforeSuite(func() {
 		Tags: tagIds,
 	}
 	err = db.Insert(newTrack)
+	Expect(err).NotTo(HaveOccurred())
+
+	playlistTrack = &models.Track{
+		CreatorId: newUser.Id,
+		UserGroupId: newArtistUserGroup.Id,
+		Artists: []uuid.UUID{newArtistUserGroup.Id},
+		Title: "playlist track",
+		Status: "free",
+	}
+	err = db.Insert(playlistTrack)
 	Expect(err).NotTo(HaveOccurred())
 
 	favoritingUser := &models.User{Username: "fav", FullName: "fav name", Email: "fav@fake.com", FavoriteTracks: []uuid.UUID{newTrack.Id}}

@@ -15,7 +15,7 @@ service TrackGroupService {
   rpc UpdateTrackGroup(TrackGroup) returns (Empty);
   rpc DeleteTrackGroup(TrackGroup) returns (Empty);
   rpc AddTracksToTrackGroup(TracksToTrackGroup) returns (Empty);
-  rpc DeleteTracksFromTrackGroup(TracksToTrackGroup) returns (Empty);
+  rpc RemoveTracksFromTrackGroup(TracksToTrackGroup) returns (Empty);
 }
 
 message TrackGroup {

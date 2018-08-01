@@ -45,7 +45,7 @@ type TrackGroupService interface {
 
 	AddTracksToTrackGroup(context.Context, *TracksToTrackGroup) (*resonate_api_user.Empty, error)
 
-	DeleteTracksFromTrackGroup(context.Context, *TracksToTrackGroup) (*resonate_api_user.Empty, error)
+	RemoveTracksFromTrackGroup(context.Context, *TracksToTrackGroup) (*resonate_api_user.Empty, error)
 }
 
 // =================================
@@ -67,7 +67,7 @@ func NewTrackGroupServiceProtobufClient(addr string, client HTTPClient) TrackGro
 		prefix + "UpdateTrackGroup",
 		prefix + "DeleteTrackGroup",
 		prefix + "AddTracksToTrackGroup",
-		prefix + "DeleteTracksFromTrackGroup",
+		prefix + "RemoveTracksFromTrackGroup",
 	}
 	if httpClient, ok := client.(*http.Client); ok {
 		return &trackGroupServiceProtobufClient{
@@ -126,10 +126,10 @@ func (c *trackGroupServiceProtobufClient) AddTracksToTrackGroup(ctx context.Cont
 	return out, err
 }
 
-func (c *trackGroupServiceProtobufClient) DeleteTracksFromTrackGroup(ctx context.Context, in *TracksToTrackGroup) (*resonate_api_user.Empty, error) {
+func (c *trackGroupServiceProtobufClient) RemoveTracksFromTrackGroup(ctx context.Context, in *TracksToTrackGroup) (*resonate_api_user.Empty, error) {
 	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
 	ctx = ctxsetters.WithServiceName(ctx, "TrackGroupService")
-	ctx = ctxsetters.WithMethodName(ctx, "DeleteTracksFromTrackGroup")
+	ctx = ctxsetters.WithMethodName(ctx, "RemoveTracksFromTrackGroup")
 	out := new(resonate_api_user.Empty)
 	err := doProtobufRequest(ctx, c.client, c.urls[5], in, out)
 	return out, err
@@ -154,7 +154,7 @@ func NewTrackGroupServiceJSONClient(addr string, client HTTPClient) TrackGroupSe
 		prefix + "UpdateTrackGroup",
 		prefix + "DeleteTrackGroup",
 		prefix + "AddTracksToTrackGroup",
-		prefix + "DeleteTracksFromTrackGroup",
+		prefix + "RemoveTracksFromTrackGroup",
 	}
 	if httpClient, ok := client.(*http.Client); ok {
 		return &trackGroupServiceJSONClient{
@@ -213,10 +213,10 @@ func (c *trackGroupServiceJSONClient) AddTracksToTrackGroup(ctx context.Context,
 	return out, err
 }
 
-func (c *trackGroupServiceJSONClient) DeleteTracksFromTrackGroup(ctx context.Context, in *TracksToTrackGroup) (*resonate_api_user.Empty, error) {
+func (c *trackGroupServiceJSONClient) RemoveTracksFromTrackGroup(ctx context.Context, in *TracksToTrackGroup) (*resonate_api_user.Empty, error) {
 	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
 	ctx = ctxsetters.WithServiceName(ctx, "TrackGroupService")
-	ctx = ctxsetters.WithMethodName(ctx, "DeleteTracksFromTrackGroup")
+	ctx = ctxsetters.WithMethodName(ctx, "RemoveTracksFromTrackGroup")
 	out := new(resonate_api_user.Empty)
 	err := doJSONRequest(ctx, c.client, c.urls[5], in, out)
 	return out, err
@@ -285,8 +285,8 @@ func (s *trackGroupServiceServer) ServeHTTP(resp http.ResponseWriter, req *http.
 	case "/twirp/resonate.api.user.TrackGroupService/AddTracksToTrackGroup":
 		s.serveAddTracksToTrackGroup(ctx, resp, req)
 		return
-	case "/twirp/resonate.api.user.TrackGroupService/DeleteTracksFromTrackGroup":
-		s.serveDeleteTracksFromTrackGroup(ctx, resp, req)
+	case "/twirp/resonate.api.user.TrackGroupService/RemoveTracksFromTrackGroup":
+		s.serveRemoveTracksFromTrackGroup(ctx, resp, req)
 		return
 	default:
 		msg := fmt.Sprintf("no handler for path %q", req.URL.Path)
@@ -1016,7 +1016,7 @@ func (s *trackGroupServiceServer) serveAddTracksToTrackGroupProtobuf(ctx context
 	callResponseSent(ctx, s.hooks)
 }
 
-func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroup(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
+func (s *trackGroupServiceServer) serveRemoveTracksFromTrackGroup(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
 	header := req.Header.Get("Content-Type")
 	i := strings.Index(header, ";")
 	if i == -1 {
@@ -1024,9 +1024,9 @@ func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroup(ctx context.Co
 	}
 	switch strings.TrimSpace(strings.ToLower(header[:i])) {
 	case "application/json":
-		s.serveDeleteTracksFromTrackGroupJSON(ctx, resp, req)
+		s.serveRemoveTracksFromTrackGroupJSON(ctx, resp, req)
 	case "application/protobuf":
-		s.serveDeleteTracksFromTrackGroupProtobuf(ctx, resp, req)
+		s.serveRemoveTracksFromTrackGroupProtobuf(ctx, resp, req)
 	default:
 		msg := fmt.Sprintf("unexpected Content-Type: %q", req.Header.Get("Content-Type"))
 		twerr := badRouteError(msg, req.Method, req.URL.Path)
@@ -1034,9 +1034,9 @@ func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroup(ctx context.Co
 	}
 }
 
-func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroupJSON(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
+func (s *trackGroupServiceServer) serveRemoveTracksFromTrackGroupJSON(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
 	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "DeleteTracksFromTrackGroup")
+	ctx = ctxsetters.WithMethodName(ctx, "RemoveTracksFromTrackGroup")
 	ctx, err = callRequestRouted(ctx, s.hooks)
 	if err != nil {
 		s.writeError(ctx, resp, err)
@@ -1061,7 +1061,7 @@ func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroupJSON(ctx contex
 				panic(r)
 			}
 		}()
-		respContent, err = s.DeleteTracksFromTrackGroup(ctx, reqContent)
+		respContent, err = s.RemoveTracksFromTrackGroup(ctx, reqContent)
 	}()
 
 	if err != nil {
@@ -1069,7 +1069,7 @@ func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroupJSON(ctx contex
 		return
 	}
 	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *resonate_api_user.Empty and nil error while calling DeleteTracksFromTrackGroup. nil responses are not supported"))
+		s.writeError(ctx, resp, twirp.InternalError("received a nil *resonate_api_user.Empty and nil error while calling RemoveTracksFromTrackGroup. nil responses are not supported"))
 		return
 	}
 
@@ -1096,9 +1096,9 @@ func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroupJSON(ctx contex
 	callResponseSent(ctx, s.hooks)
 }
 
-func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroupProtobuf(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
+func (s *trackGroupServiceServer) serveRemoveTracksFromTrackGroupProtobuf(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
 	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "DeleteTracksFromTrackGroup")
+	ctx = ctxsetters.WithMethodName(ctx, "RemoveTracksFromTrackGroup")
 	ctx, err = callRequestRouted(ctx, s.hooks)
 	if err != nil {
 		s.writeError(ctx, resp, err)
@@ -1128,7 +1128,7 @@ func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroupProtobuf(ctx co
 				panic(r)
 			}
 		}()
-		respContent, err = s.DeleteTracksFromTrackGroup(ctx, reqContent)
+		respContent, err = s.RemoveTracksFromTrackGroup(ctx, reqContent)
 	}()
 
 	if err != nil {
@@ -1136,7 +1136,7 @@ func (s *trackGroupServiceServer) serveDeleteTracksFromTrackGroupProtobuf(ctx co
 		return
 	}
 	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *resonate_api_user.Empty and nil error while calling DeleteTracksFromTrackGroup. nil responses are not supported"))
+		s.writeError(ctx, resp, twirp.InternalError("received a nil *resonate_api_user.Empty and nil error while calling RemoveTracksFromTrackGroup. nil responses are not supported"))
 		return
 	}
 
