@@ -3,6 +3,7 @@ package models
 import (
   "time"
   // "fmt"
+  // "reflect"
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/satori/go.uuid"
@@ -75,15 +76,40 @@ func (u *UserGroup) BeforeInsert(db orm.DB) error {
   return nil
 }
 
-// TODO delete  track group
-// delete from recommended artists
 func (u *UserGroup) Delete(tx *pg.Tx) (error, string) {
   pgerr := tx.Model(u).
-    Column("user_group.links","user_group.followers", "Address", "Privacy").
+    Column("user_group.links","user_group.followers", "user_group.recommended_by", "user_group.recommended_artists", "user_group.tracks", "Address", "Privacy", "OwnerOfTrackGroups").
     WherePK().
     Select()
   if pgerr != nil {
     return pgerr, "user_group"
+  }
+
+  // ownerOfTrackIds := make([]uuid.UUID, len(u.OwnerOfTracks))
+  // for i, track := range(u.OwnerOfTracks) {
+  //   ownerOfTrackIds[i] = track.Id
+  // }
+
+  // These tracks contain the user group to delete as artist
+  // so we have to remove it from the tracks' artists list
+  // If the user group to delete is as well owner of some of these tracks
+  // they'll be deleted from trackGroup.Delete (l.107)
+  if len(u.Tracks) > 0 {
+    _, pgerr = tx.Exec(`
+      UPDATE tracks
+      SET artists = array_remove(artists, ?)
+      WHERE id IN (?)
+    `, u.Id, pg.In(u.Tracks))
+    if pgerr != nil {
+      return pgerr, "track"
+    }
+  }
+
+  for _, trackGroup := range(u.OwnerOfTrackGroups) {
+    pgerr, table := trackGroup.Delete(tx)
+    if pgerr != nil {
+      return pgerr, table
+    }
   }
 
   if len(u.Links) > 0 {
@@ -92,6 +118,28 @@ func (u *UserGroup) Delete(tx *pg.Tx) (error, string) {
       Delete()
     if pgerr != nil {
       return pgerr, "link"
+    }
+  }
+
+  if len(u.RecommendedBy) > 0 {
+    _, pgerr = tx.Exec(`
+      UPDATE user_groups
+      SET recommended_artists = array_remove(recommended_artists, ?)
+      WHERE id IN (?)
+    `, u.Id, pg.In(u.RecommendedBy))
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
+  }
+
+  if len(u.RecommendedArtists) > 0 {
+    _, pgerr = tx.Exec(`
+      UPDATE user_groups
+      SET recommended_by = array_remove(recommended_by, ?)
+      WHERE id IN (?)
+    `, u.Id, pg.In(u.RecommendedArtists))
+    if pgerr != nil {
+      return pgerr, "user_group"
     }
   }
 

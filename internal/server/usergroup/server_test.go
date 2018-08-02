@@ -15,7 +15,7 @@ import (
 	pb "user-api/rpc/usergroup"
 	userpb "user-api/rpc/user"
 	trackpb "user-api/rpc/track"
-	// "user-api/internal"
+	"user-api/internal"
 	"user-api/internal/database/models"
 )
 
@@ -235,7 +235,7 @@ var _ = Describe("UserGroup server", func() {
 				userGroup := new(models.UserGroup)
 				err = db.Model(userGroup).Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(userGroup.RecommendedArtists)).To(Equal(1))
+				Expect(len(userGroup.RecommendedArtists)).To(Equal(2))
 				Expect(userGroup.RecommendedArtists).To(ContainElement(newRecommendedArtist.Id))
 
 				recommended := new(models.UserGroup)
@@ -325,7 +325,7 @@ var _ = Describe("UserGroup server", func() {
 				userGroup := new(models.UserGroup)
 				err = db.Model(userGroup).Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(userGroup.RecommendedArtists)).To(Equal(0))
+				Expect(len(userGroup.RecommendedArtists)).To(Equal(1))
 				Expect(userGroup.RecommendedArtists).NotTo(ContainElement(newRecommendedArtist.Id))
 
 				recommended := new(models.UserGroup)
@@ -712,7 +712,9 @@ var _ = Describe("UserGroup server", func() {
 				userGroup := &pb.UserGroup{Id: newArtist.Id.String()}
 
 				userGroupToDelete := new(models.UserGroup)
-				err := db.Model(userGroupToDelete).Where("id = ?", newArtist.Id).Select()
+				err := db.Model(userGroupToDelete).
+					Column("OwnerOfTracks", "OwnerOfTrackGroups", "user_group.*").
+					Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 
 				_, err = service.DeleteUserGroup(context.Background(), userGroup)
@@ -743,6 +745,56 @@ var _ = Describe("UserGroup server", func() {
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(userGroupMembers)).To(Equal(0))
+
+				var recommendedBy []models.UserGroup
+				err = db.Model(&recommendedBy).
+					Where("id in (?)", pg.In(userGroupToDelete.RecommendedBy)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				for _, r := range recommendedBy {
+					Expect(r.RecommendedArtists).NotTo(ContainElement(userGroupToDelete.Id))
+				}
+
+				var recommendedArtists []models.UserGroup
+				err = db.Model(&recommendedArtists).
+					Where("id in (?)", pg.In(userGroupToDelete.RecommendedArtists)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				for _, r := range recommendedArtists {
+					Expect(r.RecommendedBy).NotTo(ContainElement(userGroupToDelete.Id))
+				}
+
+				ownerOfTrackGroupIds := make([]uuid.UUID, len(userGroupToDelete.OwnerOfTrackGroups))
+				for i, trackGroup := range(userGroupToDelete.OwnerOfTrackGroups) {
+				  ownerOfTrackGroupIds[i] = trackGroup.Id
+				}
+				var ownerOfTrackGroups []models.TrackGroup
+				err = db.Model(&ownerOfTrackGroups).
+					Where("id in (?)", pg.In(ownerOfTrackGroupIds)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(ownerOfTrackGroups)).To(Equal(0))
+
+				ownerOfTrackIds := make([]uuid.UUID, len(userGroupToDelete.OwnerOfTracks))
+				for i, track := range(userGroupToDelete.OwnerOfTracks) {
+				  ownerOfTrackIds[i] = track.Id
+				}
+				var ownerOfTracks []models.Track
+				err = db.Model(&ownerOfTracks).
+					Where("id in (?)", pg.In(ownerOfTrackIds)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(ownerOfTracks)).To(Equal(0))
+
+				trackIds := internal.Difference(userGroupToDelete.Tracks, ownerOfTrackIds)
+				var tracks []models.Track
+				err = db.Model(&tracks).
+					Where("id in (?)", pg.In(trackIds)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				for _, t := range tracks {
+					Expect(t.Artists).NotTo(ContainElement(userGroupToDelete.Id))
+				}
 
 				var userGroups []models.UserGroup
 				err = db.Model(&userGroups).
