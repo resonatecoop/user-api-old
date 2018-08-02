@@ -223,9 +223,7 @@ To add or remove tags or links:
 - add {...obj} to the corresponding array in the request body with info (type, name for tags; platform, uri for links).
 - remove {"id": "idToRemove"} from the array.
 
-To add or remove recommended_artists:
-- add {"id": "idToadd"} to the corresponding array in the request body.
-- remove {"id": "idToRemove"} from the array.
+To add or remove recommended_artists, cf. dedicated endpoints Add/RemoveRecommended
 
 
 + Request (application/json)
@@ -259,6 +257,28 @@ To add or remove recommended_artists:
 
         {
             "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 204 (application/json)
+
+### Add Recommended UserGroup [POST /twirp/resonate.api.user.UserGroupService/AddRecommended]
+
++ Request (application/json)
+
+        {
+            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "recommended_id": "c09cd642-9df8-4f44-bb5a-169829043110",
+        }
+
++ Response 204 (application/json)
+
+### Remove Recommended UserGroup [POST /twirp/resonate.api.user.UserGroupService/RemoveRecommended]
+
++ Request (application/json)
+
+        {
+            "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "recommended_id": "c09cd642-9df8-4f44-bb5a-169829043110",
         }
 
 + Response 204 (application/json)
@@ -484,7 +504,8 @@ Tracks are created and only after the TrackGroup they are part of is created.
 ### Update Track [POST /twirp/resonate.api.user.Track/UpdateTrack]
 
 CreatorId and UserGroupId are immutable.
-Tracks can be added to a track group from dedicated endpoint in TrackGroup Service AddTracksToTrackGroup
+
+Tracks can be added to a track group from dedicated endpoint in TrackGroup Service AddTracksToTrackGroup or on TrackGroup creation
 
 + Request (application/json)
 
@@ -549,51 +570,116 @@ Tracks can be added to a track group from dedicated endpoint in TrackGroup Servi
 
 ### Create TrackGroup [POST /twirp/resonate.api.user.Track/CreateTrackGroup]
 
-artist EP, LP, user playlist...
++ type (string) - type of track group: lp, ep, single or playlist.
+For lp, ep, single: user_group_id is required.
+For playlist: user_group_id can be set (public playlist owned by a user group profile) or not (private playlist owned by a user, i.e. creator).
 
 + Request (application/json)
 
         {
             "creator_id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "tracks": [
-                "c09cd642-9df8-4f44-bb5a-169829043110",
-                "a09cd642-9df8-4f44-bb5a-169829043110"
-            ],
+            "user_group_id": "d09cd642-9df8-4f44-bb5a-169829043110",
+            "label_id": "c09cd642-9df8-4f44-bb5a-169829043110",
+            "release_date": "2009-11-10T00:00:00Z",
+            "type": "lp",
+            "cover": "blob",
+            "display_artist": "Various",
+            "multiple_composers": true,
+            "private": false,
             "title": "Greatest Album",
-            "publish_date": "2015-08-05"
+            "tags": [
+              {"type": "genre", "name": "rock"}
+            ],
+            "tracks": [
+              {"id": "b19cd642-9df8-4f44-bb5a-169829043110"},
+              {"id": "b29cd642-9df8-4f44-bb5a-169829043110"},
+              {"id": "b39cd642-9df8-4f44-bb5a-169829043110"}
+            ]
         }
 
 + Response 200 (application/json)
 
         {
-            "id": "a3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05"
-            "created_at": "2015-08-05T08:40:51.620Z",
-            "updated_at": "2015-08-05T08:40:51.620Z",
-            "creator": [
-                {
-                    "id": "b09cd642-9df8-4f44-bb5a-169829043110"
-                }
+            "id": "a3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05",
+            "creator_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_group_id": "d09cd642-9df8-4f44-bb5a-169829043110",
+            "label_id": "c09cd642-9df8-4f44-bb5a-169829043110",
+            "release_date": "2009-11-10T00:00:00Z",
+            "type": "lp",
+            "cover": "blob",
+            "display_artist": "Various",
+            "multiple_composers": true,
+            "private": false,
+            "title": "Greatest Album",
+            "tags": [
+              {"id": "b3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05", "type": "genre", "name": "rock"}
             ],
             "tracks": [
+              {
+                "id": "b19cd642-9df8-4f44-bb5a-169829043110",
+                "title": "track title",
+                "track_server_id": "d29cd642-9df8-4f44-bb5a-169829043110",
+                "duration": 123.0,
+                "track_number": 1,
+                "status": "paid",
+                "artists": [
+                  {
+                    "id": "b29cd642-9df8-4f44-bb5a-169829043110",
+                    "display_name": "Artist1",
+                    "avatar": "blob"
+                  }
+                ]
+              },
+              {
+                "id": "b29cd642-9df8-4f44-bb5a-169829043110",
+                "title": "track title",
+                "track_server_id": "e29cd642-9df8-4f44-bb5a-169829043110",
+                "duration": 123.0,
+                "track_number": 2,
+                "status": "paid",
+                "artists": [
+                    {
+                      "id": "bc9cd642-9df8-4f44-bb5a-169829043110",
+                      "display_name": "Artist2",
+                      "avatar": "blob"
+                    }
+                  ]
+              },
+              {
+                "id": "b39cd642-9df8-4f44-bb5a-169829043110",
+                "title": "track title",
+                "track_server_id": "f29cd642-9df8-4f44-bb5a-169829043110",
+                "duration": 123.0,
+                "track_number": 3,
+                "status": "paid"
+                "artists": [
                 {
-                    "id": "c09cd642-9df8-4f44-bb5a-169829043110"
-                },
-                {
-                    "id": "a09cd642-9df8-4f44-bb5a-169829043110"
+                  "id": "bc9cd642-9df8-4f44-bb5a-169829043110",
+                  "display_name": "Artist2",
+                  "avatar": "blob"
                 }
-            ],
-            "title": "Greatest Album",
-            "publish_date": "2015-08-05"
-
+              ]
+            }
         }
 
 ### Update TrackGroup [POST /twirp/resonate.api.user.Track/UpdateTrackGroup]
+
+title, release_date, cover, display_artist, multiple_composers and private can be updated.
 
 + Request (application/json)
 
         {
             "id": "a3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05",
-            "title": "Worst Album"
+            "creator_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_group_id": "d09cd642-9df8-4f44-bb5a-169829043110",
+            "label_id": "c09cd642-9df8-4f44-bb5a-169829043110",
+            "release_date": "2009-11-10T00:00:00Z",
+            "type": "lp",
+            "cover": "blob",
+            "display_artist": "Various",
+            "multiple_composers": true,
+            "private": false,
+            "title": "Worst Album",
         }
 
 + Response 204 (application/json)
@@ -606,7 +692,11 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 
         {
             "track_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d",
-            "tracks": "TODO"
+            "tracks": [
+              {"id": "bd1f89f6-e7d8-4e10-9926-a32b6bff125d"},
+              {"id": "bd2f89f6-e7d8-4e10-9926-a32b6bff125d"},
+              {"id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d"},
+            ]
         }
 
 + Response 204 (application/json)
@@ -617,7 +707,11 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 
         {
             "track_group_id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d",
-            "tracks": "TODO"
+            "tracks": [
+              {"id": "bd1f89f6-e7d8-4e10-9926-a32b6bff125d"},
+              {"id": "bd2f89f6-e7d8-4e10-9926-a32b6bff125d"},
+              {"id": "bd3f89f6-e7d8-4e10-9926-a32b6bff125d"},
+            ]
         }
 
 + Response 204 (application/json)
@@ -643,5 +737,64 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 + Response 200 (application/json)
 
         {
-
+            "id": "a3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05",
+            "creator_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+            "user_group_id": "d09cd642-9df8-4f44-bb5a-169829043110",
+            "label_id": "c09cd642-9df8-4f44-bb5a-169829043110",
+            "release_date": "2009-11-10T00:00:00Z",
+            "type": "lp",
+            "cover": "blob",
+            "display_artist": "Various",
+            "multiple_composers": true,
+            "private": false,
+            "title": "Greatest Album",
+            "tags": [
+              {"id": "b3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05", "type": "genre", "name": "rock"}
+            ],
+            "tracks": [
+              {
+                "id": "b19cd642-9df8-4f44-bb5a-169829043110",
+                "title": "track title",
+                "track_server_id": "d29cd642-9df8-4f44-bb5a-169829043110",
+                "duration": 123.0,
+                "track_number": 1,
+                "status": "paid",
+                "artists": [
+                  {
+                    "id": "b29cd642-9df8-4f44-bb5a-169829043110",
+                    "display_name": "Artist1",
+                    "avatar": "blob"
+                  }
+                ]
+              },
+              {
+                "id": "b29cd642-9df8-4f44-bb5a-169829043110",
+                "title": "track title",
+                "track_server_id": "e29cd642-9df8-4f44-bb5a-169829043110",
+                "duration": 123.0,
+                "track_number": 2,
+                "status": "paid",
+                "artists": [
+                    {
+                      "id": "bc9cd642-9df8-4f44-bb5a-169829043110",
+                      "display_name": "Artist2",
+                      "avatar": "blob"
+                    }
+                  ]
+              },
+              {
+                "id": "b39cd642-9df8-4f44-bb5a-169829043110",
+                "title": "track title",
+                "track_server_id": "f29cd642-9df8-4f44-bb5a-169829043110",
+                "duration": 123.0,
+                "track_number": 3,
+                "status": "paid"
+                "artists": [
+                {
+                  "id": "bc9cd642-9df8-4f44-bb5a-169829043110",
+                  "display_name": "Artist2",
+                  "avatar": "blob"
+                }
+              ]
+            }
         }

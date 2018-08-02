@@ -16,6 +16,9 @@ service UserGroupService {
   rpc GetLabelUserGroups(Empty) returns (GroupedUserGroups);
   rpc GetUserGroupTypes(Empty) returns (GroupTaxonomies);
 
+  rpc AddRecommended(UserGroupRecommended) returns (Empty);
+  rpc RemoveRecommended(UserGroupRecommended) returns (Empty);
+
   // rpc AddSubGroups(UserGroupToUserGroups) returns (Empty); // Update?
   // rpc RemoveSubGroups(UserGroupToUserGroups) returns (Empty);
   rpc AddMembers(UserGroupMembers) returns (Empty);
@@ -46,6 +49,11 @@ message UserGroup {
   repeated Track highlighted_tracks = 20;
 
   string group_email_address = 22;
+}
+
+message UserGroupRecommended {
+  string user_group_id = 1;
+  string recommended_id = 2;
 }
 
 message UserGroupMembers {

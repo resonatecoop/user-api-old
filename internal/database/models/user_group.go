@@ -39,7 +39,10 @@ type UserGroup struct {
 
   Links []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   Tags []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+
   RecommendedArtists []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  RecommendedBy []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+
   HighlightedTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   FeaturedTrackGroupId uuid.NullUUID `sql:"type:uuid,default:uuid_nil()"`
 
@@ -72,7 +75,7 @@ func (u *UserGroup) BeforeInsert(db orm.DB) error {
   return nil
 }
 
-// TODO delete track and track group
+// TODO delete  track group
 // delete from recommended artists
 func (u *UserGroup) Delete(tx *pg.Tx) (error, string) {
   pgerr := tx.Model(u).
@@ -128,6 +131,76 @@ func (u *UserGroup) Delete(tx *pg.Tx) (error, string) {
   }
 
   return nil, ""
+}
+
+func (u *UserGroup) AddRecommended(db *pg.DB, recommendedId uuid.UUID) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  res, pgerr := tx.Exec(`
+    UPDATE user_groups
+    SET recommended_artists = (select array_agg(distinct e) from unnest(recommended_artists || ?) e)
+    WHERE id = ?
+  `, pg.Array([]uuid.UUID{recommendedId}), u.Id)
+  if res.RowsAffected() == 0 {
+    return pg.ErrNoRows, "user_group"
+  }
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  res, pgerr = tx.Exec(`
+    UPDATE user_groups
+    SET recommended_by = (select array_agg(distinct e) from unnest(recommended_by || ?) e)
+    WHERE id = ?
+  `, pg.Array([]uuid.UUID{u.Id}), recommendedId)
+  if res.RowsAffected() == 0 {
+    return pg.ErrNoRows, "recommended"
+  }
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  return tx.Commit(), table
+}
+
+func (u *UserGroup) RemoveRecommended(db *pg.DB, recommendedId uuid.UUID) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  res, pgerr := tx.Exec(`
+    UPDATE user_groups
+    SET recommended_artists = array_remove(recommended_artists, ?)
+    WHERE id = ?
+  `, recommendedId, u.Id)
+  if res.RowsAffected() == 0 {
+    return pg.ErrNoRows, "user_group"
+  }
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  res, pgerr = tx.Exec(`
+    UPDATE user_groups
+    SET recommended_by = array_remove(recommended_by, ?)
+    WHERE id = ?
+  `, u.Id, recommendedId)
+  if res.RowsAffected() == 0 {
+    return pg.ErrNoRows, "recommended"
+  }
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  return tx.Commit(), table
 }
 
 // Select user groups in db with given 'ids'

@@ -83,6 +83,15 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 			return pgerr, "user_group", nil
 		}
 
+		_, pgerr = tx.Exec(`
+			UPDATE user_groups
+			SET recommended_by = (select array_agg(distinct e) from unnest(recommended_by || ?) e)
+			WHERE id IN (?)
+		`, pg.Array([]uuid.UUID{newUserGroup.Id}), pg.In(recommendedArtistIds))
+		if pgerr != nil {
+			return pgerr, "user_group", nil
+		}
+
 		pgerr = tx.Model(newUserGroup).
 			Column("Privacy").
 			WherePK().
@@ -274,15 +283,15 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		}
 
 		// Update recommended artists
-		recommendedArtistIds, pgerr := models.GetRelatedUserGroupIds(userGroup.RecommendedArtists, tx)
-		if pgerr != nil {
-			return pgerr, "user_group"
-		}
+		// recommendedArtistIds, pgerr := models.GetRelatedUserGroupIds(userGroup.RecommendedArtists, tx)
+		// if pgerr != nil {
+		// 	return pgerr, "user_group"
+		// }
 
 		// Update user group
 		u.Tags = tagIds
 		u.Links = linkIds
-		u.RecommendedArtists = recommendedArtistIds
+		// u.RecommendedArtists = recommendedArtistIds
 		u.UpdatedAt = time.Now()
 		_, pgerr = tx.Model(u).WherePK().Returning("*").UpdateNotNull()
 		if pgerr != nil {
@@ -492,6 +501,40 @@ func (s *Server) DeleteMembers(ctx context.Context, userGroupMembers *pb.UserGro
 	}
 	if err, table := deleteMembers(); err != nil {
 		return nil, internal.CheckError(err, table)
+	}
+	return &userpb.Empty{}, nil
+}
+
+func (s *Server) AddRecommended(ctx context.Context, userGroupRecommended *pb.UserGroupRecommended) (*userpb.Empty, error) {
+	userGroupId, twerr := internal.GetUuidFromString(userGroupRecommended.UserGroupId)
+	if twerr != nil {
+		return nil, twerr
+	}
+	recommendedId, twerr := internal.GetUuidFromString(userGroupRecommended.RecommendedId)
+	if twerr != nil {
+		return nil, twerr
+	}
+	u := &models.UserGroup{Id: userGroupId}
+
+	if pgerr, table := u.AddRecommended(s.db, recommendedId); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
+	}
+	return &userpb.Empty{}, nil
+}
+
+func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb.UserGroupRecommended) (*userpb.Empty, error) {
+	userGroupId, twerr := internal.GetUuidFromString(userGroupRecommended.UserGroupId)
+	if twerr != nil {
+		return nil, twerr
+	}
+	recommendedId, twerr := internal.GetUuidFromString(userGroupRecommended.RecommendedId)
+	if twerr != nil {
+		return nil, twerr
+	}
+	u := &models.UserGroup{Id: userGroupId}
+
+	if pgerr, table := u.RemoveRecommended(s.db, recommendedId); pgerr != nil {
+		return nil, internal.CheckError(pgerr, table)
 	}
 	return &userpb.Empty{}, nil
 }

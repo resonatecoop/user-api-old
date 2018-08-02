@@ -120,7 +120,7 @@ var _ = Describe("UserGroup server", func() {
 			It("should update user_group if it exists", func() {
 				tags := []*trackpb.Tag{&trackpb.Tag{Type: "genre", Name: "experimental"}}
 				links := []*pb.Link{&pb.Link{Platform: "instagram", Uri: "https://instagram/bestartistever"}}
-				recommendedArtists := []*trackpb.RelatedUserGroup{&trackpb.RelatedUserGroup{Id: newRecommendedArtist.Id.String()}}
+				// recommendedArtists := []*trackpb.RelatedUserGroup{&trackpb.RelatedUserGroup{Id: newRecommendedArtist.Id.String()}}
 				userGroup := &pb.UserGroup{
 					Id: newArtist.Id.String(),
 					DisplayName: "new display name",
@@ -132,7 +132,7 @@ var _ = Describe("UserGroup server", func() {
 					OwnerId: newArtist.OwnerId.String(),
 					Tags: tags,
 					Links: links,
-					RecommendedArtists: recommendedArtists,
+					// RecommendedArtists: recommendedArtists,
 				}
 				_, err := service.UpdateUserGroup(context.Background(), userGroup)
 
@@ -169,9 +169,8 @@ var _ = Describe("UserGroup server", func() {
 				err = db.Model(newLink).WherePK().Returning("*").Select()
 				Expect(err).To(HaveOccurred())
 
-				Expect(len(updatedUserGroup.RecommendedArtists)).To(Equal(1))
-				Expect(updatedUserGroup.RecommendedArtists[0]).To(Equal(newRecommendedArtist.Id))
-
+				// Expect(len(updatedUserGroup.RecommendedArtists)).To(Equal(1))
+				// Expect(updatedUserGroup.RecommendedArtists[0]).To(Equal(newRecommendedArtist.Id))
 			})
 			It("should respond with not_found error if user_group does not exist", func() {
 				id := uuid.NewV4()
@@ -218,6 +217,186 @@ var _ = Describe("UserGroup server", func() {
 				twerr := err.(twirp.Error)
 				Expect(twerr.Code()).To(Equal(invalid_argument_code))
 				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
+	})
+
+	Describe("AddRecommended", func () {
+		Context("with user_group_id and recommended_id", func() {
+			It("should add recommended and recommended_by to user groups", func() {
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: newArtist.Id.String(),
+					RecommendedId: newRecommendedArtist.Id.String(),
+				}
+				_, err := service.AddRecommended(context.Background(), userGroupRecommended)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				userGroup := new(models.UserGroup)
+				err = db.Model(userGroup).Where("id = ?", newArtist.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(userGroup.RecommendedArtists)).To(Equal(1))
+				Expect(userGroup.RecommendedArtists).To(ContainElement(newRecommendedArtist.Id))
+
+				recommended := new(models.UserGroup)
+				err = db.Model(recommended).Where("id = ?", newRecommendedArtist.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(recommended.RecommendedBy)).To(Equal(1))
+				Expect(recommended.RecommendedBy).To(ContainElement(newArtist.Id))
+			})
+			It("should respond with not_found error if user group does exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id || id == newUserProfile.Id) {
+					id = uuid.NewV4()
+				}
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: id.String(),
+					RecommendedId: newRecommendedArtist.Id.String(),
+				}
+				resp, err := service.AddRecommended(context.Background(), userGroupRecommended)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should respond with not_found error if recommended user group does exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id || id == newUserProfile.Id) {
+					id = uuid.NewV4()
+				}
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: newArtist.Id.String(),
+					RecommendedId: id.String(),
+				}
+				resp, err := service.AddRecommended(context.Background(), userGroupRecommended)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid user_group_id", func() {
+			It("should respond with invalid_argument_code error", func() {
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: "1",
+					RecommendedId: newRecommendedArtist.Id.String(),
+				}
+				resp, err := service.AddRecommended(context.Background(), userGroupRecommended)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+		})
+		Context("with invalid recommended_id", func() {
+			It("should respond with invalid_argument_code error", func() {
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: newArtist.Id.String(),
+					RecommendedId: "",
+				}
+				resp, err := service.AddRecommended(context.Background(), userGroupRecommended)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+		})
+	})
+
+	Describe("RemoveRecommended", func () {
+		Context("with user_group_id and recommended_id", func() {
+			It("should remove recommended and recommended_by from user groups", func() {
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: newArtist.Id.String(),
+					RecommendedId: newRecommendedArtist.Id.String(),
+				}
+				_, err := service.RemoveRecommended(context.Background(), userGroupRecommended)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				userGroup := new(models.UserGroup)
+				err = db.Model(userGroup).Where("id = ?", newArtist.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(userGroup.RecommendedArtists)).To(Equal(0))
+				Expect(userGroup.RecommendedArtists).NotTo(ContainElement(newRecommendedArtist.Id))
+
+				recommended := new(models.UserGroup)
+				err = db.Model(recommended).Where("id = ?", newRecommendedArtist.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(recommended.RecommendedBy)).To(Equal(0))
+				Expect(recommended.RecommendedBy).NotTo(ContainElement(newArtist.Id))
+			})
+			It("should respond with not_found error if user group does exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id || id == newUserProfile.Id) {
+					id = uuid.NewV4()
+				}
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: id.String(),
+					RecommendedId: newRecommendedArtist.Id.String(),
+				}
+				resp, err := service.RemoveRecommended(context.Background(), userGroupRecommended)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should respond with not_found error if recommended user group does exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id || id == newUserProfile.Id) {
+					id = uuid.NewV4()
+				}
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: newArtist.Id.String(),
+					RecommendedId: id.String(),
+				}
+				resp, err := service.RemoveRecommended(context.Background(), userGroupRecommended)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid user_group_id", func() {
+			It("should respond with invalid_argument_code error", func() {
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: "1",
+					RecommendedId: newRecommendedArtist.Id.String(),
+				}
+				resp, err := service.RemoveRecommended(context.Background(), userGroupRecommended)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+			})
+		})
+		Context("with invalid recommended_id", func() {
+			It("should respond with invalid_argument_code error", func() {
+				userGroupRecommended := &pb.UserGroupRecommended{
+					UserGroupId: newArtist.Id.String(),
+					RecommendedId: "",
+				}
+				resp, err := service.RemoveRecommended(context.Background(), userGroupRecommended)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
 			})
 		})
 	})
@@ -618,6 +797,9 @@ var _ = Describe("UserGroup server", func() {
 					ShortBio: "short bio",
 					Address: &userpb.StreetAddress{Data: map[string]string{"some": "data"}},
 					Tags: tags,
+					RecommendedArtists: []*trackpb.RelatedUserGroup{
+						&trackpb.RelatedUserGroup{Id: newRecommendedArtist.Id.String()},
+					},
 				}
 				resp, err := service.CreateUserGroup(context.Background(), userGroup)
 
@@ -635,6 +817,18 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.Tags[0].Name).To(Equal("rock"))
 				Expect(resp.Address.Id).NotTo(Equal(""))
 				Expect(resp.Privacy.Id).NotTo(Equal(""))
+
+				id, err := uuid.FromString(resp.Id)
+				Expect(err).NotTo(HaveOccurred())
+				updatedUserGroup := new(models.UserGroup)
+				err = db.Model(updatedUserGroup).Where("id = ?", id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(updatedUserGroup.RecommendedArtists).To(ContainElement(newRecommendedArtist.Id))
+
+				recommended := new(models.UserGroup)
+				err = db.Model(recommended).Where("id = ?", newRecommendedArtist.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(recommended.RecommendedBy).To(ContainElement(id))
 			})
 
 			It("should not create a user_group with same display_name", func() {

@@ -284,16 +284,14 @@ func (t *TrackGroup) AddTracks(db *pg.DB, tracks []*trackpb.Track) (error, strin
   }
 
   // Add Tracks to Trackgroup tracks array
-  pgerr = tx.Model(t).WherePK().Select()
-  if pgerr != nil {
-    return pgerr, "track_group"
-  }
-  _, pgerr = tx.Exec(`
+  res, pgerr := tx.Exec(`
     UPDATE track_groups
     SET tracks = (select array_agg(distinct e) from unnest(tracks || ?) e)
     WHERE id = ?
   `, pg.Array(trackIds), t.Id)
-
+  if res.RowsAffected() == 0 {
+    return pg.ErrNoRows, "track_group"
+  }
   if pgerr != nil {
     return pgerr, "track_group"
   }
@@ -326,15 +324,14 @@ func (t *TrackGroup) RemoveTracks(db *pg.DB, tracks []*trackpb.Track) (error, st
   }
 
   // Remove Tracks from Trackgroup tracks array
-  pgerr = tx.Model(t).WherePK().Select()
-  if pgerr != nil {
-    return pgerr, "track_group"
-  }
-  _, pgerr = tx.Exec(`
+  res, pgerr := tx.Exec(`
     UPDATE track_groups
     SET tracks = (select array_agg(e) from unnest(tracks) e where e <> all(?))
     WHERE id = ?
   `, pg.Array(trackIds), t.Id)
+  if res.RowsAffected() == 0 {
+    return pg.ErrNoRows, "track_group"
+  }
   if pgerr != nil {
     return pgerr, "track_group"
   }
