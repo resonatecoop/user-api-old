@@ -221,7 +221,11 @@ var _ = BeforeSuite(func() {
 		newArtist.Tracks = []uuid.UUID{newTrack.Id, featuringTrack.Id}
 		newArtist.TrackGroups = []uuid.UUID{newAlbum.Id}
 		newArtist.RecommendedBy = []uuid.UUID{newRecommendedArtist.Id}
-		_, err = db.Model(newArtist).Column("tracks", "track_groups", "recommended_by").WherePK().Update()
+		newArtist.HighlightedTracks = []uuid.UUID{newTrack.Id}
+		newArtist.FeaturedTrackGroupId = newAlbum.Id
+		_, err = db.Model(newArtist).
+			Column("tracks", "track_groups", "recommended_by", "highlighted_tracks", "featured_track_group_id").
+			WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
 		newRecommendedArtist.Tracks = []uuid.UUID{featuringTrack.Id}

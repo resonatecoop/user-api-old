@@ -23,6 +23,7 @@ type TrackGroup struct {
   DisplayArtist string // for display purposes, e.g. "Various" for compilation
   MultipleComposers bool `sql:",notnull"`
   Private bool `sql:",notnull"`
+  About string
 
   CreatorId uuid.UUID `sql:"type:uuid,notnull"`
   Creator *User
@@ -43,16 +44,10 @@ type TrackGroup struct {
   // CatalogNumber string
 }
 
-func GetTrackGroups(ids []uuid.UUID, db *pg.DB, playlists bool) ([]*trackpb.RelatedTrackGroup, twirp.Error) {
+func GetTrackGroups(ids []uuid.UUID, db *pg.DB, types []string) ([]*trackpb.RelatedTrackGroup, twirp.Error) {
 	var trackGroupsResponse []*trackpb.RelatedTrackGroup
 	if len(ids) > 0 {
 		var t []TrackGroup
-    var types []string
-    if playlists == true {
-      types = []string{"playlist"}
-    } else {
-      types = []string{"lp", "ep", "single"}
-    }
 		pgerr := db.Model(&t).
 			Where("id in (?)", pg.In(ids)).
       Where("type in (?)", pg.In(types)).
@@ -61,10 +56,21 @@ func GetTrackGroups(ids []uuid.UUID, db *pg.DB, playlists bool) ([]*trackpb.Rela
 			return nil, internal.CheckError(pgerr, "track_group")
 		}
 		for _, trackGroup := range t {
+      tracks := make([]*trackpb.Track, len(trackGroup.Tracks))
+      for i, id := range trackGroup.Tracks {
+        tracks[i] = &trackpb.Track{Id: id.String()}
+      }
+      // tracks, twerr := GetTracks(trackGroup.Tracks, db, false)
+      // if twerr != nil {
+      //   return nil, twerr
+      // }
 			trackGroupsResponse = append(trackGroupsResponse, &trackpb.RelatedTrackGroup{
         Id: trackGroup.Id.String(),
         Title: trackGroup.Title,
         Cover: trackGroup.Cover,
+        Type: trackGroup.Type,
+        About: trackGroup.About,
+        Tracks: tracks,
       })
 		}
 	}
@@ -203,7 +209,7 @@ func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
 
   t.UpdatedAt = time.Now()
   _, pgerr := tx.Model(t).
-    Column("title", "updated_at", "release_date", "cover", "display_artist", "multiple_composers", "private").
+    Column("title", "updated_at", "release_date", "cover", "display_artist", "multiple_composers", "private", "about").
     WherePK().
     Returning("*").
     Update()

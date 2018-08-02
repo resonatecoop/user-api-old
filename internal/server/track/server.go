@@ -60,7 +60,7 @@ func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, erro
 	track.Artists = artists
 
   // Get track_groups (id, title, cover) that are not playlists (i.e. LP, EP or Single)
-	trackGroups, twerr := models.GetTrackGroups(t.TrackGroups, s.db, false)
+	trackGroups, twerr := models.GetTrackGroups(t.TrackGroups, s.db, []string{"lp", "ep", "single"})
 	if twerr != nil {
 		return nil, twerr
 	}

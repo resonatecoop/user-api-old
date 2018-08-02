@@ -67,7 +67,7 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, playlist bool) ([]*pb.Track, twirp.Er
       }
       trackResponse.Artists = artists
       if playlist == true {
-        trackGroups, twerr := GetTrackGroups(track.TrackGroups, db, false)
+        trackGroups, twerr := GetTrackGroups(track.TrackGroups, db, []string{"lp", "ep", "single"})
         if twerr != nil {
           return  nil, twerr
         }

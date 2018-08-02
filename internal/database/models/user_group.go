@@ -45,7 +45,7 @@ type UserGroup struct {
   RecommendedBy []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   HighlightedTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
-  FeaturedTrackGroupId uuid.NullUUID `sql:"type:uuid,default:uuid_nil()"`
+  FeaturedTrackGroupId uuid.UUID `sql:"type:uuid,default:uuid_nil()"`
 
   Kvstore map[string]string `pg:",hstore"`
   Followers []uuid.UUID `sql:",type:uuid[]" pg:",array"`

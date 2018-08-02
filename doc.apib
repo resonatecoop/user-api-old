@@ -306,6 +306,8 @@ Support pagination (?page=2?limit=50).
 
 scope private/public.
 
+To get more info on featured track group (release), call TrackGroupService GetTrackGroup.
+
 + Request (application/json)
 
         {
@@ -366,6 +368,51 @@ scope private/public.
               {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"},
               {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"}
             ],
+            "featured_track_group": {
+              "id": "266f3a00-1022-4cb6-beda-8f7eeef8bd31",
+              "title": "Featured album",
+              "cover": "blob",
+              "type": "single",
+              "about": "blabla",
+              "tracks": [
+                {"id": "266f3a00-1022-4cb6-beda-8f7eeef8bd31"},
+                {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31"}
+              ]
+            },
+            "track_groups": [
+              {
+                "id": "266f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "title": "Featured album",
+                "cover": "blob",
+                "type": "single",
+                "about": "blabla",
+                "tracks": [
+                  {"id": "266f3a00-1022-4cb6-beda-8f7eeef8bd31"},
+                  {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31"}
+                ]
+              },
+              {
+                "id": "466f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "title": "Mix",
+                "cover": "blob",
+                "type": "playlist",
+                "about": "blabla",
+                "tracks": [
+                  {"id": "566f3a00-1022-4cb6-beda-8f7eeef8bd31"},
+                  {"id": "666f3a00-1022-4cb6-beda-8f7eeef8bd31"}
+                ]
+              }
+            ],
+            "highlighted_tracks": [
+              {
+                "id": "766f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "title": "highlight",
+                "track_server_id": "866f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "duration": 120.30,
+                "status": "paid",
+                "track_number": 6
+              }
+            ]
         }
 
 ### Get User Group Types [POST /twirp/resonate.api.user.UserGroupService/GetUserGroupTypes]
@@ -583,6 +630,7 @@ For playlist: user_group_id can be set (public playlist owned by a user group pr
             "release_date": "2009-11-10T00:00:00Z",
             "type": "lp",
             "cover": "blob",
+            "about": "blabla",
             "display_artist": "Various",
             "multiple_composers": true,
             "private": false,
@@ -606,6 +654,7 @@ For playlist: user_group_id can be set (public playlist owned by a user group pr
             "label_id": "c09cd642-9df8-4f44-bb5a-169829043110",
             "release_date": "2009-11-10T00:00:00Z",
             "type": "lp",
+            "about": "blabla",
             "cover": "blob",
             "display_artist": "Various",
             "multiple_composers": true,
@@ -664,7 +713,7 @@ For playlist: user_group_id can be set (public playlist owned by a user group pr
 
 ### Update TrackGroup [POST /twirp/resonate.api.user.Track/UpdateTrackGroup]
 
-title, release_date, cover, display_artist, multiple_composers and private can be updated.
+title, release_date, cover, about, display_artist, multiple_composers and private can be updated.
 
 + Request (application/json)
 
@@ -675,6 +724,7 @@ title, release_date, cover, display_artist, multiple_composers and private can b
             "label_id": "c09cd642-9df8-4f44-bb5a-169829043110",
             "release_date": "2009-11-10T00:00:00Z",
             "type": "lp",
+            "about": "blabla2",
             "cover": "blob",
             "display_artist": "Various",
             "multiple_composers": true,
@@ -743,6 +793,7 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
             "label_id": "c09cd642-9df8-4f44-bb5a-169829043110",
             "release_date": "2009-11-10T00:00:00Z",
             "type": "lp",
+            "about": "blabla",
             "cover": "blob",
             "display_artist": "Various",
             "multiple_composers": true,

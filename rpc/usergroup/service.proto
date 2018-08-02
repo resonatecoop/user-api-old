@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 import "user-api/rpc/user/service.proto";
-import "user-api/rpc/trackgroup/service.proto";
 import "user-api/rpc/track/service.proto";
 
 package resonate.api.user;
@@ -44,7 +43,7 @@ message UserGroup {
 
   repeated RelatedUserGroup recommended_artists = 17;
 
-  TrackGroup featured_track_group = 18;
+  RelatedTrackGroup featured_track_group = 18;
   repeated RelatedTrackGroup track_groups = 19;
   repeated Track highlighted_tracks = 20;
 

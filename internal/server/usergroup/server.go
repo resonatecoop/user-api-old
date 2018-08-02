@@ -145,8 +145,6 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 }
 
 // TODO handle privacy settings
-// add FeaturedTrackGroup
-// add TrackGroups (id, title, cover)
 func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb.UserGroup, error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)
 	if err != nil {
@@ -197,6 +195,24 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		return nil, internal.CheckError(pgerr, table)
 	}
 
+	// Get related tracks/track groups
+	highlightedTracks, pgerr := models.GetTracks(u.HighlightedTracks, s.db, true)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "track")
+	}
+	trackGroups, pgerr := models.GetTrackGroups(u.TrackGroups, s.db, []string{"lp", "ep", "single", "playlist"})
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "track_group")
+	}
+	var featuredTrackGroup *trackpb.RelatedTrackGroup
+	if (u.FeaturedTrackGroupId != uuid.UUID{}) {
+		featuredTrackGroups, pgerr := models.GetTrackGroups([]uuid.UUID{u.FeaturedTrackGroupId}, s.db, []string{"lp", "ep", "single", "playlist"})
+		if pgerr != nil {
+			return nil, internal.CheckError(pgerr, "track_group")
+		}
+		featuredTrackGroup = featuredTrackGroups[0]
+	}
+
 	address := &userpb.StreetAddress{Id: u.Address.Id.String(), Data: u.Address.Data}
 	privacy := &pb.Privacy{Id: u.Privacy.Id.String(), Private: u.Privacy.Private, SupportedArtists: u.Privacy.SupportedArtists, OwnedTracks: u.Privacy.OwnedTracks}
 	groupType:= &pb.GroupTaxonomy{Id: u.Type.Id.String(), Type: u.Type.Type}
@@ -218,9 +234,9 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		RecommendedArtists: recommendedArtists,
 		Members: members,
 		MemberOfGroups: memberOfGroups,
-
-		// Tracks?
-		// TrackGroups: releases if artist/label or owner playlist if user
+		HighlightedTracks: highlightedTracks,
+		FeaturedTrackGroup: featuredTrackGroup,
+		TrackGroups: trackGroups,
 	}, nil
 }
 

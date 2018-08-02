@@ -47,6 +47,7 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
   trackGroup.CreatorId = t.CreatorId.String()
   trackGroup.LabelId = t.LabelId.String()
   trackGroup.Title = t.Title
+  trackGroup.About = t.About
   trackGroup.ReleaseDate = releaseDate
   trackGroup.Type = t.Type
   trackGroup.Cover = t.Cover
@@ -101,6 +102,7 @@ func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
     DisplayArtist: trackGroup.DisplayArtist,
     MultipleComposers: trackGroup.MultipleComposers,
     Private: trackGroup.Private,
+    About: trackGroup.About,
   }
 
   releaseDate, err := ptypes.Timestamp(trackGroup.ReleaseDate)
@@ -221,5 +223,6 @@ func getTrackGroupModel(trackGroup *pb.TrackGroup) (*models.TrackGroup, twirp.Er
     DisplayArtist: trackGroup.DisplayArtist,
     MultipleComposers: trackGroup.MultipleComposers,
     Private: trackGroup.Private,
+    About: trackGroup.About,
   }, nil
 }

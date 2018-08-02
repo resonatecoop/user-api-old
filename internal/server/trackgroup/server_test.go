@@ -37,6 +37,7 @@ var _ = Describe("TrackGroup server", func() {
         Expect(res.ReleaseDate.Seconds).To(Equal(releaseDate.Seconds))
         Expect(res.Type).To(Equal(newAlbum.Type))
         Expect(res.Cover).To(Equal(newAlbum.Cover))
+        Expect(res.About).To(Equal(newAlbum.About))
         Expect(res.DisplayArtist).To(Equal(newAlbum.DisplayArtist))
         Expect(res.MultipleComposers).To(Equal(newAlbum.MultipleComposers))
         Expect(res.Private).To(Equal(newAlbum.Private))
@@ -158,6 +159,7 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
+          About: "about",
 				}
 				_, err = service.UpdateTrackGroup(context.Background(), trackGroup)
 
@@ -171,7 +173,8 @@ var _ = Describe("TrackGroup server", func() {
         Expect(err).NotTo(HaveOccurred())
 				Expect(updatedReleaseDate.Seconds).To(Equal(trackGroup.ReleaseDate.Seconds))
 				Expect(t.DisplayArtist).To(Equal(trackGroup.DisplayArtist))
-				Expect(t.Cover).To(Equal(trackGroup.Cover))
+        Expect(t.Cover).To(Equal(trackGroup.Cover))
+				Expect(t.About).To(Equal(trackGroup.About))
         Expect(t.MultipleComposers).To(Equal(trackGroup.MultipleComposers))
 				Expect(t.Private).To(Equal(trackGroup.Private))
 
@@ -463,6 +466,7 @@ var _ = Describe("TrackGroup server", func() {
           ReleaseDate: releaseDate,
           Type: "lp",
           Cover: cover,
+          About: "about",
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
@@ -490,6 +494,7 @@ var _ = Describe("TrackGroup server", func() {
         Expect(resp.LabelId).To(Equal(trackGroup.LabelId))
         Expect(resp.ReleaseDate).To(Equal(trackGroup.ReleaseDate))
         Expect(resp.Type).To(Equal(trackGroup.Type))
+        Expect(resp.About).To(Equal(trackGroup.About))
         Expect(resp.Cover).To(Equal(trackGroup.Cover))
         Expect(resp.DisplayArtist).To(Equal(trackGroup.DisplayArtist))
         Expect(resp.MultipleComposers).To(Equal(trackGroup.MultipleComposers))

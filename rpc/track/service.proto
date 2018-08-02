@@ -45,4 +45,7 @@ message RelatedTrackGroup {
   string id = 1; // required
   string title = 2; // required
   bytes cover = 3; // required
+  string type = 4; // required
+  string about = 5;
+  repeated Track tracks = 6;
 }
