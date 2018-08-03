@@ -9,8 +9,8 @@ import (
   // "github.com/golang/protobuf/ptypes/timestamp"
   "github.com/golang/protobuf/ptypes"
 
-  userpb "user-api/rpc/user"
-  // trackpb "user-api/rpc/track"
+  // userpb "user-api/rpc/user"
+  trackpb "user-api/rpc/track"
   pb "user-api/rpc/trackgroup"
   "user-api/internal"
   "user-api/internal/database/models"
@@ -118,7 +118,7 @@ func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
   return trackGroup, nil
 }
 
-func (s *Server) UpdateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*userpb.Empty, error) {
+func (s *Server) UpdateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*trackpb.Empty, error) {
   t, twerr := getTrackGroupModel(trackGroup)
 	if twerr != nil {
 		return nil, twerr
@@ -132,10 +132,10 @@ func (s *Server) UpdateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
 	if pgerr, table := t.Update(s.db, trackGroup); pgerr != nil {
     return nil, internal.CheckError(pgerr, table)
   }
-  return &userpb.Empty{}, nil
+  return &trackpb.Empty{}, nil
 }
 
-func (s *Server) DeleteTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*userpb.Empty, error) {
+func (s *Server) DeleteTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*trackpb.Empty, error) {
   t, twerr := getTrackGroupModel(trackGroup)
 	if twerr != nil {
 		return nil, twerr
@@ -155,10 +155,10 @@ func (s *Server) DeleteTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
   if err != nil {
     return nil, internal.CheckError(err, "")
   }
-  return &userpb.Empty{}, nil
+  return &trackpb.Empty{}, nil
 }
 
-func (s *Server) AddTracksToTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*userpb.Empty, error) {
+func (s *Server) AddTracksToTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*trackpb.Empty, error) {
   id, twerr := internal.GetUuidFromString(tracksToTrackGroup.TrackGroupId)
   if twerr != nil {
     return nil, twerr
@@ -168,10 +168,10 @@ func (s *Server) AddTracksToTrackGroup(ctx context.Context, tracksToTrackGroup *
   if pgerr, table := t.AddTracks(s.db, tracksToTrackGroup.Tracks); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
-  return &userpb.Empty{}, nil
+  return &trackpb.Empty{}, nil
 }
 
-func (s *Server) RemoveTracksFromTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*userpb.Empty, error) {
+func (s *Server) RemoveTracksFromTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*trackpb.Empty, error) {
   id, twerr := internal.GetUuidFromString(tracksToTrackGroup.TrackGroupId)
   if twerr != nil {
     return nil, twerr
@@ -181,7 +181,7 @@ func (s *Server) RemoveTracksFromTrackGroup(ctx context.Context, tracksToTrackGr
   if pgerr, table := t.RemoveTracks(s.db, tracksToTrackGroup.Tracks); pgerr != nil {
     return nil, internal.CheckError(pgerr, table)
   }
-  return &userpb.Empty{}, nil
+  return &trackpb.Empty{}, nil
 }
 
 func checkRequiredAttributes(trackGroup *pb.TrackGroup) (twirp.Error) {

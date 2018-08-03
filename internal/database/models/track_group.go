@@ -70,6 +70,7 @@ func GetTrackGroups(ids []uuid.UUID, db *pg.DB, types []string) ([]*trackpb.Rela
         Cover: trackGroup.Cover,
         Type: trackGroup.Type,
         About: trackGroup.About,
+        Private: trackGroup.Private,
         Tracks: tracks,
       })
 		}

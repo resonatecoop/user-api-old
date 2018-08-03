@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-import "user-api/rpc/user/service.proto";
+// import "user-api/rpc/user/service.proto";
 import "user-api/rpc/track/service.proto";
 // import "user-api/rpc/usergroup/service.proto";
 

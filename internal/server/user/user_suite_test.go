@@ -2,7 +2,7 @@ package userserver_test
 
 import (
 	"testing"
-	// "time"
+	"time"
 
 	// pb "user-api/rpc/user"
 	. "github.com/onsi/ginkgo"
@@ -24,6 +24,7 @@ var (
 	newUserGroup *models.UserGroup
 	newFavoriteTrack *models.Track
 	newFollowedUserGroup *models.UserGroup
+	newUserPlaylist *models.TrackGroup
 )
 
 func TestUser(t *testing.T) {
@@ -74,9 +75,23 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newTrack)
 		Expect(err).NotTo(HaveOccurred())
 
+		tracks := []uuid.UUID{newTrack.Id}
+		newUserPlaylist = &models.TrackGroup{
+			CreatorId: newUser.Id,
+			Title: "user playlist",
+			ReleaseDate: time.Now(),
+			Type: "playlist",
+			Cover: avatar,
+			Tracks: tracks,
+			Private: true,
+		}
+		err = db.Insert(newUserPlaylist)
+		Expect(err).NotTo(HaveOccurred())
+
+		newUser.Playlists = []uuid.UUID{newUserPlaylist.Id}
 		newUser.FollowedGroups = []uuid.UUID{newFollowedUserGroup.Id}
 		newUser.FavoriteTracks = []uuid.UUID{newFavoriteTrack.Id}
-		_, err = db.Model(newUser).Column("followed_groups", "favorite_tracks").WherePK().Update()
+		_, err = db.Model(newUser).Column("playlists", "followed_groups", "favorite_tracks").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
 		userGroupAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}
@@ -101,6 +116,14 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&tracks).Delete()
 	Expect(err).NotTo(HaveOccurred())
+
+	var trackGroups []models.TrackGroup
+	err = db.Model(&trackGroups).Select()
+	Expect(err).NotTo(HaveOccurred())
+	if len(trackGroups) > 0 {
+		_, err = db.Model(&trackGroups).Delete()
+		Expect(err).NotTo(HaveOccurred())
+	}
 
 	// Delete all userGroups
 	var userGroups []models.UserGroup

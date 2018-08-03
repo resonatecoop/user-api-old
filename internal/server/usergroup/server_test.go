@@ -126,7 +126,7 @@ var _ = Describe("UserGroup server", func() {
 
 	Describe("GetLabelUserGroups", func() {
 		It("should respond with user_groups of type label", func() {
-			emptyReq := &userpb.Empty{}
+			emptyReq := &trackpb.Empty{}
 			u := url.URL{}
 			ctx := context.WithValue(context.Background(), "query", u.Query())
 			resp, err := service.GetLabelUserGroups(ctx, emptyReq)
@@ -1035,7 +1035,7 @@ var _ = Describe("UserGroup server", func() {
 
 	Describe("GetUserGroupTypes", func() {
 		It("should respond with group_taxonomies except distributor", func() {
-			emptyReq := &userpb.Empty{}
+			emptyReq := &trackpb.Empty{}
 			groupTaxonomies, err := service.GetUserGroupTypes(context.Background(), emptyReq)
 
 			Expect(err).NotTo(HaveOccurred())

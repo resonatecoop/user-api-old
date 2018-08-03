@@ -240,7 +240,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	}, nil
 }
 
-func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*userpb.Empty, error) {
+func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*trackpb.Empty, error) {
 	updateUserGroup := func(userGroup *pb.UserGroup, u *models.UserGroup) (error, string) {
 		var table string
 		tx, err := s.db.Begin()
@@ -331,10 +331,10 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		return nil, internal.CheckError(pgerr, table)
 	}
 
-  return &userpb.Empty{}, nil
+  return &trackpb.Empty{}, nil
 }
 
-func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*userpb.Empty, error) {
+func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*trackpb.Empty, error) {
 	id, twerr := internal.GetUuidFromString(userGroup.Id)
 	if twerr != nil {
 		return nil, twerr
@@ -356,10 +356,10 @@ func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		return nil, internal.CheckError(err, "")
 	}
 
-	return &userpb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
-func (s *Server) GetLabelUserGroups(ctx context.Context, empty *userpb.Empty) (*pb.GroupedUserGroups, error) {
+func (s *Server) GetLabelUserGroups(ctx context.Context, empty *trackpb.Empty) (*pb.GroupedUserGroups, error) {
 	var labels []models.UserGroup
 
 	// err := s.db.Model(&labels).
@@ -395,7 +395,7 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *userpb.Empty) (*
   return &pb.GroupedUserGroups{Labels: userGroups}, nil
 }
 
-func (s *Server) GetUserGroupTypes(ctx context.Context, empty *userpb.Empty) (*pb.GroupTaxonomies, error) {
+func (s *Server) GetUserGroupTypes(ctx context.Context, empty *trackpb.Empty) (*pb.GroupTaxonomies, error) {
 	var types []models.GroupTaxonomy
 	var groupTaxonomies pb.GroupTaxonomies
 	err := s.db.Model(&types).
@@ -416,7 +416,7 @@ func (s *Server) GetUserGroupTypes(ctx context.Context, empty *userpb.Empty) (*p
   return &groupTaxonomies, nil
 }
 
-func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupMembers) (*userpb.Empty, error) {
+func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupMembers) (*trackpb.Empty, error) {
 	addMembers := func() (error, string) {
 		var table string
 		tx, err := s.db.Begin()
@@ -473,10 +473,10 @@ func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupM
 	if err, table := addMembers(); err != nil {
 		return nil, internal.CheckError(err, table)
 	}
-	return &userpb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
-func (s *Server) DeleteMembers(ctx context.Context, userGroupMembers *pb.UserGroupMembers) (*userpb.Empty, error) {
+func (s *Server) DeleteMembers(ctx context.Context, userGroupMembers *pb.UserGroupMembers) (*trackpb.Empty, error) {
 	deleteMembers := func() (error, string) {
 		var table string
 		tx, err := s.db.Begin()
@@ -518,10 +518,10 @@ func (s *Server) DeleteMembers(ctx context.Context, userGroupMembers *pb.UserGro
 	if err, table := deleteMembers(); err != nil {
 		return nil, internal.CheckError(err, table)
 	}
-	return &userpb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
-func (s *Server) AddRecommended(ctx context.Context, userGroupRecommended *pb.UserGroupRecommended) (*userpb.Empty, error) {
+func (s *Server) AddRecommended(ctx context.Context, userGroupRecommended *pb.UserGroupRecommended) (*trackpb.Empty, error) {
 	userGroupId, twerr := internal.GetUuidFromString(userGroupRecommended.UserGroupId)
 	if twerr != nil {
 		return nil, twerr
@@ -535,10 +535,10 @@ func (s *Server) AddRecommended(ctx context.Context, userGroupRecommended *pb.Us
 	if pgerr, table := u.AddRecommended(s.db, recommendedId); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
-	return &userpb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
-func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb.UserGroupRecommended) (*userpb.Empty, error) {
+func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb.UserGroupRecommended) (*trackpb.Empty, error) {
 	userGroupId, twerr := internal.GetUuidFromString(userGroupRecommended.UserGroupId)
 	if twerr != nil {
 		return nil, twerr
@@ -552,7 +552,7 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 	if pgerr, table := u.RemoveRecommended(s.db, recommendedId); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
-	return &userpb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
 func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error) {

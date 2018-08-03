@@ -66,6 +66,54 @@ var _ = Describe("User server", func() {
 		})
 	})
 
+	Describe("GetPlaylists", func() {
+		Context("with valid uuid", func() {
+			It("should respond with playlists", func() {
+				user := &pb.User{Id: newUser.Id.String()}
+				resp, err := service.GetPlaylists(context.Background(), user)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(resp.Playlists)).To(Equal(1))
+				Expect(resp.Playlists[0].Id).To(Equal(newUserPlaylist.Id.String()))
+				Expect(resp.Playlists[0].Title).To(Equal(newUserPlaylist.Title))
+				Expect(resp.Playlists[0].Cover).To(Equal(newUserPlaylist.Cover))
+				Expect(resp.Playlists[0].Type).To(Equal(newUserPlaylist.Type))
+				Expect(resp.Playlists[0].About).To(Equal(newUserPlaylist.About))
+				Expect(resp.Playlists[0].Private).To(Equal(newUserPlaylist.Private))
+				Expect(len(resp.Playlists[0].Tracks)).To(Equal(1))
+				Expect(resp.Playlists[0].Tracks[0].Id).To(Equal(newTrack.Id.String()))
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				id := uuid.NewV4()
+				for id == newUser.Id {
+					id = uuid.NewV4()
+				}
+				user := &pb.User{Id: id.String()}
+				resp, err := service.GetPlaylists(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error", func() {
+				id := "45"
+				user := &pb.User{Id: id}
+				resp, err := service.GetPlaylists(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
+	})
+
 	Describe("AddFavoriteTrack", func() {
 		Context("with user_id and track_id", func() {
 			It("should add favorite track", func() {
@@ -542,6 +590,13 @@ var _ = Describe("User server", func() {
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(ownerOfGroups)).To(Equal(0))
+
+				var playlists []models.TrackGroup
+				err = db.Model(&playlists).
+					Where("id in (?)", pg.In(userToDelete.Playlists)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(playlists)).To(Equal(0))
 
 				var users []models.User
 				err = db.Model(&users).

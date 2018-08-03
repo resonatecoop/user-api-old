@@ -3,6 +3,8 @@ syntax = "proto3";
 package resonate.api.user;
 option go_package = "user";
 
+import "user-api/rpc/track/service.proto";
+
 service UserService {
   rpc CreateUser(User) returns (User);
   rpc GetUser(User) returns (User);
@@ -12,6 +14,9 @@ service UserService {
   rpc UnfollowGroup(UserToUserGroup) returns (Empty);
   rpc AddFavoriteTrack(UserToTrack) returns (Empty);
   rpc RemoveFavoriteTrack(UserToTrack) returns (Empty);
+
+  rpc GetPlaylists(User) returns (Playlists);
+
 }
 
 message User {
@@ -30,6 +35,10 @@ message User {
   repeated string followed_groups = 12;
   repeated UserGroupResponse owner_of_groups = 13;
   StreetAddress residence_address = 14;
+}
+
+message Playlists {
+  repeated RelatedTrackGroup playlists = 1;
 }
 
 message StreetAddress {
@@ -58,5 +67,3 @@ message UserToTrack {
   string user_id = 1; // required
   string track_id = 2; // required
 }
-
-message Empty {}

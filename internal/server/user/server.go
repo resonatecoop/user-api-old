@@ -11,6 +11,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	pb "user-api/rpc/user"
+	trackpb "user-api/rpc/track"
 	"user-api/internal"
 	"user-api/internal/database/models"
 )
@@ -56,6 +57,28 @@ func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	}, nil
 }
 
+func (s *Server) GetPlaylists(ctx context.Context, user *pb.User) (*pb.Playlists, error) {
+	u, twerr := getUserModel(user)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	pgerr := s.db.Model(u).Column("user.playlists", "OwnerOfGroups").WherePK().Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user")
+	}
+
+	userPlaylists, twerr := models.GetTrackGroups(u.Playlists, s.db, []string{"playlist"})
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	// ? Include playlist from user groups user is owner of?
+	playlists := userPlaylists
+	return &pb.Playlists{
+		Playlists: playlists,
+	}, nil
+}
 func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	requiredErr := checkRequiredAttributes(user)
 	if requiredErr != nil {
@@ -84,7 +107,7 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	}, nil
 }
 
-func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, error) {
+func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*trackpb.Empty, error) {
 	err := checkRequiredAttributes(user)
 
 	if err != nil {
@@ -102,10 +125,10 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 	if twerr != nil {
 		return nil, twerr
 	}
-	return &pb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
-func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, error) {
+func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*trackpb.Empty, error) {
 	deleteUser := func(db *pg.DB, u *models.User) (error, string) {
 		var table string
 		tx, err := db.Begin()
@@ -115,7 +138,7 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 		defer tx.Rollback()
 
 		pgerr := tx.Model(u).
-	    Column("user.favorite_tracks", "user.followed_groups", "OwnerOfGroups").
+	    Column("user.favorite_tracks", "user.followed_groups", "user.playlists", "OwnerOfGroups").
 	    WherePK().
 	    Select()
 		if pgerr != nil {
@@ -152,6 +175,15 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 			}
 		}
 
+		if len(u.Playlists) > 0 {
+			for _, playlistId := range u.Playlists {
+				playlist := &models.TrackGroup{Id: playlistId}
+				if pgerr, table := playlist.Delete(tx); pgerr != nil {
+					return pgerr, table
+				}
+			}
+		}
+
 		pgerr = tx.Delete(u)
 		if pgerr != nil {
 			return pgerr, "user"
@@ -169,11 +201,11 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*pb.Empty, erro
 		return nil, internal.CheckError(pgerr, table)
 	}
 
-	return &pb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
 // TODO: refacto, pretty similar to AddFavoriteTrack
-func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
+func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*trackpb.Empty, error) {
 	followGroup := func(db *pg.DB, userId uuid.UUID, userGroupId uuid.UUID) (error, string) {
 		var table string
 		tx, err := db.Begin()
@@ -220,10 +252,10 @@ func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUser
 		return nil, internal.CheckError(pgerr, table)
 	}
 
-	return &pb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
-func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*pb.Empty, error) {
+func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*trackpb.Empty, error) {
 	unfollowGroup := func(db *pg.DB, userId uuid.UUID, userGroupId uuid.UUID) (error, string) {
 		var table string
 		tx, err := db.Begin()
@@ -269,10 +301,10 @@ func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUs
 	if pgerr, table := unfollowGroup(s.db, userId, userGroupId); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
-	return &pb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
-func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*pb.Empty, error) {
+func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*trackpb.Empty, error) {
 	addFavoriteTrack := func(db *pg.DB, userId uuid.UUID, trackId uuid.UUID) (error, string) {
 		var table string
 	  tx, err := db.Begin()
@@ -322,10 +354,10 @@ func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTra
 		return nil, internal.CheckError(pgerr, table)
 	}
 
-	return &pb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
-func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*pb.Empty, error) {
+func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*trackpb.Empty, error) {
 	removeFavoriteTrack := func(db *pg.DB, userId uuid.UUID, trackId uuid.UUID) (error, string) {
 		var table string
 	  tx, err := db.Begin()
@@ -372,7 +404,7 @@ func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserTo
 	if pgerr, table := removeFavoriteTrack(s.db, userId, trackId); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
-	return &pb.Empty{}, nil
+	return &trackpb.Empty{}, nil
 }
 
 
