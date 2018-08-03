@@ -24,6 +24,7 @@ var (
 	newUserGroup *models.UserGroup
 	newFavoriteTrack *models.Track
 	newFollowedUserGroup *models.UserGroup
+	newAlbum *models.TrackGroup
 	newUserPlaylist *models.TrackGroup
 )
 
@@ -67,8 +68,28 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newFollowedUserGroup)
 		Expect(err).NotTo(HaveOccurred())
 
-		newFavoriteTrack = &models.Track{CreatorId: ownerOfFollowedUserGroup.Id, UserGroupId: newFollowedUserGroup.Id, Title: "fav track title", Status: "free", FavoriteOfUsers: []uuid.UUID{newUser.Id}}
+		newFavoriteTrack = &models.Track{
+			CreatorId: ownerOfFollowedUserGroup.Id,
+			UserGroupId: newFollowedUserGroup.Id,
+			Artists: []uuid.UUID{newFollowedUserGroup.Id},
+			Title: "fav track title",
+			Status: "free",
+			FavoriteOfUsers: []uuid.UUID{newUser.Id},
+		}
 		err = db.Insert(newFavoriteTrack)
+		Expect(err).NotTo(HaveOccurred())
+
+		albumTracks := []uuid.UUID{newFavoriteTrack.Id}
+		newAlbum = &models.TrackGroup{
+			CreatorId: ownerOfFollowedUserGroup.Id,
+			UserGroupId: newFollowedUserGroup.Id,
+			Title: "album title",
+			ReleaseDate: time.Now(),
+			Type: "lp",
+			Cover: avatar,
+			Tracks: albumTracks,
+		}
+		err = db.Insert(newAlbum)
 		Expect(err).NotTo(HaveOccurred())
 
 		newTrack = &models.Track{CreatorId: ownerOfFollowedUserGroup.Id, UserGroupId: newFollowedUserGroup.Id, Title: "track title", Status: "free"}
@@ -92,6 +113,14 @@ var _ = BeforeSuite(func() {
 		newUser.FollowedGroups = []uuid.UUID{newFollowedUserGroup.Id}
 		newUser.FavoriteTracks = []uuid.UUID{newFavoriteTrack.Id}
 		_, err = db.Model(newUser).Column("playlists", "followed_groups", "favorite_tracks").WherePK().Update()
+		Expect(err).NotTo(HaveOccurred())
+
+		newFavoriteTrack.TrackGroups = []uuid.UUID{newAlbum.Id}
+		_, err = db.Model(newFavoriteTrack).Column("track_groups").WherePK().Update()
+		Expect(err).NotTo(HaveOccurred())
+
+		newTrack.TrackGroups = []uuid.UUID{newUserPlaylist.Id}
+		_, err = db.Model(newFavoriteTrack).Column("track_groups").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
 		userGroupAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}

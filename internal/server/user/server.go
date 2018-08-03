@@ -79,6 +79,28 @@ func (s *Server) GetPlaylists(ctx context.Context, user *pb.User) (*pb.Playlists
 		Playlists: playlists,
 	}, nil
 }
+
+func (s *Server) GetFavoriteTracks(ctx context.Context, user *pb.User) (*pb.FavoriteTracks, error) {
+	u, twerr := getUserModel(user)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	pgerr := s.db.Model(u).Column("user.favorite_tracks").WherePK().Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user")
+	}
+
+	favoriteTracks, twerr := models.GetTracks(u.FavoriteTracks, s.db, true) // will return release info (to display cover)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	return &pb.FavoriteTracks{
+		FavoriteTracks: favoriteTracks,
+	}, nil
+}
+
 func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	requiredErr := checkRequiredAttributes(user)
 	if requiredErr != nil {

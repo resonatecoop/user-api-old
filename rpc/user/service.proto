@@ -16,7 +16,7 @@ service UserService {
   rpc RemoveFavoriteTrack(UserToTrack) returns (Empty);
 
   rpc GetPlaylists(User) returns (Playlists);
-
+  rpc GetFavoriteTracks(User) returns (FavoriteTracks);
 }
 
 message User {
@@ -39,6 +39,10 @@ message User {
 
 message Playlists {
   repeated RelatedTrackGroup playlists = 1;
+}
+
+message FavoriteTracks {
+  repeated Track favorite_tracks = 1;
 }
 
 message StreetAddress {
