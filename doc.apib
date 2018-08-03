@@ -36,7 +36,78 @@ TODO: add scope for restricted access (public/private user profile).
             "followed_groups": ["b29cd642-9df8-4f44-bb5a-169829043110"],
         }
 
+### Get Playlists [POST /twirp/resonate.api.user.UserService/GetPlaylists]
 
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "playlists": [
+                {
+                    "id": "b19cd642-9df8-4f44-bb5a-169829043110",
+                    "title": "playlist title",
+                    "cover": "blob",
+                    "type": "playlist",
+                    "about": "blabla",
+                    "private": true,
+                    "tracks": [
+                        {"id": "c19cd642-9df8-4f44-bb5a-169829043110"},
+                        {"id": "d19cd642-9df8-4f44-bb5a-169829043110"},
+                        {"id": "e19cd642-9df8-4f44-bb5a-169829043110"},
+                        {"id": "f19cd642-9df8-4f44-bb5a-169829043110"},
+                    ]
+                }
+            ]
+        }
+
+### Get Favorite Tracks [POST /twirp/resonate.api.user.UserService/GetFavoriteTracks]
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "favorite_tracks": [
+                {
+                    "id": "b29cd642-9df8-4f44-bb5a-169829043110",
+                    "title": "favorite track",
+                    "track_server_id": "b39cd642-9df8-4f44-bb5a-169829043110",
+                    "duration": 120.10,
+                    "status": "free",
+                    "track_number": 7,
+                    "track_groups": [
+                        {
+                            "id": "z19cd642-9df8-4f44-bb5a-169829043110",
+                            "title": "favorite single",
+                            "cover": "blob",
+                            "type": "single",
+                            "about": "blabla",
+                            "private": false,
+                            "tracks": [
+                                {"id": "w29cd642-9df8-4f44-bb5a-169829043110"},
+                                {"id": "x29cd642-9df8-4f44-bb5a-169829043110"}
+                            ]
+                        }
+                    ],
+                    "artists": [
+                        {
+                            "id": "y29cd642-9df8-4f44-bb5a-169829043110",
+                            "display_name": "best artist ever",
+                            "avatar": "blob"
+                        }
+                    ]
+                }
+            ]
+        }
 
 ### Create a New User [POST /twirp/resonate.api.user.UserService/CreateUser]
 
@@ -502,9 +573,9 @@ Can also be used for an artist (members array only contains 1 element with artis
 
 + Response 204 (application/json)
 
-## Tracks Collection [/twirp/resonate.api.user.Track]
+## Tracks Collection [/twirp/resonate.api.user.TrackService]
 
-### Create Track [POST /twirp/resonate.api.user.Track/CreateTrack]
+### Create Track [POST /twirp/resonate.api.user.TrackService/CreateTrack]
 Used by track server API.
 Tracks are created and only after the TrackGroup they are part of is created.
 
@@ -548,7 +619,7 @@ Tracks are created and only after the TrackGroup they are part of is created.
             ]
         }
 
-### Update Track [POST /twirp/resonate.api.user.Track/UpdateTrack]
+### Update Track [POST /twirp/resonate.api.user.TrackService/UpdateTrack]
 
 CreatorId and UserGroupId are immutable.
 
@@ -569,7 +640,7 @@ Tracks can be added to a track group from dedicated endpoint in TrackGroup Servi
 
 + Response 204 (application/json)
 
-### Delete Track [POST /twirp/resonate.api.user.Track/DeleteTrack]
+### Delete Track [POST /twirp/resonate.api.user.TrackService/DeleteTrack]
 
 + Request (application/json)
 
@@ -579,7 +650,7 @@ Tracks can be added to a track group from dedicated endpoint in TrackGroup Servi
 
 + Response 204 (application/json)
 
-### Get Track [POST /twirp/resonate.api.user.Track/GetTrack]
+### Get Track [POST /twirp/resonate.api.user.TrackService/GetTrack]
 
 
 + Request (application/json)
@@ -613,9 +684,9 @@ Tracks can be added to a track group from dedicated endpoint in TrackGroup Servi
                 ]
             }
 
-## TrackGroups Collection [/twirp/resonate.api.user.TrackGroup]
+## TrackGroups Collection [/twirp/resonate.api.user.TrackGroupService]
 
-### Create TrackGroup [POST /twirp/resonate.api.user.Track/CreateTrackGroup]
+### Create TrackGroup [POST /twirp/resonate.api.user.TrackGroupServiceTrackGroupService/CreateTrackGroup]
 
 + type (string) - type of track group: lp, ep, single or playlist.
 For lp, ep, single: user_group_id is required.
@@ -711,7 +782,7 @@ For playlist: user_group_id can be set (public playlist owned by a user group pr
             }
         }
 
-### Update TrackGroup [POST /twirp/resonate.api.user.Track/UpdateTrackGroup]
+### Update TrackGroup [POST /twirp/resonate.api.user.TrackGroupService/UpdateTrackGroup]
 
 title, release_date, cover, about, display_artist, multiple_composers and private can be updated.
 
@@ -734,7 +805,7 @@ title, release_date, cover, about, display_artist, multiple_composers and privat
 
 + Response 204 (application/json)
 
-### Add Tracks To TrackGroup [POST /twirp/resonate.api.user.Track/AddTracksToTrackGroup]
+### Add Tracks To TrackGroup [POST /twirp/resonate.api.user.TrackGroupService/AddTracksToTrackGroup]
 
 Can be used to add a track to a playlist, lp, ep, single (all types of track group).
 
@@ -751,7 +822,7 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 
 + Response 204 (application/json)
 
-### Delete Tracks From TrackGroup [POST /twirp/resonate.api.user.Track/DeletesTrackFromTrackGroup]
+### Delete Tracks From TrackGroup [POST /twirp/resonate.api.user.TrackGroupService/DeletesTrackFromTrackGroup]
 
 + Request (application/json)
 
@@ -766,7 +837,7 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 
 + Response 204 (application/json)
 
-### Delete TrackGroup [POST /twirp/resonate.api.user.Track/DeleteTrackGroup]
+### Delete TrackGroup [POST /twirp/resonate.api.user.TrackGroupService/DeleteTrackGroup]
 
 + Request (application/json)
 
@@ -776,7 +847,7 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
 
 + Response 204 (application/json)
 
-### Get TrackGroup [POST /twirp/resonate.api.user.Track/GetTrackGroup]
+### Get TrackGroup [POST /twirp/resonate.api.user.TrackGroupService/GetTrackGroup]
 
 + Request (application/json)
 
