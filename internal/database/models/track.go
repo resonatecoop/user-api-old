@@ -38,6 +38,7 @@ type Track struct {
   Artists []uuid.UUID `sql:",type:uuid[]" pg:",array"` // for display purposes
   Tags []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
+  Plays []User `pg:"many2many:plays"`
   // Composers with IPI
   // Performers with IPI
 }

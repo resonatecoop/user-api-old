@@ -21,6 +21,10 @@ func init() {
       return err
     }
 
+    if _, err := db.Exec(`CREATE TYPE play_type AS ENUM ('paid', 'free');`); err != nil {
+      return err
+    }
+
     if _, err := db.Exec(`CREATE TYPE track_group_type AS ENUM ('lp', 'ep', 'single', 'playlist');`); err != nil {
       return err
     }
@@ -36,6 +40,7 @@ func init() {
       &models.Track{},
       &models.TrackGroup{},
       &models.UserGroupMember{},
+      &models.Play{},
     } {
       _, err := orm.CreateTable(db, model, &orm.CreateTableOptions{
         FKConstraints: true,
@@ -54,13 +59,18 @@ func init() {
     }
 		return nil
 	}, func(db migrations.DB) error {
-    if _, err := db.Exec(`DROP TYPE IF EXISTS track_status CASCADE;`); err != nil {
+    if _, err := db.Exec(`DROP TYPE IF EXISTS play_type CASCADE;`); err != nil {
       return err
     }
+    }, func(db migrations.DB) error {
+      if _, err := db.Exec(`DROP TYPE IF EXISTS track_status CASCADE;`); err != nil {
+        return err
+      }
     if _, err := db.Exec(`DROP TYPE IF EXISTS track_group_type CASCADE;`); err != nil {
       return err
     }
     for _, model := range []interface{}{
+      &models.Play{},
       &models.Tag{},
       &models.TrackGroup{},
       &models.Track{},
@@ -71,7 +81,6 @@ func init() {
       &models.UserGroup{},
       &models.User{},
       &models.Link{},
-
       } {
       _, err := orm.DropTable(db, model, &orm.DropTableOptions{
         IfExists: true,

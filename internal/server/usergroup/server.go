@@ -599,19 +599,21 @@ func getUserGroupMembers(userGroupId uuid.UUID, userGroups []models.UserGroup, m
 		if members { // userGroups are members of user group with userGroupId
 			userGroupMember.UserGroupId = userGroupId
 			userGroupMember.MemberId = userGroup.Id
+			u.Id = userGroupMember.MemberId.String()
 		} else { // user group with userGroupId is member of userGroups
 			userGroupMember.UserGroupId = userGroup.Id
 			userGroupMember.MemberId = userGroupId
+			u.Id = userGroupMember.UserGroupId.String()
 		}
 		err := db.Model(&userGroupMember).
-			Where("user_group_id = ?user_group_id").
-			Where("member_id = ?member_id").
+			WherePK().
+			// Where("user_group_id = ?user_group_id").
+			// Where("member_id = ?member_id").
 			Select()
 		if err != nil {
 			return nil, err, "user_group_member"
 		}
 
-		u.Id = userGroupMember.Id.String()
 		u.DisplayName = userGroupMember.DisplayName
 
 		// get tags

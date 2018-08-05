@@ -55,16 +55,16 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.Links[0].Platform).To(Equal(newLink.Platform))
 
 				Expect(len(resp.Members)).To(Equal(1))
-				Expect(resp.Members[0].Id).To(Equal(newArtistUserGroupMember.Id.String()))
+				Expect(resp.Members[0].Id).To(Equal(newUserProfile.Id.String()))
 				Expect(resp.Members[0].DisplayName).To(Equal(newArtistUserGroupMember.DisplayName))
-				Expect(resp.Members[0].Avatar).To(Equal(newArtist.Avatar))
+				Expect(resp.Members[0].Avatar).To(Equal(newUserProfile.Avatar))
 				Expect(len(resp.Members[0].Tags)).To(Equal(1))
 				Expect(resp.Members[0].Tags[0].Id).To(Equal(newRoleTag.Id.String()))
 				Expect(resp.Members[0].Tags[0].Type).To(Equal(newRoleTag.Type))
 				Expect(resp.Members[0].Tags[0].Name).To(Equal(newRoleTag.Name))
 
 				Expect(len(resp.MemberOfGroups)).To(Equal(1))
-				Expect(resp.MemberOfGroups[0].Id).To(Equal(newLabelUserGroupMember.Id.String()))
+				Expect(resp.MemberOfGroups[0].Id).To(Equal(newLabel.Id.String()))
 				Expect(resp.MemberOfGroups[0].DisplayName).To(Equal(newArtist.DisplayName))
 				Expect(resp.MemberOfGroups[0].Avatar).To(Equal(newArtist.Avatar))
 
