@@ -129,6 +129,56 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	}, nil
 }
 
+func (s *Server) CreatePlay(ctx context.Context, playRequest *pb.CreatePlayRequest) (*pb.CreatePlayResponse, error) {
+	if playRequest.Play == nil {
+		return nil, twirp.RequiredArgumentError("play")
+	}
+
+	if playRequest.Play.Type == "" {
+		return nil, twirp.RequiredArgumentError("type")
+	}
+
+	userId, twerr := internal.GetUuidFromString(playRequest.Play.UserId)
+	if twerr != nil {
+		return nil, twerr
+	}
+	user := &models.User{Id: userId}
+	pgerr := s.db.Model(user).WherePK().Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user")
+	}
+	trackId, twerr := internal.GetUuidFromString(playRequest.Play.TrackId)
+	if twerr != nil {
+		return nil, twerr
+	}
+	track := &models.Track{Id: trackId}
+	pgerr = s.db.Model(track).WherePK().Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "track")
+	}
+
+	newPlay := &models.Play{
+		UserId: userId,
+		TrackId: trackId,
+		Type: playRequest.Play.Type,
+		Credits: playRequest.Play.Credits,
+	}
+
+	_, pgerr = s.db.Model(newPlay).Returning("*").Insert()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "play")
+	}
+
+	updatedPlayCount, pgerr := models.CountPlays(trackId, userId, s.db)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "play")
+	}
+	return &pb.CreatePlayResponse{
+		UpdatedPlayCount: updatedPlayCount,
+		UpdatedCredits: playRequest.UpdatedCredits,
+	}, nil
+}
+
 func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*trackpb.Empty, error) {
 	err := checkRequiredAttributes(user)
 

@@ -17,6 +17,8 @@ service UserService {
 
   rpc GetPlaylists(User) returns (Playlists);
   rpc GetFavoriteTracks(User) returns (FavoriteTracks);
+
+  rpc CreatePlay(CreatePlayRequest) returns (CreatePlayResponse);
 }
 
 message User {
@@ -66,8 +68,27 @@ message UserToUserGroup {
 }
 
 // Used for:
-// - add/remove favorite tracks
+// - adding/removing favorite tracks
 message UserToTrack {
   string user_id = 1; // required
   string track_id = 2; // required
+}
+
+// Used for:
+// - adding a track play (i.e. track has been streamed >=45s)
+message Play {
+  string user_id = 1; // required
+  string track_id = 2; // required
+  string type = 3; // required
+  float credits = 4; // credits spent by user
+}
+
+message CreatePlayRequest {
+  Play play = 1; // required
+  float updated_credits = 2; // required
+}
+
+message CreatePlayResponse {
+  int32 updated_play_count = 1; // required
+  float updated_credits = 2; // required
 }

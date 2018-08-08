@@ -26,6 +26,8 @@ var (
 	newFollowedUserGroup *models.UserGroup
 	newAlbum *models.TrackGroup
 	newUserPlaylist *models.TrackGroup
+	newTrackPlay *models.Play
+	newFavoriteTrackPlay *models.Play
 )
 
 func TestUser(t *testing.T) {
@@ -94,6 +96,24 @@ var _ = BeforeSuite(func() {
 
 		newTrack = &models.Track{CreatorId: ownerOfFollowedUserGroup.Id, UserGroupId: newFollowedUserGroup.Id, Title: "track title", Status: "free"}
 		err = db.Insert(newTrack)
+		Expect(err).NotTo(HaveOccurred())
+
+		newTrackPlay = &models.Play{
+			UserId: newUser.Id,
+			TrackId: newTrack.Id,
+			Type: "free",
+			Credits: 0.00,
+		}
+		err = db.Insert(newTrackPlay)
+		Expect(err).NotTo(HaveOccurred())
+
+		newFavoriteTrackPlay = &models.Play{
+			UserId: newUser.Id,
+			TrackId: newFavoriteTrack.Id,
+			Type: "paid",
+			Credits: 0.02,
+		}
+		err = db.Insert(newFavoriteTrackPlay)
 		Expect(err).NotTo(HaveOccurred())
 
 		tracks := []uuid.UUID{newTrack.Id}
@@ -180,6 +200,13 @@ var _ = AfterSuite(func() {
 	err = db.Model(&groupTaxonomies).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&groupTaxonomies).Delete()
+	Expect(err).NotTo(HaveOccurred())
+
+	// Delete all plays
+	var plays []models.Play
+	err = db.Model(&plays).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&plays).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all tags

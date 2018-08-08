@@ -41,7 +41,7 @@ func CheckError(err error, table string) (twirp.Error) {
       } else if code == "23503" { // foreign_key_violation
         message = pgerr.Field('M')
         return twirp.NotFoundError(message)
-			} else {
+      } else {
 				message = pgerr.Field('M')
 				return twirp.NewError("unknown", message)
 			}

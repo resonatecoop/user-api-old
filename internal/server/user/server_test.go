@@ -37,7 +37,7 @@ var _ = Describe("User server", func() {
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
-				for id == newUser.Id {
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
 					id = uuid.NewV4()
 				}
 				user := &pb.User{Id: id.String()}
@@ -66,6 +66,135 @@ var _ = Describe("User server", func() {
 		})
 	})
 
+	Describe("CreatePlay", func() {
+		Context("with valid track id and user id", func() {
+			It("should create a play and respond with updated play count and credits", func() {
+				playRequest := &pb.CreatePlayRequest{
+					Play: &pb.Play{
+						UserId: newUser.Id.String(),
+						TrackId: newFavoriteTrack.Id.String(),
+						Type: "paid",
+						Credits: 0.04,
+					},
+					UpdatedCredits: 1.00,
+				}
+				resp, err := service.CreatePlay(context.Background(), playRequest)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.UpdatedCredits).To(Equal(playRequest.UpdatedCredits))
+				Expect(resp.UpdatedPlayCount).To(Equal(int32(2)))
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				id := uuid.NewV4()
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
+					id = uuid.NewV4()
+				}
+
+				playRequest := &pb.CreatePlayRequest{
+					Play: &pb.Play{
+						UserId: id.String(),
+						TrackId: newFavoriteTrack.Id.String(),
+						Type: "paid",
+						Credits: 0.04,
+					},
+					UpdatedCredits: 1.00,
+				}
+				resp, err := service.CreatePlay(context.Background(), playRequest)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should respond with not_found error if track does not exist", func() {
+				id := uuid.NewV4()
+				for id == newTrack.Id || id == newFavoriteTrack.Id {
+					id = uuid.NewV4()
+				}
+
+				playRequest := &pb.CreatePlayRequest{
+					Play: &pb.Play{
+						UserId: newUser.Id.String(),
+						TrackId: id.String(),
+						Type: "paid",
+						Credits: 0.04,
+					},
+					UpdatedCredits: 1.00,
+				}
+				resp, err := service.CreatePlay(context.Background(), playRequest)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid request", func() {
+			Context("with invalid uuid", func() {
+				It("should respond with invalid_argument error if track_id invalid", func() {
+					id := "45"
+					playRequest := &pb.CreatePlayRequest{
+						Play: &pb.Play{
+							UserId: newUser.Id.String(),
+							TrackId: id,
+							Type: "paid",
+							Credits: 0.04,
+						},
+						UpdatedCredits: 1.00,
+					}
+					resp, err := service.CreatePlay(context.Background(), playRequest)
+
+					Expect(resp).To(BeNil())
+					Expect(err).To(HaveOccurred())
+
+					twerr := err.(twirp.Error)
+					Expect(twerr.Code()).To(Equal(invalid_argument_code))
+					Expect(twerr.Meta("argument")).To(Equal("id"))
+				})
+				It("should respond with invalid_argument error if user_id invalid", func() {
+					id := "45"
+					playRequest := &pb.CreatePlayRequest{
+						Play: &pb.Play{
+							UserId: id,
+							TrackId: newTrack.Id.String(),
+							Type: "paid",
+							Credits: 0.04,
+						},
+						UpdatedCredits: 1.00,
+					}
+					resp, err := service.CreatePlay(context.Background(), playRequest)
+
+					Expect(resp).To(BeNil())
+					Expect(err).To(HaveOccurred())
+
+					twerr := err.(twirp.Error)
+					Expect(twerr.Code()).To(Equal(invalid_argument_code))
+					Expect(twerr.Meta("argument")).To(Equal("id"))
+				})
+				It("should respond with invalid_argument error if type invalid", func() {
+					playRequest := &pb.CreatePlayRequest{
+						Play: &pb.Play{
+							UserId: newUser.Id.String(),
+							TrackId: newTrack.Id.String(),
+							Type: "",
+							Credits: 0.04,
+						},
+						UpdatedCredits: 1.00,
+					}
+					resp, err := service.CreatePlay(context.Background(), playRequest)
+
+					Expect(resp).To(BeNil())
+					Expect(err).To(HaveOccurred())
+					twerr := err.(twirp.Error)
+					Expect(twerr.Code()).To(Equal(invalid_argument_code))
+					Expect(twerr.Meta("argument")).To(Equal("type"))
+				})
+			})
+		})
+	})
+
 	Describe("GetPlaylists", func() {
 		Context("with valid uuid", func() {
 			It("should respond with playlists", func() {
@@ -85,7 +214,7 @@ var _ = Describe("User server", func() {
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
-				for id == newUser.Id {
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
 					id = uuid.NewV4()
 				}
 				user := &pb.User{Id: id.String()}
@@ -146,7 +275,7 @@ var _ = Describe("User server", func() {
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
-				for id == newUser.Id {
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
 					id = uuid.NewV4()
 				}
 				user := &pb.User{Id: id.String()}
@@ -492,7 +621,7 @@ var _ = Describe("User server", func() {
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
-				for id == newUser.Id {
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
 					id = uuid.NewV4()
 				}
 				user := &pb.User{
@@ -668,7 +797,7 @@ var _ = Describe("User server", func() {
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
-				for id == newUser.Id {
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
 					id = uuid.NewV4()
 				}
 				user := &pb.User{Id: id.String()}

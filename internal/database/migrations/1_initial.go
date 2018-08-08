@@ -62,10 +62,9 @@ func init() {
     if _, err := db.Exec(`DROP TYPE IF EXISTS play_type CASCADE;`); err != nil {
       return err
     }
-    }, func(db migrations.DB) error {
-      if _, err := db.Exec(`DROP TYPE IF EXISTS track_status CASCADE;`); err != nil {
-        return err
-      }
+    if _, err := db.Exec(`DROP TYPE IF EXISTS track_status CASCADE;`); err != nil {
+      return err
+    }
     if _, err := db.Exec(`DROP TYPE IF EXISTS track_group_type CASCADE;`); err != nil {
       return err
     }
@@ -90,7 +89,6 @@ func init() {
         return err
       }
     }
-
 
     return nil
 	})

@@ -744,7 +744,6 @@ var _ = Describe("TrackGroup server", func() {
           },
 				}
 				resp, err := service.CreateTrackGroup(context.Background(), trackGroup)
-
 				Expect(resp).To(BeNil())
 				Expect(err).To(HaveOccurred())
 				twerr := err.(twirp.Error)
