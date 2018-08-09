@@ -4,6 +4,7 @@ import (
 	// "fmt"
 	// "reflect"
 	"context"
+	"net/url"
 
 	"github.com/go-pg/pg"
 	. "github.com/onsi/ginkgo"
@@ -247,31 +248,37 @@ var _ = Describe("User server", func() {
 		Context("with valid uuid", func() {
 			It("should respond with favorite tracks", func() {
 				user := &pb.User{Id: newUser.Id.String()}
-				resp, err := service.GetFavoriteTracks(context.Background(), user)
+				u := url.URL{}
+				queryString := u.Query()
+				queryString.Set("page", "1")
+    		queryString.Set("limit", "50")
+				ctx := context.WithValue(context.Background(), "query", queryString)
+				resp, err := service.GetFavoriteTracks(ctx, user)
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(resp.FavoriteTracks)).To(Equal(1))
-				Expect(resp.FavoriteTracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
-				Expect(resp.FavoriteTracks[0].Title).To(Equal(newFavoriteTrack.Title))
-				Expect(resp.FavoriteTracks[0].TrackServerId).To(Equal(newFavoriteTrack.TrackServerId.String()))
-				Expect(resp.FavoriteTracks[0].Duration).To(Equal(newFavoriteTrack.Duration))
-				Expect(resp.FavoriteTracks[0].Status).To(Equal(newFavoriteTrack.Status))
-				Expect(resp.FavoriteTracks[0].TrackNumber).To(Equal(newFavoriteTrack.TrackNumber))
+				Expect(len(resp.Tracks)).To(Equal(1))
+				Expect(resp.Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
+				Expect(resp.Tracks[0].Title).To(Equal(newFavoriteTrack.Title))
+				Expect(resp.Tracks[0].TrackServerId).To(Equal(newFavoriteTrack.TrackServerId.String()))
+				Expect(resp.Tracks[0].Duration).To(Equal(newFavoriteTrack.Duration))
+				Expect(resp.Tracks[0].Status).To(Equal(newFavoriteTrack.Status))
+				Expect(resp.Tracks[0].TrackNumber).To(Equal(newFavoriteTrack.TrackNumber))
 
-				Expect(len(resp.FavoriteTracks[0].TrackGroups)).To(Equal(1))
-				Expect(resp.FavoriteTracks[0].TrackGroups[0].Id).To(Equal(newAlbum.Id.String()))
-				Expect(resp.FavoriteTracks[0].TrackGroups[0].Title).To(Equal(newAlbum.Title))
-				Expect(resp.FavoriteTracks[0].TrackGroups[0].Cover).To(Equal(newAlbum.Cover))
-				Expect(resp.FavoriteTracks[0].TrackGroups[0].Type).To(Equal(newAlbum.Type))
-				Expect(resp.FavoriteTracks[0].TrackGroups[0].About).To(Equal(newAlbum.About))
-				Expect(resp.FavoriteTracks[0].TrackGroups[0].Private).To(Equal(newAlbum.Private))
-				Expect(len(resp.FavoriteTracks[0].TrackGroups[0].Tracks)).To(Equal(1))
-				Expect(resp.FavoriteTracks[0].TrackGroups[0].Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
+				Expect(len(resp.Tracks[0].TrackGroups)).To(Equal(1))
+				Expect(resp.Tracks[0].TrackGroups[0].Id).To(Equal(newAlbum.Id.String()))
+				Expect(resp.Tracks[0].TrackGroups[0].Title).To(Equal(newAlbum.Title))
+				Expect(resp.Tracks[0].TrackGroups[0].Cover).To(Equal(newAlbum.Cover))
+				Expect(resp.Tracks[0].TrackGroups[0].Type).To(Equal(newAlbum.Type))
+				Expect(resp.Tracks[0].TrackGroups[0].About).To(Equal(newAlbum.About))
+				Expect(resp.Tracks[0].TrackGroups[0].Private).To(Equal(newAlbum.Private))
+				Expect(len(resp.Tracks[0].TrackGroups[0].Tracks)).To(Equal(2))
+				Expect(resp.Tracks[0].TrackGroups[0].Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
+				Expect(resp.Tracks[0].TrackGroups[0].Tracks[1].Id).To(Equal(newTrack.Id.String()))
 
-				Expect(len(resp.FavoriteTracks[0].Artists)).To(Equal(1))
-				Expect(resp.FavoriteTracks[0].Artists[0].Id).To(Equal(newFollowedUserGroup.Id.String()))
-				Expect(resp.FavoriteTracks[0].Artists[0].DisplayName).To(Equal(newFollowedUserGroup.DisplayName))
-				Expect(resp.FavoriteTracks[0].Artists[0].Avatar).To(Equal(newFollowedUserGroup.Avatar))
+				Expect(len(resp.Tracks[0].Artists)).To(Equal(1))
+				Expect(resp.Tracks[0].Artists[0].Id).To(Equal(newFollowedUserGroup.Id.String()))
+				Expect(resp.Tracks[0].Artists[0].DisplayName).To(Equal(newFollowedUserGroup.DisplayName))
+				Expect(resp.Tracks[0].Artists[0].Avatar).To(Equal(newFollowedUserGroup.Avatar))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
@@ -293,6 +300,73 @@ var _ = Describe("User server", func() {
 				id := "45"
 				user := &pb.User{Id: id}
 				resp, err := service.GetFavoriteTracks(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
+	})
+
+	Describe("GetOwnedTracks", func() {
+		Context("with valid uuid", func() {
+			It("should respond with owned tracks", func() {
+				user := &pb.User{Id: newUser.Id.String()}
+				u := url.URL{}
+				queryString := u.Query()
+				queryString.Set("page", "1")
+    		queryString.Set("limit", "50")
+				ctx := context.WithValue(context.Background(), "query", queryString)
+				resp, err := service.GetOwnedTracks(ctx, user)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(resp.Tracks)).To(Equal(1))
+				Expect(resp.Tracks[0].Id).To(Equal(newTrack.Id.String()))
+				Expect(resp.Tracks[0].Title).To(Equal(newTrack.Title))
+				Expect(resp.Tracks[0].TrackServerId).To(Equal(newTrack.TrackServerId.String()))
+				Expect(resp.Tracks[0].Duration).To(Equal(newTrack.Duration))
+				Expect(resp.Tracks[0].Status).To(Equal(newTrack.Status))
+				Expect(resp.Tracks[0].TrackNumber).To(Equal(newTrack.TrackNumber))
+
+				Expect(len(resp.Tracks[0].TrackGroups)).To(Equal(1))
+				Expect(resp.Tracks[0].TrackGroups[0].Id).To(Equal(newAlbum.Id.String()))
+				Expect(resp.Tracks[0].TrackGroups[0].Title).To(Equal(newAlbum.Title))
+				Expect(resp.Tracks[0].TrackGroups[0].Cover).To(Equal(newAlbum.Cover))
+				Expect(resp.Tracks[0].TrackGroups[0].Type).To(Equal(newAlbum.Type))
+				Expect(resp.Tracks[0].TrackGroups[0].About).To(Equal(newAlbum.About))
+				Expect(resp.Tracks[0].TrackGroups[0].Private).To(Equal(newAlbum.Private))
+				Expect(len(resp.Tracks[0].TrackGroups[0].Tracks)).To(Equal(2))
+				Expect(resp.Tracks[0].TrackGroups[0].Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
+				Expect(resp.Tracks[0].TrackGroups[0].Tracks[1].Id).To(Equal(newTrack.Id.String()))
+
+				Expect(len(resp.Tracks[0].Artists)).To(Equal(1))
+				Expect(resp.Tracks[0].Artists[0].Id).To(Equal(newFollowedUserGroup.Id.String()))
+				Expect(resp.Tracks[0].Artists[0].DisplayName).To(Equal(newFollowedUserGroup.DisplayName))
+				Expect(resp.Tracks[0].Artists[0].Avatar).To(Equal(newFollowedUserGroup.Avatar))
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				id := uuid.NewV4()
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
+					id = uuid.NewV4()
+				}
+				user := &pb.User{Id: id.String()}
+				resp, err := service.GetOwnedTracks(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error", func() {
+				id := "45"
+				user := &pb.User{Id: id}
+				resp, err := service.GetOwnedTracks(context.Background(), user)
 
 				Expect(resp).To(BeNil())
 				Expect(err).To(HaveOccurred())

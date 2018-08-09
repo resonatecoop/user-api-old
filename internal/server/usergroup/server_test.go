@@ -128,7 +128,10 @@ var _ = Describe("UserGroup server", func() {
 		It("should respond with user_groups of type label", func() {
 			emptyReq := &trackpb.Empty{}
 			u := url.URL{}
-			ctx := context.WithValue(context.Background(), "query", u.Query())
+			queryString := u.Query()
+			queryString.Set("page", "1")
+			queryString.Set("limit", "50")
+			ctx := context.WithValue(context.Background(), "query", queryString)
 			resp, err := service.GetLabelUserGroups(ctx, emptyReq)
 
 			Expect(err).NotTo(HaveOccurred())

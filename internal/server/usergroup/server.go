@@ -196,7 +196,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	}
 
 	// Get related tracks/track groups
-	highlightedTracks, pgerr := models.GetTracks(u.HighlightedTracks, s.db, true)
+	highlightedTracks, pgerr := models.GetTracks(u.HighlightedTracks, s.db, true, ctx)
 	if pgerr != nil {
 		return nil, internal.CheckError(pgerr, "track")
 	}

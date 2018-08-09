@@ -38,7 +38,7 @@ func main() {
 	db := database.Connect(true)
 
 	newUserServer := userServer.NewServer(db)
-	userTwirpHandler := userRpc.NewUserServiceServer(newUserServer, nil)
+	userTwirpHandler := WithURLQuery(userRpc.NewUserServiceServer(newUserServer, nil))
 
 	newUserGroupServer := userGroupServer.NewServer(db)
 	userGroupTwirpHandler := WithURLQuery(userGroupRpc.NewUserGroupServiceServer(newUserGroupServer, nil))

@@ -81,7 +81,17 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newFavoriteTrack)
 		Expect(err).NotTo(HaveOccurred())
 
-		albumTracks := []uuid.UUID{newFavoriteTrack.Id}
+		newTrack = &models.Track{
+			CreatorId: ownerOfFollowedUserGroup.Id,
+			UserGroupId: newFollowedUserGroup.Id,
+			Artists: []uuid.UUID{newFollowedUserGroup.Id},
+			Title: "track title",
+			Status: "free",
+		}
+		err = db.Insert(newTrack)
+		Expect(err).NotTo(HaveOccurred())
+
+		albumTracks := []uuid.UUID{newFavoriteTrack.Id, newTrack.Id}
 		newAlbum = &models.TrackGroup{
 			CreatorId: ownerOfFollowedUserGroup.Id,
 			UserGroupId: newFollowedUserGroup.Id,
@@ -94,10 +104,6 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newAlbum)
 		Expect(err).NotTo(HaveOccurred())
 
-		newTrack = &models.Track{CreatorId: ownerOfFollowedUserGroup.Id, UserGroupId: newFollowedUserGroup.Id, Title: "track title", Status: "free"}
-		err = db.Insert(newTrack)
-		Expect(err).NotTo(HaveOccurred())
-
 		newTrackPlay = &models.Play{
 			UserId: newUser.Id,
 			TrackId: newTrack.Id,
@@ -106,6 +112,17 @@ var _ = BeforeSuite(func() {
 		}
 		err = db.Insert(newTrackPlay)
 		Expect(err).NotTo(HaveOccurred())
+
+		for i := 1; i <= 9; i++ {
+			newTrackPaidPlay := &models.Play{
+				UserId: newUser.Id,
+				TrackId: newTrack.Id,
+				Type: "paid",
+				Credits: 0.02, // constant for simplicity
+			}
+			err = db.Insert(newTrackPaidPlay)
+			Expect(err).NotTo(HaveOccurred())
+		}
 
 		newFavoriteTrackPlay = &models.Play{
 			UserId: newUser.Id,
@@ -139,8 +156,8 @@ var _ = BeforeSuite(func() {
 		_, err = db.Model(newFavoriteTrack).Column("track_groups").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
-		newTrack.TrackGroups = []uuid.UUID{newUserPlaylist.Id}
-		_, err = db.Model(newFavoriteTrack).Column("track_groups").WherePK().Update()
+		newTrack.TrackGroups = []uuid.UUID{newAlbum.Id, newUserPlaylist.Id}
+		_, err = db.Model(newTrack).Column("track_groups").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
 		userGroupAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}

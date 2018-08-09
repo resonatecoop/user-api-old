@@ -2,11 +2,15 @@ package models
 
 import (
   "time"
+  "context"
   // "fmt"
+  "net/url"
   // "log"
+
   "github.com/satori/go.uuid"
   pb "user-api/rpc/track"
   "github.com/go-pg/pg"
+  "github.com/go-pg/pg/orm"
   "github.com/twitchtv/twirp"
 
   "user-api/internal"
@@ -43,12 +47,20 @@ type Track struct {
   // Performers with IPI
 }
 
-func GetTracks(ids []uuid.UUID, db *pg.DB, playlist bool) ([]*pb.Track, twirp.Error) {
+func GetTracks(ids []uuid.UUID, db *pg.DB, showTrackGroup bool, ctx context.Context) ([]*pb.Track, twirp.Error) {
 	var tracksResponse []*pb.Track
 	if len(ids) > 0 {
 		var t []Track
+
+    pagination := func(q *orm.Query) (*orm.Query, error) {
+      if ctx.Value("query") != nil {
+        q = q.Apply(orm.Pagination(ctx.Value("query").(url.Values)))
+      }
+      return q, nil
+    }
 		pgerr := db.Model(&t).
 			Where("id in (?)", pg.In(ids)).
+      Apply(pagination).
 			Select()
 		if pgerr != nil {
 			return nil, internal.CheckError(pgerr, "track")
@@ -67,7 +79,7 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, playlist bool) ([]*pb.Track, twirp.Er
         return  nil, internal.CheckError(pgerr, "user_group")
       }
       trackResponse.Artists = artists
-      if playlist == true {
+      if showTrackGroup == true {
         trackGroups, twerr := GetTrackGroups(track.TrackGroups, db, []string{"lp", "ep", "single"})
         if twerr != nil {
           return  nil, twerr

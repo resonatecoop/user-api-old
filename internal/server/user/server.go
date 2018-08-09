@@ -5,6 +5,7 @@ import (
 	// "reflect"
 	"time"
 	"context"
+	// "log"
 
 	"github.com/go-pg/pg"
 	"github.com/twitchtv/twirp"
@@ -80,7 +81,7 @@ func (s *Server) GetPlaylists(ctx context.Context, user *pb.User) (*pb.Playlists
 	}, nil
 }
 
-func (s *Server) GetFavoriteTracks(ctx context.Context, user *pb.User) (*pb.FavoriteTracks, error) {
+func (s *Server) GetFavoriteTracks(ctx context.Context, user *pb.User) (*pb.Tracks, error) {
 	u, twerr := getUserModel(user)
 	if twerr != nil {
 		return nil, twerr
@@ -91,13 +92,53 @@ func (s *Server) GetFavoriteTracks(ctx context.Context, user *pb.User) (*pb.Favo
 		return nil, internal.CheckError(pgerr, "user")
 	}
 
-	favoriteTracks, twerr := models.GetTracks(u.FavoriteTracks, s.db, true) // will return release info (to display cover)
+	favoriteTracks, twerr := models.GetTracks(u.FavoriteTracks, s.db, true, ctx) // will return release info (to display cover)
 	if twerr != nil {
 		return nil, twerr
 	}
 
-	return &pb.FavoriteTracks{
-		FavoriteTracks: favoriteTracks,
+	return &pb.Tracks{
+		Tracks: favoriteTracks,
+	}, nil
+}
+
+func (s *Server) GetOwnedTracks(ctx context.Context, user *pb.User) (*pb.Tracks, error) {
+	u, twerr := getUserModel(user)
+	if twerr != nil {
+		return nil, twerr
+	}
+	pgerr := s.db.Model(u).WherePK().Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user")
+	}
+
+	var ownedTrackIds []uuid.UUID
+	_, pgerr = s.db.Query(&ownedTrackIds, `
+    SELECT track_id FROM plays
+		WHERE user_id = ? and type = 'paid'
+		GROUP BY track_id
+		HAVING COUNT(DISTINCT plays.id) >= 9
+	`, u.Id)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "play")
+	}
+
+	ownedTracks, twerr := models.GetTracks(ownedTrackIds, s.db, true, ctx)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	return &pb.Tracks{
+		Tracks: ownedTracks,
+	}, nil
+}
+
+func (s *Server) GetTrackHistory(ctx context.Context, user *pb.User) (*pb.Tracks, error) {
+	// u, twerr := getUserModel(user)
+	// if twerr != nil {
+	// 	return nil, twerr
+	// }
+	return &pb.Tracks{
 	}, nil
 }
 
