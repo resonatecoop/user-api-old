@@ -18,10 +18,10 @@ service UserService {
   // User Library
   rpc GetPlaylists(User) returns (Playlists);
   rpc GetFavoriteTracks(User) returns (Tracks);
-  rpc GetOwnedTracks(User) returns (Tracks); // TODO add doc
-  rpc GetTrackHistory(User) returns (Tracks); // TODO add doc
+  rpc GetOwnedTracks(User) returns (Tracks);
+  rpc GetTrackHistory(User) returns (Tracks);
 
-  rpc CreatePlay(CreatePlayRequest) returns (CreatePlayResponse); // TODO add doc
+  rpc CreatePlay(CreatePlayRequest) returns (CreatePlayResponse);
 }
 
 message User {

@@ -78,7 +78,99 @@ Support pagination (?page=2?limit=50).
 + Response 200 (application/json)
 
         {
-            "favorite_tracks": [
+            "tracks": [
+                {
+                    "id": "b29cd642-9df8-4f44-bb5a-169829043110",
+                    "title": "favorite track",
+                    "track_server_id": "b39cd642-9df8-4f44-bb5a-169829043110",
+                    "duration": 120.10,
+                    "status": "free",
+                    "track_number": 7,
+                    "track_groups": [
+                        {
+                            "id": "z19cd642-9df8-4f44-bb5a-169829043110",
+                            "title": "favorite single",
+                            "cover": "blob",
+                            "type": "single",
+                            "about": "blabla",
+                            "private": false,
+                            "tracks": [
+                                {"id": "w29cd642-9df8-4f44-bb5a-169829043110"},
+                                {"id": "x29cd642-9df8-4f44-bb5a-169829043110"}
+                            ]
+                        }
+                    ],
+                    "artists": [
+                        {
+                            "id": "y29cd642-9df8-4f44-bb5a-169829043110",
+                            "display_name": "best artist ever",
+                            "avatar": "blob"
+                        }
+                    ]
+                }
+            ]
+        }
+
+### Get Track History [POST /twirp/resonate.api.user.UserService/GetTrackHistory]
+
+Support pagination (?page=2?limit=50).
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "tracks": [
+                {
+                    "id": "b29cd642-9df8-4f44-bb5a-169829043110",
+                    "title": "favorite track",
+                    "track_server_id": "b39cd642-9df8-4f44-bb5a-169829043110",
+                    "duration": 120.10,
+                    "status": "free",
+                    "track_number": 7,
+                    "track_groups": [
+                        {
+                            "id": "z19cd642-9df8-4f44-bb5a-169829043110",
+                            "title": "favorite single",
+                            "cover": "blob",
+                            "type": "single",
+                            "about": "blabla",
+                            "private": false,
+                            "tracks": [
+                                {"id": "w29cd642-9df8-4f44-bb5a-169829043110"},
+                                {"id": "x29cd642-9df8-4f44-bb5a-169829043110"}
+                            ]
+                        }
+                    ],
+                    "artists": [
+                        {
+                            "id": "y29cd642-9df8-4f44-bb5a-169829043110",
+                            "display_name": "best artist ever",
+                            "avatar": "blob"
+                        }
+                    ]
+                }
+            ]
+        }
+
+### Get Owned Tracks [POST /twirp/resonate.api.user.UserService/GetOwnedTracks]
+
+Support pagination (?page=2?limit=50).
+
++ Request (application/json)
+
+        {
+            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "tracks": [
                 {
                     "id": "b29cd642-9df8-4f44-bb5a-169829043110",
                     "title": "favorite track",
@@ -195,6 +287,34 @@ Used for signup.
         }
 
 + Response 204 (application/json)
+
+### Create Play [POST /twirp/resonate.api.user.UserService/CreatePlay]
+
+Create play after 45s streaming a track.
+Called from track server/payment apis.
+
++ play type (string) - paid or free (free track or user without enough credits)
++ play credits (float) - credits spent by user for this stream
++ updated_credits (float) - updated credits after stream
+
++ Request (application/json)
+
+        {
+            "play": {
+                "user_id": "b09cd642-9df8-4f44-bb5a-169829043110",
+                "track_id": "b09cd642-9df8-4f44-bb5a-169829043111",
+                "type": "paid",
+                "credits": 0.002
+            },
+            "updated_credits": 10.115
+        }
+
++ Response 200 (application/json)
+
+        {
+            "updated_play_count": 1,
+            "updated_credits": 10.115
+        }
 
 ### TODO Get Feed [POST /twirp/resonate.api.user.UserService/GetFeed]
 

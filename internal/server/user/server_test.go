@@ -378,6 +378,63 @@ var _ = Describe("User server", func() {
 		})
 	})
 
+	Describe("GetTrackHistory", func() {
+		Context("with valid uuid", func() {
+			It("should respond with owned tracks", func() {
+				user := &pb.User{Id: newUser.Id.String()}
+				u := url.URL{}
+				queryString := u.Query()
+				queryString.Set("page", "1")
+    		queryString.Set("limit", "50")
+				ctx := context.WithValue(context.Background(), "query", queryString)
+				resp, err := service.GetTrackHistory(ctx, user)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(resp.Tracks)).To(Equal(2))
+				Expect(resp.Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
+				Expect(resp.Tracks[0].Title).To(Equal(newFavoriteTrack.Title))
+				Expect(resp.Tracks[0].TrackServerId).To(Equal(newFavoriteTrack.TrackServerId.String()))
+				Expect(resp.Tracks[0].Duration).To(Equal(newFavoriteTrack.Duration))
+				Expect(resp.Tracks[0].Status).To(Equal(newFavoriteTrack.Status))
+				Expect(resp.Tracks[0].TrackNumber).To(Equal(newFavoriteTrack.TrackNumber))
+				Expect(resp.Tracks[1].Id).To(Equal(newTrack.Id.String()))
+				Expect(resp.Tracks[1].Title).To(Equal(newTrack.Title))
+				Expect(resp.Tracks[1].TrackServerId).To(Equal(newTrack.TrackServerId.String()))
+				Expect(resp.Tracks[1].Duration).To(Equal(newTrack.Duration))
+				Expect(resp.Tracks[1].Status).To(Equal(newTrack.Status))
+				Expect(resp.Tracks[1].TrackNumber).To(Equal(newTrack.TrackNumber))
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				id := uuid.NewV4()
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
+					id = uuid.NewV4()
+				}
+				user := &pb.User{Id: id.String()}
+				resp, err := service.GetTrackHistory(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error", func() {
+				id := "45"
+				user := &pb.User{Id: id}
+				resp, err := service.GetTrackHistory(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
+	})
+
 	Describe("AddFavoriteTrack", func() {
 		Context("with user_id and track_id", func() {
 			It("should add favorite track", func() {

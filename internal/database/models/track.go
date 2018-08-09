@@ -47,6 +47,7 @@ type Track struct {
   // Performers with IPI
 }
 
+// TODO add user fav and play count
 func GetTracks(ids []uuid.UUID, db *pg.DB, showTrackGroup bool, ctx context.Context) ([]*pb.Track, twirp.Error) {
 	var tracksResponse []*pb.Track
 	if len(ids) > 0 {

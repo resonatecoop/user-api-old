@@ -134,11 +134,33 @@ func (s *Server) GetOwnedTracks(ctx context.Context, user *pb.User) (*pb.Tracks,
 }
 
 func (s *Server) GetTrackHistory(ctx context.Context, user *pb.User) (*pb.Tracks, error) {
-	// u, twerr := getUserModel(user)
-	// if twerr != nil {
-	// 	return nil, twerr
-	// }
+	u, twerr := getUserModel(user)
+	if twerr != nil {
+		return nil, twerr
+	}
+	pgerr := s.db.Model(u).WherePK().Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user")
+	}
+
+	var trackIds []uuid.UUID
+	_, pgerr = s.db.Query(&trackIds, `
+		SELECT track_id FROM plays
+		WHERE user_id = ? and type = 'paid'
+		GROUP BY track_id
+		ORDER BY MAX(plays.created_at) desc
+	`, u.Id)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "play")
+	}
+
+	tracks, twerr := models.GetTracks(trackIds, s.db, true, ctx)
+	if twerr != nil {
+		return nil, twerr
+	}
+
 	return &pb.Tracks{
+		Tracks: tracks,
 	}, nil
 }
 
