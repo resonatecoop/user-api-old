@@ -18,10 +18,10 @@ service UserGroupService {
   rpc AddRecommended(UserGroupRecommended) returns (Empty);
   rpc RemoveRecommended(UserGroupRecommended) returns (Empty);
 
-  // rpc AddSubGroups(UserGroupToUserGroups) returns (Empty); // Update?
-  // rpc RemoveSubGroups(UserGroupToUserGroups) returns (Empty);
   rpc AddMembers(UserGroupMembers) returns (Empty);
   rpc DeleteMembers(UserGroupMembers) returns (Empty);
+
+  rpc GetTrackAnalytics(UserGroup) returns (UserGroupTrackAnalytics);
 }
 
 message UserGroup {
@@ -48,6 +48,36 @@ message UserGroup {
   repeated Track highlighted_tracks = 20;
 
   string group_email_address = 22;
+}
+
+message TrackAnalytics {
+  string id = 1;
+  string title = 2;
+  int32 total_plays = 3;
+  int32 paid_plays = 4;
+  int32 free_plays = 5;
+  float total_credits = 6;
+  float user_group_credits = 7;
+  float resonate_credits = 8;
+}
+
+message ArtistTrackAnalytics {
+  repeated TrackAnalytics tracks = 1;
+}
+
+message LabelTrackAnalytics {
+  message ArtistTrackAnalytics {
+    RelatedUserGroup artist = 1;
+    repeated TrackAnalytics tracks = 2;
+  }
+  repeated ArtistTrackAnalytics artists = 1;
+}
+
+message UserGroupTrackAnalytics {
+  oneof track_analytics {
+    ArtistTrackAnalytics artist_track_analytics = 1;
+    LabelTrackAnalytics label_track_analytics = 2;
+  }
 }
 
 message UserGroupRecommended {
