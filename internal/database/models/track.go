@@ -59,8 +59,11 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, showTrackGroup bool, ctx context.Cont
       }
       return q, nil
     }
+
 		pgerr := db.Model(&t).
 			Where("id in (?)", pg.In(ids)).
+      Join("JOIN unnest(?::uuid[]) with ordinality t(id, ord) using (id)", pg.Array(ids)).
+      Order("t.ord").
       Apply(pagination).
 			Select()
 		if pgerr != nil {

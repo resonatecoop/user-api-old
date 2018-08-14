@@ -21,6 +21,7 @@ service UserService {
   rpc GetOwnedTracks(User) returns (Tracks);
   rpc GetTrackHistory(User) returns (Tracks);
 
+  rpc GetSupportedArtists(User) returns (Artists);
   rpc CreatePlay(CreatePlayRequest) returns (CreatePlayResponse);
 }
 
@@ -38,7 +39,7 @@ message User {
   bool newsletter_notification = 10;
   repeated string favorite_tracks = 11;
   repeated string followed_groups = 12;
-  repeated UserGroupResponse owner_of_groups = 13;
+  repeated RelatedUserGroup owner_of_groups = 13;
   StreetAddress residence_address = 14;
 }
 
@@ -56,15 +57,12 @@ message StreetAddress {
   bool personal_data = 3;
 }
 
-message UserGroupResponse {
-  string id = 1;
-  string display_name = 2;
-  bytes avatar = 3;
+message Artists {
+  repeated RelatedUserGroup artists = 1;
 }
 
 // Used for:
-// - connecting to user group
-// - follow/unfollow group
+// - following/unfollowing group
 message UserToUserGroup {
   string user_id = 1; // required
   string user_group_id = 2; // required

@@ -244,6 +244,50 @@ var _ = Describe("User server", func() {
 		})
 	})
 
+
+	Describe("GetSupportedArtists", func() {
+		Context("with valid uuid", func() {
+			It("should respond with owned tracks", func() {
+				user := &pb.User{Id: newUser.Id.String()}
+				res, err := service.GetSupportedArtists(context.Background(), user)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(res.Artists)).To(Equal(1))
+				Expect(res.Artists[0].Id).To(Equal(newUserGroup.Id.String()))
+				Expect(res.Artists[0].DisplayName).To(Equal(newUserGroup.DisplayName))
+				Expect(res.Artists[0].Avatar).To(Equal(newUserGroup.Avatar))
+			})
+			It("should respond with not_found error if user does not exist", func() {
+				id := uuid.NewV4()
+				for id == newUser.Id || id == ownerOfFollowedUserGroup.Id {
+					id = uuid.NewV4()
+				}
+				user := &pb.User{Id: id.String()}
+				resp, err := service.GetSupportedArtists(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error", func() {
+				id := "45"
+				user := &pb.User{Id: id}
+				resp, err := service.GetSupportedArtists(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
+	})
+
 	Describe("GetFavoriteTracks", func() {
 		Context("with valid uuid", func() {
 			It("should respond with favorite tracks", func() {
@@ -323,7 +367,7 @@ var _ = Describe("User server", func() {
 				resp, err := service.GetOwnedTracks(ctx, user)
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(resp.Tracks)).To(Equal(1))
+				Expect(len(resp.Tracks)).To(Equal(10))
 				Expect(resp.Tracks[0].Id).To(Equal(newTrack.Id.String()))
 				Expect(resp.Tracks[0].Title).To(Equal(newTrack.Title))
 				Expect(resp.Tracks[0].TrackServerId).To(Equal(newTrack.TrackServerId.String()))
@@ -342,10 +386,13 @@ var _ = Describe("User server", func() {
 				Expect(resp.Tracks[0].TrackGroups[0].Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
 				Expect(resp.Tracks[0].TrackGroups[0].Tracks[1].Id).To(Equal(newTrack.Id.String()))
 
-				Expect(len(resp.Tracks[0].Artists)).To(Equal(1))
+				Expect(len(resp.Tracks[0].Artists)).To(Equal(2))
 				Expect(resp.Tracks[0].Artists[0].Id).To(Equal(newFollowedUserGroup.Id.String()))
 				Expect(resp.Tracks[0].Artists[0].DisplayName).To(Equal(newFollowedUserGroup.DisplayName))
 				Expect(resp.Tracks[0].Artists[0].Avatar).To(Equal(newFollowedUserGroup.Avatar))
+				Expect(resp.Tracks[0].Artists[1].Id).To(Equal(newUserGroup.Id.String()))
+				Expect(resp.Tracks[0].Artists[1].DisplayName).To(Equal(newUserGroup.DisplayName))
+				Expect(resp.Tracks[0].Artists[1].Avatar).To(Equal(newUserGroup.Avatar))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
@@ -380,7 +427,7 @@ var _ = Describe("User server", func() {
 
 	Describe("GetTrackHistory", func() {
 		Context("with valid uuid", func() {
-			It("should respond with owned tracks", func() {
+			It("should respond with track history", func() {
 				user := &pb.User{Id: newUser.Id.String()}
 				u := url.URL{}
 				queryString := u.Query()
@@ -390,13 +437,15 @@ var _ = Describe("User server", func() {
 				resp, err := service.GetTrackHistory(ctx, user)
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(resp.Tracks)).To(Equal(2))
+				Expect(len(resp.Tracks)).To(Equal(11))
+
 				Expect(resp.Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
 				Expect(resp.Tracks[0].Title).To(Equal(newFavoriteTrack.Title))
 				Expect(resp.Tracks[0].TrackServerId).To(Equal(newFavoriteTrack.TrackServerId.String()))
 				Expect(resp.Tracks[0].Duration).To(Equal(newFavoriteTrack.Duration))
 				Expect(resp.Tracks[0].Status).To(Equal(newFavoriteTrack.Status))
 				Expect(resp.Tracks[0].TrackNumber).To(Equal(newFavoriteTrack.TrackNumber))
+
 				Expect(resp.Tracks[1].Id).To(Equal(newTrack.Id.String()))
 				Expect(resp.Tracks[1].Title).To(Equal(newTrack.Title))
 				Expect(resp.Tracks[1].TrackServerId).To(Equal(newTrack.TrackServerId.String()))
@@ -434,6 +483,7 @@ var _ = Describe("User server", func() {
 			})
 		})
 	})
+
 
 	Describe("AddFavoriteTrack", func() {
 		Context("with user_id and track_id", func() {

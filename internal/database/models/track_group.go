@@ -2,7 +2,7 @@ package models
 
 import (
   "time"
-  // "fmt"
+  "fmt"
   "github.com/satori/go.uuid"
   "user-api/internal"
   "github.com/go-pg/pg"
@@ -237,6 +237,8 @@ func (t *TrackGroup) Delete(tx *pg.Tx) (error, string) {
     WHERE id IN (?)
   `, t.Id, pg.In(userGroupIds))
   if pgerr != nil {
+    fmt.Println("user_group ERR")
+
     return pgerr, "user_group"
   }
 
@@ -251,13 +253,15 @@ func (t *TrackGroup) Delete(tx *pg.Tx) (error, string) {
       return pgerr, "user"
     }
 
-    _, pgerr = tx.Exec(`
-      UPDATE tracks
-      SET track_groups = array_remove(track_groups, ?)
-      WHERE id IN (?)
-    `, t.Id, pg.In(t.Tracks))
-    if pgerr != nil {
-      return pgerr, "track"
+    if len(t.Tracks) > 0 {
+      _, pgerr = tx.Exec(`
+        UPDATE tracks
+        SET track_groups = array_remove(track_groups, ?)
+        WHERE id IN (?)
+      `, t.Id, pg.In(t.Tracks))
+      if pgerr != nil {
+        return pgerr, "track"
+      }
     }
   } else { // Delete tracks if track group not of type playlist
     for _, id := range(t.Tracks) {

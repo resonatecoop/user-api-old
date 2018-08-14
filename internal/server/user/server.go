@@ -74,7 +74,6 @@ func (s *Server) GetPlaylists(ctx context.Context, user *pb.User) (*pb.Playlists
 		return nil, twerr
 	}
 
-	// ? Include playlist from user groups user is owner of?
 	playlists := userPlaylists
 	return &pb.Playlists{
 		Playlists: playlists,
@@ -118,6 +117,7 @@ func (s *Server) GetOwnedTracks(ctx context.Context, user *pb.User) (*pb.Tracks,
 		WHERE user_id = ? and type = 'paid'
 		GROUP BY track_id
 		HAVING COUNT(DISTINCT plays.id) >= 9
+		ORDER BY max(created_at) desc
 	`, u.Id)
 	if pgerr != nil {
 		return nil, internal.CheckError(pgerr, "play")
@@ -148,11 +148,12 @@ func (s *Server) GetTrackHistory(ctx context.Context, user *pb.User) (*pb.Tracks
 		SELECT track_id FROM plays
 		WHERE user_id = ? and type = 'paid'
 		GROUP BY track_id
-		ORDER BY MAX(plays.created_at) desc
+		ORDER BY max(created_at) desc
 	`, u.Id)
 	if pgerr != nil {
 		return nil, internal.CheckError(pgerr, "play")
 	}
+
 
 	tracks, twerr := models.GetTracks(trackIds, s.db, true, ctx)
 	if twerr != nil {
@@ -161,6 +162,49 @@ func (s *Server) GetTrackHistory(ctx context.Context, user *pb.User) (*pb.Tracks
 
 	return &pb.Tracks{
 		Tracks: tracks,
+	}, nil
+}
+
+func (s *Server) GetSupportedArtists(ctx context.Context, user *pb.User) (*pb.Artists, error) {
+	u, twerr := getUserModel(user)
+	if twerr != nil {
+		return nil, twerr
+	}
+	pgerr := s.db.Model(u).WherePK().Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user")
+	}
+
+	// JOIN plays AS play ON (play.track_id = track.id AND play.user_id = ? AND play.type = 'paid')
+
+	var userGroupIds []uuid.UUID
+	_, pgerr = s.db.Query(&userGroupIds, `
+		WITH owned_tracks
+		AS (
+			SELECT play.track_id FROM plays AS play
+			WHERE play.type = 'paid' AND play.user_id = ?
+			GROUP BY play.track_id
+			HAVING COUNT(DISTINCT play.id) >= 9
+		)
+		SELECT track.user_group_id FROM tracks AS track
+		JOIN user_groups AS g ON g.id = track.user_group_id
+		JOIN group_taxonomies AS t ON t.id = g.type_id AND t.type = 'artist'
+		WHERE track.id IN (
+			SELECT track_id FROM owned_tracks
+		)
+		GROUP BY track.user_group_id
+		HAVING COUNT(DISTINCT track.id) >= 5
+	`, u.Id)
+
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "")
+	}
+	artists, pgerr := models.GetRelatedUserGroups(userGroupIds, s.db)
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user_group")
+	}
+	return &pb.Artists{
+		Artists: artists,
 	}, nil
 }
 
@@ -578,10 +622,10 @@ func checkRequiredAttributes(user *pb.User) (twirp.Error) {
 	return nil
 }
 
-func getUserGroupResponse(ownerOfGroup []models.UserGroup) ([]*pb.UserGroupResponse) {
-	groups := make([]*pb.UserGroupResponse, len(ownerOfGroup))
+func getUserGroupResponse(ownerOfGroup []models.UserGroup) ([]*trackpb.RelatedUserGroup) {
+	groups := make([]*trackpb.RelatedUserGroup, len(ownerOfGroup))
 	for i, group := range ownerOfGroup {
-		groups[i] = &pb.UserGroupResponse{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
+		groups[i] = &trackpb.RelatedUserGroup{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
 	}
 	return groups
 }
