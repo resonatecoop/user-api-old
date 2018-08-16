@@ -240,6 +240,35 @@ var _ = BeforeSuite(func() {
 		newTrack.TrackGroups = []uuid.UUID{newAlbum.Id}
 		_, err = db.Model(newTrack).Column("track_groups").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
+
+		// Create plays
+		for i := 1; i <= 3; i++ {
+			newTrackPlay := &models.Play{
+				UserId: newUser.Id,
+				TrackId: newTrack.Id,
+				Type: "paid",
+				Credits: 0.02, // constant for simplicity
+			}
+			err = db.Insert(newTrackPlay)
+			Expect(err).NotTo(HaveOccurred())
+		}
+		newFreeTrackPlay := &models.Play{
+			UserId: newUser.Id,
+			TrackId: newTrack.Id,
+			Type: "free",
+			Credits: 0.00,
+		}
+		err = db.Insert(newFreeTrackPlay)
+		Expect(err).NotTo(HaveOccurred())
+
+		featuringTrackPlay := &models.Play{
+			UserId: newUser.Id,
+			TrackId: featuringTrack.Id,
+			Type: "paid",
+			Credits: 0.02,
+		}
+		err = db.Insert(featuringTrackPlay)
+		Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
@@ -309,6 +338,13 @@ var _ = AfterSuite(func() {
 	// Expect(err).NotTo(HaveOccurred())
 	// _, err = db.Model(&links).Delete()
 	// Expect(err).NotTo(HaveOccurred())
+
+	// Delete all plays
+	var plays []models.Play
+	err = db.Model(&plays).Select()
+	Expect(err).NotTo(HaveOccurred())
+	_, err = db.Model(&plays).Delete()
+	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all tags
 	var tags []models.Tag

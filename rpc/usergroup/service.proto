@@ -61,23 +61,14 @@ message TrackAnalytics {
   float resonate_credits = 8;
 }
 
-message ArtistTrackAnalytics {
-  repeated TrackAnalytics tracks = 1;
-}
-
 message LabelTrackAnalytics {
-  message ArtistTrackAnalytics {
-    RelatedUserGroup artist = 1;
-    repeated TrackAnalytics tracks = 2;
-  }
-  repeated ArtistTrackAnalytics artists = 1;
+  RelatedUserGroup user_group = 1;
+  repeated TrackAnalytics tracks = 2;
 }
 
 message UserGroupTrackAnalytics {
-  oneof track_analytics {
-    ArtistTrackAnalytics artist_track_analytics = 1;
-    LabelTrackAnalytics label_track_analytics = 2;
-  }
+  repeated TrackAnalytics artist_track_analytics = 1;
+  repeated LabelTrackAnalytics label_track_analytics = 2;
 }
 
 message UserGroupRecommended {

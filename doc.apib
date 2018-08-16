@@ -30,7 +30,7 @@ TODO: add scope for restricted access (public/private user profile).
               "avatar": "avatar"
             }],
             "favorite_tracks": ["b19cd642-9df8-4f44-bb5a-169829043110"],
-            "followed_groups": ["b29cd642-9df8-4f44-bb5a-169829043110"],
+            "followed_groups": ["b29cd642-9df8-4f44-bb5a-169829043110"]
         }
 
 ### Get Playlists [POST /twirp/resonate.api.user.UserService/GetPlaylists]
@@ -216,7 +216,7 @@ Used for signup.
 
             {
                 "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-                "email": "john@doe.com",
+                "email": "john@doe.com"
             }
 
 ### Update a User [POST /twirp/resonate.api.user.UserService/UpdateUser]
@@ -226,7 +226,7 @@ Used for signup.
         {
             "id": "b09cd642-9df8-4f44-bb5a-169829043110",
             "email": "john@doe.com",
-            "full_name": "john doe",
+            "full_name": "john doe"
         }
 
 + Response 204 (application/json)
@@ -986,8 +986,16 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
         {
             "id": "a3ba2ecb-5594-4fc9-bf2d-f6c8bd21bd05",
             "creator_id": "b09cd642-9df8-4f44-bb5a-169829043110",
-            "user_group_id": "d09cd642-9df8-4f44-bb5a-169829043110",
-            "label_id": "c09cd642-9df8-4f44-bb5a-169829043110",
+            "user_group": {
+              "id": "d09cd642-9df8-4f44-bb5a-169829043110",
+              "display_name": "User group who owns this track group",
+              "avatar": "blob"
+            },
+            "label": {
+              "id": "c09cd642-9df8-4f44-bb5a-169829043110",
+              "display_name": "released on this label",
+              "avatar": "blob"
+            },
             "release_date": "2009-11-10T00:00:00Z",
             "type": "lp",
             "about": "blabla",

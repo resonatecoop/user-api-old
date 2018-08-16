@@ -41,8 +41,6 @@ var _ = Describe("TrackGroup server", func() {
         Expect(res.DisplayArtist).To(Equal(newAlbum.DisplayArtist))
         Expect(res.MultipleComposers).To(Equal(newAlbum.MultipleComposers))
         Expect(res.Private).To(Equal(newAlbum.Private))
-        Expect(res.LabelId).To(Equal(newAlbum.LabelId.String()))
-        Expect(res.UserGroupId).To(Equal(newAlbum.UserGroupId.String()))
 
         Expect(res.UserGroup.Id).To(Equal(newArtistUserGroup.Id.String()))
         Expect(res.UserGroup.DisplayName).To(Equal(newArtistUserGroup.DisplayName))
@@ -87,8 +85,6 @@ var _ = Describe("TrackGroup server", func() {
         Expect(res.DisplayArtist).To(Equal(newPlaylist.DisplayArtist))
         Expect(res.MultipleComposers).To(Equal(newPlaylist.MultipleComposers))
         Expect(res.Private).To(Equal(newPlaylist.Private))
-        Expect(res.LabelId).To(Equal(newPlaylist.LabelId.String()))
-        Expect(res.UserGroupId).To(Equal(newPlaylist.UserGroupId.String()))
 
         Expect(len(res.Tags)).To(Equal(0))
 

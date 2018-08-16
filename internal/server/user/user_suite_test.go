@@ -218,6 +218,7 @@ var _ = BeforeSuite(func() {
 			newUserGroupTrack := &models.Track{
 				CreatorId: newUser.Id,
 				UserGroupId: newUserGroup.Id,
+				Artists: []uuid.UUID{newUserGroup.Id},
 				TrackGroups: []uuid.UUID{newUserGroupTrackGroup.Id},
 				Title: "album track title",
 				Status: "paid",
@@ -247,7 +248,7 @@ var _ = BeforeSuite(func() {
 			err = db.Insert(newTrackPaidPlay)
 			Expect(err).NotTo(HaveOccurred())
 		}
-		
+
 		newFavoriteTrackPlay = &models.Play{
 			UserId: newUser.Id,
 			TrackId: newFavoriteTrack.Id,

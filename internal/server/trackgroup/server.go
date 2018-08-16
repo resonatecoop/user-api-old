@@ -43,9 +43,9 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
     return nil, twirp.InvalidArgumentError("release_date", "must be a valid time")
   }
 
-  trackGroup.UserGroupId = t.UserGroupId.String()
+  // trackGroup.UserGroupId = t.UserGroupId.String()
   trackGroup.CreatorId = t.CreatorId.String()
-  trackGroup.LabelId = t.LabelId.String()
+  // trackGroup.LabelId = t.LabelId.String()
   trackGroup.Title = t.Title
   trackGroup.About = t.About
   trackGroup.ReleaseDate = releaseDate
@@ -63,14 +63,14 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
   trackGroup.Tags = tags
 
   // Get UserGroup and Label if exists
-  if trackGroup.UserGroupId != "" {
+  if t.UserGroupId.String() != "" {
     userGroup, pgerr := models.GetRelatedUserGroups([]uuid.UUID{t.UserGroupId}, s.db)
     if pgerr != nil {
       return nil, internal.CheckError(pgerr, "user_group")
     }
     trackGroup.UserGroup = userGroup[0]
   }
-  if trackGroup.LabelId != "" {
+  if t.LabelId.String() != "" {
     label, pgerr := models.GetRelatedUserGroups([]uuid.UUID{t.LabelId}, s.db)
     if pgerr != nil {
       return nil, internal.CheckError(pgerr, "user_group")

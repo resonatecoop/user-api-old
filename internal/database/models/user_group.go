@@ -7,9 +7,9 @@ import (
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/satori/go.uuid"
-  // "github.com/twitchtv/twirp"
+  "github.com/twitchtv/twirp"
 
-  // pb "user-api/rpc/usergroup"
+  pb "user-api/rpc/usergroup"
   trackpb "user-api/rpc/track"
 
   "user-api/internal"
@@ -74,6 +74,62 @@ func (u *UserGroup) BeforeInsert(db orm.DB) error {
   u.PrivacyId = newPrivacy.Id
 
   return nil
+}
+
+type TrackAnalytics struct {
+  Id uuid.UUID
+  Title string
+  PaidPlays int32
+  FreePlays int32
+  TotalCredits float32
+}
+
+func (u *UserGroup) GetUserGroupTrackAnalytics(db *pg.DB) ([]*pb.TrackAnalytics, twirp.Error) {
+  pgerr := db.Model(u).
+    Column("OwnerOfTracks").
+    WherePK().
+    Select()
+  if pgerr != nil {
+    return nil, internal.CheckError(pgerr, "user_group")
+  }
+  tracks := make([]TrackAnalytics, len(u.OwnerOfTracks))
+  trackIds := make([]uuid.UUID, len(u.OwnerOfTracks))
+  for i, track := range(u.OwnerOfTracks) {
+    tracks[i] = TrackAnalytics{
+      Title: track.Title,
+    }
+    trackIds[i] = track.Id
+  }
+  artistTrackAnalytics := make([]*pb.TrackAnalytics, len(tracks))
+
+  if len(u.OwnerOfTracks) > 0 {
+    _, pgerr := db.Query(&tracks, `
+      SELECT play.track_id AS id,
+        count(case when play.type = 'paid' then 1 else null end) AS paid_plays,
+        count(case when play.type = 'free' then 1 else null end) AS free_plays,
+        SUM(play.credits) AS total_credits
+      FROM plays AS play
+      WHERE play.track_id IN (?)
+      GROUP BY play.track_id
+    `, pg.In(trackIds))
+    if pgerr != nil {
+      return nil, internal.CheckError(pgerr, "play")
+    }
+    for i, track := range(tracks) {
+      artistTrackAnalytics[i] = &pb.TrackAnalytics{
+        Id: track.Id.String(),
+        Title: track.Title,
+        TotalPlays: track.PaidPlays + track.FreePlays,
+        PaidPlays: track.PaidPlays,
+        FreePlays: track.FreePlays,
+        TotalCredits: float32(track.TotalCredits),
+        UserGroupCredits: 0.7*float32(track.TotalCredits),
+        ResonateCredits: 0.3*float32(track.TotalCredits),
+      }
+    }
+  }
+
+  return artistTrackAnalytics, nil
 }
 
 func (u *UserGroup) Delete(tx *pg.Tx) (error, string) {

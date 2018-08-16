@@ -555,6 +555,76 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 	return &trackpb.Empty{}, nil
 }
 
+func (s *Server) GetTrackAnalytics(ctx context.Context, userGroup *pb.UserGroup) (*pb.UserGroupTrackAnalytics, error) {
+	id, err := internal.GetUuidFromString(userGroup.Id)
+	if err != nil {
+		return nil, err
+	}
+	u := &models.UserGroup{Id: id}
+	pgerr := s.db.Model(u).
+		Column("Type").
+		WherePK().
+		Select()
+	if pgerr != nil {
+		return nil, internal.CheckError(pgerr, "user_group")
+	}
+
+	if u.Type.Type == "artist" {
+		artistTrackAnalytics, twerr := u.GetUserGroupTrackAnalytics(s.db)
+		if twerr != nil {
+			return nil, twerr
+		}
+		return &pb.UserGroupTrackAnalytics{
+	    ArtistTrackAnalytics: artistTrackAnalytics,
+	  }, nil
+	} else if u.Type.Type == "label" {
+		pgerr := s.db.Model(u).
+			Column("user_group.id", "user_group.display_name", "user_group.avatar", "Members").
+			WherePK().
+			Select()
+		if pgerr != nil {
+			return nil, internal.CheckError(pgerr, "user_group")
+		}
+		userGroups := make([]*pb.LabelTrackAnalytics, len(u.Members)+1)
+
+		// Track analytics of artists members of label
+		for i, member := range u.Members {
+			trackAnalytics, twerr := member.GetUserGroupTrackAnalytics(s.db)
+			if twerr != nil {
+				return nil, twerr
+			}
+			labelArtistTrackAnalytics := &pb.LabelTrackAnalytics{
+				UserGroup: &trackpb.RelatedUserGroup{
+					Id: member.Id.String(),
+					DisplayName: member.DisplayName,
+					Avatar: member.Avatar,
+				},
+				Tracks: trackAnalytics,
+			}
+			userGroups[i] = labelArtistTrackAnalytics
+		}
+
+		// Track analytics of label
+		trackAnalytics, twerr := u.GetUserGroupTrackAnalytics(s.db)
+		if twerr != nil {
+			return nil, twerr
+		}
+		userGroups[len(u.Members)] = &pb.LabelTrackAnalytics{
+			UserGroup: &trackpb.RelatedUserGroup{
+				Id: u.Id.String(),
+				DisplayName: u.DisplayName,
+				Avatar: u.Avatar,
+			},
+			Tracks: trackAnalytics,
+		}
+		return &pb.UserGroupTrackAnalytics{
+			LabelTrackAnalytics: userGroups,
+		}, nil
+	}
+
+	return &pb.UserGroupTrackAnalytics{}, nil
+}
+
 func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)
 	if err != nil {
@@ -676,3 +746,18 @@ func checkRequiredAttributes(userGroup *pb.UserGroup) (twirp.Error) {
 	}
 	return nil
 }
+
+
+// SELECT p.id, track.title, p.paid_plays, p.free_plays, p.total_credits
+// FROM (
+// 	SELECT play.track_id AS id,
+// 		count(case when play.type = 'paid' then 1 else null end) AS paid_plays,
+// 		count(case when play.type = 'free' then 1 else null end) AS free_plays,
+// 		SUM(play.credits) AS total_credits
+// 	FROM plays AS play
+// 	GROUP BY play.track_id
+// ) p
+//
+//  SELECT play.track_id AS id,                                                                                                                                                                          count(case when play.type = 'paid' then 1 else null end) AS paid_plays,                                                                                                                                                 count(case when play.type = 'free' then 1 else null end) AS free_plays,                                                                                                                                                 SUM(play.credits) AS total_credits                                                                                                                                                                                      FROM plays AS play                                                                                                                                                                                                      WHERE play.track_id IN ("2d552e35-3141-473a-b2ee-fbda7f0aebe","cbaa99c2-8c52-43c3-aa18-8027ac449d28") GROUP BY play.track_id;
+
+// 	JOIN tracks AS track ON track.user_group_id = '0779331a-b813-4964-a13c-1ef82c30cfe6'

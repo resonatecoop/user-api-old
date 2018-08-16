@@ -143,6 +143,93 @@ var _ = Describe("UserGroup server", func() {
 		})
 	})
 
+	Describe("GetTrackAnalytics", func() {
+		Context("with valid uuid", func() {
+			It("should respond with artist track analytics", func() {
+				userGroup := &pb.UserGroup{Id: newArtist.Id.String()}
+				res, err := service.GetTrackAnalytics(context.Background(), userGroup)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).NotTo(BeNil())
+				Expect(len(res.ArtistTrackAnalytics)).To(Equal(1))
+				Expect(res.ArtistTrackAnalytics[0].Id).To(Equal(newTrack.Id.String()))
+				Expect(res.ArtistTrackAnalytics[0].Title).To(Equal(newTrack.Title))
+				Expect(res.ArtistTrackAnalytics[0].TotalPlays).To(Equal(int32(4)))
+				Expect(res.ArtistTrackAnalytics[0].PaidPlays).To(Equal(int32(3)))
+				Expect(res.ArtistTrackAnalytics[0].FreePlays).To(Equal(int32(1)))
+				Expect(res.ArtistTrackAnalytics[0].TotalCredits).To(Equal(float32(0.06)))
+				Expect(res.ArtistTrackAnalytics[0].UserGroupCredits).To(Equal(0.7*float32(0.06)))
+				Expect(res.ArtistTrackAnalytics[0].ResonateCredits).To(Equal(0.3*float32(0.06)))
+			})
+
+			It("should respond with label track analytics", func() {
+				userGroup := &pb.UserGroup{Id: newLabel.Id.String()}
+				res, err := service.GetTrackAnalytics(context.Background(), userGroup)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).NotTo(BeNil())
+				Expect(len(res.LabelTrackAnalytics)).To(Equal(2))
+
+				Expect(res.LabelTrackAnalytics[0].UserGroup).NotTo(BeNil())
+				Expect(res.LabelTrackAnalytics[0].UserGroup.Id).To(Equal(newArtist.Id.String()))
+				Expect(res.LabelTrackAnalytics[0].UserGroup.DisplayName).To(Equal(newArtist.DisplayName))
+				Expect(res.LabelTrackAnalytics[0].UserGroup.Avatar).To(Equal(newArtist.Avatar))
+				Expect(len(res.LabelTrackAnalytics[0].Tracks)).To(Equal(1))
+				Expect(res.LabelTrackAnalytics[0].Tracks[0].Id).To(Equal(newTrack.Id.String()))
+				Expect(res.LabelTrackAnalytics[0].Tracks[0].Title).To(Equal(newTrack.Title))
+				Expect(res.LabelTrackAnalytics[0].Tracks[0].TotalPlays).To(Equal(int32(4)))
+				Expect(res.LabelTrackAnalytics[0].Tracks[0].PaidPlays).To(Equal(int32(3)))
+				Expect(res.LabelTrackAnalytics[0].Tracks[0].FreePlays).To(Equal(int32(1)))
+				Expect(res.LabelTrackAnalytics[0].Tracks[0].TotalCredits).To(Equal(float32(0.06)))
+				Expect(res.LabelTrackAnalytics[0].Tracks[0].UserGroupCredits).To(Equal(0.7*float32(0.06)))
+				Expect(res.LabelTrackAnalytics[0].Tracks[0].ResonateCredits).To(Equal(0.3*float32(0.06)))
+
+				Expect(res.LabelTrackAnalytics[1].UserGroup).NotTo(BeNil())
+				Expect(res.LabelTrackAnalytics[1].UserGroup.Id).To(Equal(newLabel.Id.String()))
+				Expect(res.LabelTrackAnalytics[1].UserGroup.DisplayName).To(Equal(newLabel.DisplayName))
+				Expect(res.LabelTrackAnalytics[1].UserGroup.Avatar).To(Equal(newLabel.Avatar))
+				Expect(len(res.LabelTrackAnalytics[1].Tracks)).To(Equal(1))
+				Expect(res.LabelTrackAnalytics[1].Tracks[0].Id).To(Equal(featuringTrack.Id.String()))
+				Expect(res.LabelTrackAnalytics[1].Tracks[0].Title).To(Equal(featuringTrack.Title))
+				Expect(res.LabelTrackAnalytics[1].Tracks[0].TotalPlays).To(Equal(int32(1)))
+				Expect(res.LabelTrackAnalytics[1].Tracks[0].PaidPlays).To(Equal(int32(1)))
+				Expect(res.LabelTrackAnalytics[1].Tracks[0].FreePlays).To(Equal(int32(0)))
+				Expect(res.LabelTrackAnalytics[1].Tracks[0].TotalCredits).To(Equal(float32(0.02)))
+				Expect(res.LabelTrackAnalytics[1].Tracks[0].UserGroupCredits).To(Equal(0.7*float32(0.02)))
+				Expect(res.LabelTrackAnalytics[1].Tracks[0].ResonateCredits).To(Equal(0.3*float32(0.02)))
+			})
+
+			It("should respond with not_found error if user_group does not exist", func() {
+				id := uuid.NewV4()
+				for (id == newArtist.Id || id == newRecommendedArtist.Id || id == newLabel.Id || id == newDistributor.Id || id == newUserProfile.Id) {
+					id = uuid.NewV4()
+				}
+				userGroup := &pb.UserGroup{Id: id.String()}
+				res, err := service.GetTrackAnalytics(context.Background(), userGroup)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+
+		})
+		Context("with invalid uuid", func() {
+			It("should respond with invalid_argument error if user_group is invalid", func() {
+				userGroup := &pb.UserGroup{Id: "123"}
+				res, err := service.GetTrackAnalytics(context.Background(), userGroup)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+		})
+	})
+
 	Describe("UpdateUserGroup", func() {
 		Context("with valid uuid", func() {
 			It("should update user_group if it exists", func() {
