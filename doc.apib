@@ -699,6 +699,59 @@ Can also be used for an artist (members array only contains 1 element with artis
 
 + Response 204 (application/json)
 
+### Get Track Analytics [POST /twirp/resonate.api.user.UserGroupService/GetTrackAnalytics]
+
++ Request (application/json)
+
+      {
+          "user_group_id": "b09cd642-9df8-4f44-bb5a-169829043110"
+      }
+
++ Response 200 (application/json)
+
+If user_group is artist:
+
+    {
+        "artist_track_analytics": [
+            {
+                "id": "c09cd642-9df8-4f44-bb5a-169829043110",
+                "title": "track title",
+                "total_plays": 5,
+                "paid_plays": 1,
+                "free_plays": 4,
+                "total_credits": 0.02,
+                "user_group_credits": 0.014,
+                "resonate_credits": 0.006
+            }
+        ]
+    }
+
+If user_group is label (grouped by user_group):
+
+    {
+        "label_track_analytics": [
+            {
+                "user_group": {
+                    "id": "d09cd642-9df8-4f44-bb5a-169829043110"
+                    "display_name": "artist name",
+                    "avatar": "blob"
+                },
+                "tracks": [
+                    {
+                        "id": "c09cd642-9df8-4f44-bb5a-169829043110",
+                        "title": "track title",
+                        "total_plays": 5,
+                        "paid_plays": 1,
+                        "free_plays": 4,
+                        "total_credits": 0.02,
+                        "user_group_credits": 0.014,
+                        "resonate_credits": 0.006
+                    }
+                ]
+            }
+        ]
+    }
+
 ## Tracks Collection [/twirp/resonate.api.user.TrackService]
 
 ### Create Track [POST /twirp/resonate.api.user.TrackService/CreateTrack]
