@@ -3,12 +3,15 @@ package models
 import (
   "time"
   "fmt"
+  // "log"
+
   "github.com/satori/go.uuid"
   "user-api/internal"
   "github.com/go-pg/pg"
   "github.com/twitchtv/twirp"
   pb "user-api/rpc/trackgroup"
   trackpb "user-api/rpc/track"
+  tagpb "user-api/rpc/tag"
 )
 
 type TrackGroup struct {
@@ -42,6 +45,43 @@ type TrackGroup struct {
   // RightExpiryDate time.Time
   // TotalVolumes int
   // CatalogNumber string
+}
+
+func SearchTrackGroups(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Error) {
+  var trackGroups []TrackGroup
+
+  pgerr := db.Model(&trackGroups).
+    ColumnExpr("track_group.id, track_group.title, track_group.tracks, track_group.user_group_id, track_group.type").
+    Where("to_tsvector('english'::regconfig, COALESCE(title, '') || ' ' || COALESCE(f_arr2str(tags), '')) @@ (plainto_tsquery('english'::regconfig, ?)) = true", query).
+    Where("private = false").
+    Select()
+  if pgerr != nil {
+    return nil, internal.CheckError(pgerr, "track_group")
+  }
+
+  var playlists []*tagpb.SearchTrackGroup
+  var albums []*tagpb.SearchTrackGroup
+  for _, trackGroup := range trackGroups {
+    userGroups, pgerr := GetRelatedUserGroups([]uuid.UUID{trackGroup.UserGroupId}, db)
+    if pgerr != nil {
+      return nil, internal.CheckError(pgerr, "user_group")
+    }
+    searchTrackGroup := &tagpb.SearchTrackGroup{
+      Id: trackGroup.Id.String(),
+      Title: trackGroup.Title,
+      TotalTracks: int32(len(trackGroup.Tracks)),
+      UserGroup: userGroups[0],
+    }
+    if trackGroup.Type == "playlist" {
+      playlists = append(playlists, searchTrackGroup)
+    } else {
+      albums = append(albums, searchTrackGroup)
+    }
+  }
+  return &tagpb.SearchResults{
+    Playlists: playlists,
+    Albums: albums,
+  }, nil
 }
 
 func GetTrackGroups(ids []uuid.UUID, db *pg.DB, types []string) ([]*trackpb.RelatedTrackGroup, twirp.Error) {

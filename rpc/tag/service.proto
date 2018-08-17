@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+
+package resonate.api.user;
+option go_package = "tag";
+
+service TagService {
+  rpc SearchGenres(Query) returns (SearchResults);
+}
+
+message SearchResults {
+  repeated RelatedUserGroup people = 1;
+  repeated RelatedUserGroup artists = 2;
+  repeated RelatedUserGroup labels = 3;
+  repeated SearchTrackGroup playlists = 4;
+  repeated SearchTrackGroup albums = 5;
+  // TODO tracks?
+}
+
+message Query {
+  string query = 1; // required
+}
+
+message Tag {
+  string id = 1;
+  string type = 2;
+  string name = 3;
+}
+
+message RelatedUserGroup {
+  string id = 1;
+  string display_name = 2;
+  bytes avatar = 3;
+}
+
+message SearchTrackGroup {
+  string id = 1;
+  string title = 2;
+  RelatedUserGroup user_group = 3;
+  int32 total_tracks = 4;
+}
+
+message Empty {}

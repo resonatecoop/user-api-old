@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 // import "user-api/rpc/user/service.proto";
+import "user-api/rpc/tag/service.proto";
 
 package resonate.api.user;
 option go_package = "track";
@@ -29,18 +30,6 @@ message Track {
   float duration = 12;
 }
 
-message RelatedUserGroup {
-  string id = 1;
-  string display_name = 2;
-  bytes avatar = 3;
-}
-
-message Tag {
-  string id = 1;
-  string type = 2;
-  string name = 3;
-}
-
 message RelatedTrackGroup {
   string id = 1; // required
   string title = 2; // required
@@ -50,5 +39,3 @@ message RelatedTrackGroup {
   bool private = 6;
   repeated Track tracks = 7;
 }
-
-message Empty {}

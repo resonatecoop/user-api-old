@@ -5,6 +5,7 @@ import "google/protobuf/timestamp.proto";
 // import "user-api/rpc/user/service.proto";
 import "user-api/rpc/track/service.proto";
 // import "user-api/rpc/usergroup/service.proto";
+import "user-api/rpc/tag/service.proto";
 
 package resonate.api.user;
 option go_package = "trackgroup";
@@ -16,6 +17,8 @@ service TrackGroupService {
   rpc DeleteTrackGroup(TrackGroup) returns (Empty);
   rpc AddTracksToTrackGroup(TracksToTrackGroup) returns (Empty);
   rpc RemoveTracksFromTrackGroup(TracksToTrackGroup) returns (Empty);
+
+  rpc SearchTrackGroups(Query) returns (SearchResults);
 }
 
 message TrackGroup {

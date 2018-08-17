@@ -12,7 +12,8 @@ import (
 	"github.com/satori/go.uuid"
 
 	pb "user-api/rpc/user"
-	trackpb "user-api/rpc/track"
+	// trackpb "user-api/rpc/track"
+	tagpb "user-api/rpc/tag"
 	"user-api/internal"
 	"user-api/internal/database/models"
 )
@@ -286,7 +287,7 @@ func (s *Server) CreatePlay(ctx context.Context, playRequest *pb.CreatePlayReque
 	}, nil
 }
 
-func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*trackpb.Empty, error) {
+func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*tagpb.Empty, error) {
 	err := checkRequiredAttributes(user)
 
 	if err != nil {
@@ -304,10 +305,10 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*trackpb.Empty,
 	if twerr != nil {
 		return nil, twerr
 	}
-	return &trackpb.Empty{}, nil
+	return &tagpb.Empty{}, nil
 }
 
-func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*trackpb.Empty, error) {
+func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*tagpb.Empty, error) {
 	deleteUser := func(db *pg.DB, u *models.User) (error, string) {
 		var table string
 		tx, err := db.Begin()
@@ -380,11 +381,11 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*trackpb.Empty,
 		return nil, internal.CheckError(pgerr, table)
 	}
 
-	return &trackpb.Empty{}, nil
+	return &tagpb.Empty{}, nil
 }
 
 // TODO: refacto, pretty similar to AddFavoriteTrack
-func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*trackpb.Empty, error) {
+func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*tagpb.Empty, error) {
 	followGroup := func(db *pg.DB, userId uuid.UUID, userGroupId uuid.UUID) (error, string) {
 		var table string
 		tx, err := db.Begin()
@@ -431,10 +432,10 @@ func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUser
 		return nil, internal.CheckError(pgerr, table)
 	}
 
-	return &trackpb.Empty{}, nil
+	return &tagpb.Empty{}, nil
 }
 
-func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*trackpb.Empty, error) {
+func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*tagpb.Empty, error) {
 	unfollowGroup := func(db *pg.DB, userId uuid.UUID, userGroupId uuid.UUID) (error, string) {
 		var table string
 		tx, err := db.Begin()
@@ -480,10 +481,10 @@ func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUs
 	if pgerr, table := unfollowGroup(s.db, userId, userGroupId); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
-	return &trackpb.Empty{}, nil
+	return &tagpb.Empty{}, nil
 }
 
-func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*trackpb.Empty, error) {
+func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*tagpb.Empty, error) {
 	addFavoriteTrack := func(db *pg.DB, userId uuid.UUID, trackId uuid.UUID) (error, string) {
 		var table string
 	  tx, err := db.Begin()
@@ -533,10 +534,10 @@ func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTra
 		return nil, internal.CheckError(pgerr, table)
 	}
 
-	return &trackpb.Empty{}, nil
+	return &tagpb.Empty{}, nil
 }
 
-func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*trackpb.Empty, error) {
+func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*tagpb.Empty, error) {
 	removeFavoriteTrack := func(db *pg.DB, userId uuid.UUID, trackId uuid.UUID) (error, string) {
 		var table string
 	  tx, err := db.Begin()
@@ -583,7 +584,7 @@ func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserTo
 	if pgerr, table := removeFavoriteTrack(s.db, userId, trackId); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
 	}
-	return &trackpb.Empty{}, nil
+	return &tagpb.Empty{}, nil
 }
 
 
@@ -622,10 +623,10 @@ func checkRequiredAttributes(user *pb.User) (twirp.Error) {
 	return nil
 }
 
-func getUserGroupResponse(ownerOfGroup []models.UserGroup) ([]*trackpb.RelatedUserGroup) {
-	groups := make([]*trackpb.RelatedUserGroup, len(ownerOfGroup))
+func getUserGroupResponse(ownerOfGroup []models.UserGroup) ([]*tagpb.RelatedUserGroup) {
+	groups := make([]*tagpb.RelatedUserGroup, len(ownerOfGroup))
 	for i, group := range ownerOfGroup {
-		groups[i] = &trackpb.RelatedUserGroup{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
+		groups[i] = &tagpb.RelatedUserGroup{Id: group.Id.String(), DisplayName: group.DisplayName, Avatar: group.Avatar}
 	}
 	return groups
 }

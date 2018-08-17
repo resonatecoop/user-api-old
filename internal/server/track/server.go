@@ -11,6 +11,7 @@ import (
 
 	// userpb "user-api/rpc/user"
 	pb "user-api/rpc/track"
+	tagpb "user-api/rpc/tag"
 	"user-api/internal"
 	"user-api/internal/database/models"
 )
@@ -91,7 +92,7 @@ func (s *Server) CreateTrack(ctx context.Context, track *pb.Track) (*pb.Track, e
   return track, nil
 }
 
-func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*pb.Empty, error) {
+func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*tagpb.Empty, error) {
 	t, err := getTrackModel(track)
 	if err != nil {
 		return nil, err
@@ -100,10 +101,10 @@ func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*pb.Empty, e
 	if pgerr, table := t.Update(s.db, track); pgerr != nil {
     return nil, internal.CheckError(pgerr, table)
   }
-  return &pb.Empty{}, nil
+  return &tagpb.Empty{}, nil
 }
 
-func (s *Server) DeleteTrack(ctx context.Context, track *pb.Track) (*pb.Empty, error) {
+func (s *Server) DeleteTrack(ctx context.Context, track *pb.Track) (*tagpb.Empty, error) {
 	t, twerr := getTrackModel(track)
 	if twerr != nil {
 		return nil, twerr
@@ -122,7 +123,7 @@ func (s *Server) DeleteTrack(ctx context.Context, track *pb.Track) (*pb.Empty, e
   if err != nil {
     return nil, internal.CheckError(err, "")
   }
-	return &pb.Empty{}, nil
+	return &tagpb.Empty{}, nil
 }
 
 func getTrackModel(track *pb.Track) (*models.Track, twirp.Error) {

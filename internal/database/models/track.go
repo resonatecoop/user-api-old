@@ -9,6 +9,7 @@ import (
 
   "github.com/satori/go.uuid"
   pb "user-api/rpc/track"
+  // tagpb "user-api/rpc/tag"
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/twitchtv/twirp"

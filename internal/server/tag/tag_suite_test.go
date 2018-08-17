@@ -1,9 +1,8 @@
-package trackgroupserver_test
+package tagserver_test
 
 import (
 	"testing"
 	"time"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/go-pg/pg"
@@ -11,12 +10,12 @@ import (
 
 	"user-api/internal/database/models"
 	"user-api/internal/database"
-	trackgroupserver "user-api/internal/server/trackgroup"
+	tagserver "user-api/internal/server/tag"
 )
 
 var (
 	db *pg.DB
-	service *trackgroupserver.Server
+	service *tagserver.Server
 	newUser *models.User
 	newTrack *models.Track
 	playlistTrack *models.Track
@@ -26,21 +25,26 @@ var (
 	newLabelGroupTaxonomy *models.GroupTaxonomy
 	newArtistUserGroup *models.UserGroup
 	newLabelUserGroup *models.UserGroup
-	newGenreTag *models.Tag
+	newPopGenreTag *models.Tag
+	newRockGenreTag *models.Tag
 )
 
 func TestTrack(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Trackgroup server Suite")
+	RunSpecs(t, "Tag server Suite")
 }
 
 var _ = BeforeSuite(func() {
 	testing := true
 	db = database.Connect(testing)
-	service = trackgroupserver.NewServer(db)
+	service = tagserver.NewServer(db)
 
-	newGenreTag = &models.Tag{Type: "genre", Name: "pop"}
-	err := db.Insert(newGenreTag)
+	newPopGenreTag = &models.Tag{Type: "genre", Name: "pop"}
+	err := db.Insert(newPopGenreTag)
+	Expect(err).NotTo(HaveOccurred())
+
+	newRockGenreTag = &models.Tag{Type: "genre", Name: "rock"}
+	err = db.Insert(newRockGenreTag)
 	Expect(err).NotTo(HaveOccurred())
 
 	newAddress := &models.StreetAddress{Data: map[string]string{"some": "data"}}
@@ -82,7 +86,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Create a new track
-	tagIds := []uuid.UUID{newGenreTag.Id}
+	tagIds := []uuid.UUID{newPopGenreTag.Id, newRockGenreTag.Id}
 	newTrack = &models.Track{
 		CreatorId: newUser.Id,
 		UserGroupId: newArtistUserGroup.Id,
@@ -129,14 +133,14 @@ var _ = BeforeSuite(func() {
 
 	newPlaylist = &models.TrackGroup{
 		CreatorId: newUser.Id,
-		// UserGroupId: uuid.UUID{},
+		UserGroupId: newArtistUserGroup.Id,
 		// LabelId: uuid.UUID{},
 		Title: "playlist title",
 		ReleaseDate: time.Now(),
 		Type: "playlist",
 		Cover: avatar,
 		Tracks: tracks,
-		Private: true,
+		Tags: []uuid.UUID{newPopGenreTag.Id},
 	}
 	err = db.Insert(newPlaylist)
 	Expect(err).NotTo(HaveOccurred())

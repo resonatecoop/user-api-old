@@ -14,7 +14,6 @@ func main() {
 
     u1, err := client.CreateUser(context.Background(), &pb.User{Username: "janed", FullName: "jane doe", DisplayName: "jad", Email: "jane@d.com"})
     // u2, err := client.CreateUser(context.Background(), &pb.User{Name: "marie", Email: "marie@doe.com"})
-    // users, err := client.GetUsers(context.Background(), &pb.Empty{})
     if err != nil {
         fmt.Printf("oh no: %v", err)
         os.Exit(1)

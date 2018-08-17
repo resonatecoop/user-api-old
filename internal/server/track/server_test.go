@@ -12,6 +12,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	pb "user-api/rpc/track"
+	tagpb "user-api/rpc/tag"
 	"user-api/internal/database/models"
 )
 
@@ -173,13 +174,13 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
-					Tags: []*pb.Tag{
-						&pb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -224,8 +225,8 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -246,8 +247,8 @@ var _ = Describe("Track server", func() {
 					Status: "",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -267,8 +268,8 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					CreatorId: "",
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -289,8 +290,8 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: "",
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -310,8 +311,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -334,8 +335,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: "12a",
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -354,8 +355,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: "abc1",
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -378,8 +379,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: userId.String(),
 					UserGroupId: newArtistUserGroup.Id.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -402,8 +403,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: userGroupId.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: newArtistUserGroup.Id.String(),
 						},
 					},
@@ -426,8 +427,8 @@ var _ = Describe("Track server", func() {
 					Status: "free",
 					CreatorId: newUser.Id.String(),
 					UserGroupId: userGroupId.String(),
-					Artists: []*pb.RelatedUserGroup{
-						&pb.RelatedUserGroup{
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
 							Id: userGroupId.String(),
 						},
 					},

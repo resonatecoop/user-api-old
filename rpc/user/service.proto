@@ -4,6 +4,7 @@ package resonate.api.user;
 option go_package = "user";
 
 import "user-api/rpc/track/service.proto";
+import "user-api/rpc/tag/service.proto";
 
 service UserService {
   rpc CreateUser(User) returns (User);

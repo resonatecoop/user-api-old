@@ -13,6 +13,7 @@ import (
 
   pb "user-api/rpc/trackgroup"
   trackpb "user-api/rpc/track"
+  tagpb "user-api/rpc/tag"
   "user-api/internal/database/models"
 )
 
@@ -132,6 +133,40 @@ var _ = Describe("TrackGroup server", func() {
         twerr := err.(twirp.Error)
         Expect(twerr.Code()).To(Equal(invalid_argument_code))
         Expect(twerr.Meta("argument")).To(Equal("id"))
+      })
+    })
+  })
+
+  Describe("SearchTrackGroups", func() {
+    Context("with valid query", func() {
+      It("should respond with albums and playlists", func() {
+        q := &tagpb.Query{Query: "title"}
+        res, err := service.SearchTrackGroups(context.Background(), q)
+
+        Expect(err).NotTo(HaveOccurred())
+        Expect(res).NotTo(BeNil())
+        Expect(len(res.Playlists)).To(Equal(0))
+        Expect(len(res.Albums)).To(Equal(1))
+        Expect(res.Albums[0].Id).To(Equal(newAlbum.Id.String()))
+        Expect(res.Albums[0].Title).To(Equal(newAlbum.Title))
+        Expect(res.Albums[0].TotalTracks).To(Equal(int32(len(newAlbum.Tracks))))
+        Expect(res.Albums[0].UserGroup).NotTo(BeNil())
+        Expect(res.Albums[0].UserGroup.Id).To(Equal(newArtistUserGroup.Id.String()))
+        Expect(res.Albums[0].UserGroup.DisplayName).To(Equal(newArtistUserGroup.DisplayName))
+        Expect(res.Albums[0].UserGroup.Avatar).To(Equal(newArtistUserGroup.Avatar))
+      })
+    })
+    Context("with invalid query", func() {
+      It("should respond with invalid error", func() {
+        q := &tagpb.Query{Query: "ti"}
+        resp, err := service.SearchTrackGroups(context.Background(), q)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+        Expect(twerr.Meta("argument")).To(Equal("query"))
       })
     })
   })
@@ -466,8 +501,8 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -553,8 +588,8 @@ var _ = Describe("TrackGroup server", func() {
           Type: "playlist",
           Cover: cover,
           Private: true,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -632,8 +667,8 @@ var _ = Describe("TrackGroup server", func() {
           Type: "playlist",
           Cover: cover,
           Private: true,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -664,8 +699,8 @@ var _ = Describe("TrackGroup server", func() {
           Type: "playlist",
           Cover: cover,
           Private: true,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -695,8 +730,8 @@ var _ = Describe("TrackGroup server", func() {
           Type: "playlist",
           Cover: cover,
           Private: true,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -727,8 +762,8 @@ var _ = Describe("TrackGroup server", func() {
           Type: "",
           Cover: cover,
           Private: true,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -756,8 +791,8 @@ var _ = Describe("TrackGroup server", func() {
           Type: "playlist",
           // Cover: cover,
           Private: true,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -791,8 +826,8 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -829,8 +864,8 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -863,8 +898,8 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -897,8 +932,8 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -935,8 +970,8 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -973,8 +1008,8 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},
@@ -1011,8 +1046,8 @@ var _ = Describe("TrackGroup server", func() {
           DisplayArtist: "Various",
           MultipleComposers: true,
           Private: false,
-					Tags: []*trackpb.Tag{
-						&trackpb.Tag{
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
 							Type: "genre",
 							Name: "rock",
 						},

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "user-api/rpc/user/service.proto";
 import "user-api/rpc/track/service.proto";
+import "user-api/rpc/tag/service.proto";
 
 package resonate.api.user;
 option go_package = "usergroup";
