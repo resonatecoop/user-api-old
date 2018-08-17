@@ -125,6 +125,46 @@ var _ = Describe("UserGroup server", func() {
 		})
 	})
 
+	Describe("SearchUserGroups", func() {
+    Context("with valid query", func() {
+      It("should respond with public people, artists and labels", func() {
+        q := &tagpb.Query{Query: "best"}
+        res, err := service.SearchUserGroups(context.Background(), q)
+
+        Expect(err).NotTo(HaveOccurred())
+        Expect(res).NotTo(BeNil())
+
+				Expect(len(res.People)).To(Equal(1))
+				Expect(res.People[0].Id).To(Equal(newUserProfile.Id.String()))
+				Expect(res.People[0].DisplayName).To(Equal(newUserProfile.DisplayName))
+				Expect(res.People[0].Avatar).To(Equal(newUserProfile.Avatar))
+
+				Expect(len(res.Artists)).To(Equal(1))
+				Expect(res.Artists[0].Id).To(Equal(newArtist.Id.String()))
+				Expect(res.Artists[0].DisplayName).To(Equal(newArtist.DisplayName))
+				Expect(res.Artists[0].Avatar).To(Equal(newArtist.Avatar))
+
+				Expect(len(res.Labels)).To(Equal(1))
+				Expect(res.Labels[0].Id).To(Equal(newLabel.Id.String()))
+				Expect(res.Labels[0].DisplayName).To(Equal(newLabel.DisplayName))
+				Expect(res.Labels[0].Avatar).To(Equal(newLabel.Avatar))
+      })
+    })
+    Context("with invalid query", func() {
+      It("should respond with invalid error", func() {
+        q := &tagpb.Query{Query: "ti"}
+        resp, err := service.SearchUserGroups(context.Background(), q)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+        Expect(twerr.Meta("argument")).To(Equal("query"))
+      })
+    })
+  })
+
 	Describe("GetLabelUserGroups", func() {
 		It("should respond with user_groups of type label", func() {
 			emptyReq := &tagpb.Empty{}

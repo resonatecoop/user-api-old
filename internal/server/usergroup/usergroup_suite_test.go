@@ -102,7 +102,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		newUserProfile = &models.UserGroup{
-			DisplayName: "DJ JohnD",
+			DisplayName: "DJ Best",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
 			TypeId: newUserGroupTaxonomy.Id,
@@ -148,7 +148,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		newRecommendedArtist = &models.UserGroup{
-			DisplayName: "recommended by best artist ever",
+			DisplayName: "recommended",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
 			TypeId: newArtistGroupTaxonomy.Id,

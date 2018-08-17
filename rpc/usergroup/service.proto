@@ -23,6 +23,8 @@ service UserGroupService {
   rpc DeleteMembers(UserGroupMembers) returns (Empty);
 
   rpc GetTrackAnalytics(UserGroup) returns (UserGroupTrackAnalytics);
+
+  rpc SearchUserGroups(Query) returns (SearchResults);
 }
 
 message UserGroup {

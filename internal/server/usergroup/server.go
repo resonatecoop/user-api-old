@@ -145,6 +145,18 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 	}, nil
 }
 
+func (s *Server) SearchUserGroups(ctx context.Context, q *tagpb.Query) (*tagpb.SearchResults, error) {
+  if len(q.Query) < 3 {
+    return nil, twirp.InvalidArgumentError("query", "must be a valid search query")
+  }
+
+  searchResults, twerr := models.SearchUserGroups(q.Query, s.db)
+  if twerr != nil {
+    return nil, twerr
+  }
+  return searchResults, nil
+}
+
 // TODO handle privacy settings
 func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb.UserGroup, error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)

@@ -5,13 +5,17 @@ import (
 	"context"
 	"net/http"
 	"github.com/rs/cors"
+
 	userServer "user-api/internal/server/user"
 	userGroupServer "user-api/internal/server/usergroup"
 	trackServer "user-api/internal/server/track"
+	tagServer "user-api/internal/server/tag"
 	trackGroupServer "user-api/internal/server/trackgroup"
+
 	userRpc "user-api/rpc/user"
 	userGroupRpc "user-api/rpc/usergroup"
 	trackRpc "user-api/rpc/track"
+	tagRpc "user-api/rpc/tag"
 	trackGroupRpc "user-api/rpc/trackgroup"
 	"user-api/internal/database"
 )
@@ -46,6 +50,9 @@ func main() {
 	newTrackServer := trackServer.NewServer(db)
 	trackTwirpHandler := trackRpc.NewTrackServiceServer(newTrackServer, nil)
 
+	newTagServer := tagServer.NewServer(db)
+	tagTwirpHandler := tagRpc.NewTagServiceServer(newTagServer, nil)
+
 	newTrackGroupServer := trackGroupServer.NewServer(db)
 	trackGroupTwirpHandler := trackGroupRpc.NewTrackGroupServiceServer(newTrackGroupServer, nil)
 
@@ -53,6 +60,7 @@ func main() {
 	mux.Handle(userRpc.UserServicePathPrefix, userTwirpHandler)
 	mux.Handle(userGroupRpc.UserGroupServicePathPrefix, userGroupTwirpHandler)
 	mux.Handle(trackRpc.TrackServicePathPrefix, trackTwirpHandler)
+	mux.Handle(tagRpc.TagServicePathPrefix, tagTwirpHandler)
 	mux.Handle(trackGroupRpc.TrackGroupServicePathPrefix, trackGroupTwirpHandler)
 
 	// cors.Default() setup the middleware with default options being

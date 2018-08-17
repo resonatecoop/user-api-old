@@ -2,8 +2,8 @@ package models
 
 import (
   "time"
+  // "log"
   // "fmt"
-  // "reflect"
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/satori/go.uuid"
@@ -75,6 +75,43 @@ func (u *UserGroup) BeforeInsert(db orm.DB) error {
   u.PrivacyId = newPrivacy.Id
 
   return nil
+}
+
+func SearchUserGroups(query string, db *pg.DB) (*tagpb.SearchResults, twirp.Error) {
+  var userGroups []UserGroup
+
+  pgerr := db.Model(&userGroups).
+    Column("user_group.id", "user_group.display_name", "user_group.avatar", "Privacy", "Type").
+    Where("to_tsvector('english'::regconfig, COALESCE(display_name, '')) @@ (plainto_tsquery('english'::regconfig, ?)) = true", query).
+    Where("privacy.private = false").
+    Select()
+  if pgerr != nil {
+    return nil, internal.CheckError(pgerr, "user_group")
+  }
+
+  var people []*tagpb.RelatedUserGroup
+  var artists []*tagpb.RelatedUserGroup
+  var labels []*tagpb.RelatedUserGroup
+  for _, userGroup := range userGroups {
+    searchUserGroup := &tagpb.RelatedUserGroup{
+      Id: userGroup.Id.String(),
+      DisplayName: userGroup.DisplayName,
+      Avatar: userGroup.Avatar,
+    }
+    switch userGroup.Type.Type {
+    case "user":
+       people = append(people, searchUserGroup)
+    case "artist":
+      artists = append(artists, searchUserGroup)
+    case "label":
+      labels = append(labels, searchUserGroup)
+    }
+  }
+  return &tagpb.SearchResults{
+    People: people,
+    Artists: artists,
+    Labels: labels,
+  }, nil
 }
 
 type TrackAnalytics struct {

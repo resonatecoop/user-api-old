@@ -139,7 +139,7 @@ var _ = Describe("TrackGroup server", func() {
 
   Describe("SearchTrackGroups", func() {
     Context("with valid query", func() {
-      It("should respond with albums and playlists", func() {
+      It("should respond with public albums and playlists", func() {
         q := &tagpb.Query{Query: "title"}
         res, err := service.SearchTrackGroups(context.Background(), q)
 
