@@ -589,6 +589,54 @@ To get more info on featured track group (release), call TrackGroupService GetTr
             ]
         }
 
+
+### Search UserGroups [POST /twirp/resonate.api.user.UserGroupService/SearchUserGroups]
+Search in user groups display_name
+
++ query (string) - min length: 3
+
++ Request (application/json)
+
+    {
+        "query": "best"
+    }
+
++ Response 200 (application/json)
+
+    {
+        "people": [
+            {
+                "id": "766f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "display_name": "best dj ever",
+                "avatar": "blob"
+            },
+            {
+                "id": "866f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "display_name": "best curator ever",
+                "avatar": "blob"
+            }
+        ],
+        "artists": [
+            {
+                "id": "966f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "display_name": "best artist ever",
+                "avatar": "blob"
+            },
+            {
+                "id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "display_name": "best band ever",
+                "avatar": "blob"
+            }
+        ],
+        "labels": [
+            {
+                "id": "266f3a00-1022-4cb6-beda-8f7eeef8bd31",
+                "display_name": "best label ever",
+                "avatar": "blob"
+            }
+        ]
+    }
+
 ### Get User Group Types [POST /twirp/resonate.api.user.UserGroupService/GetUserGroupTypes]
 
 Return all existing group taxonomies (except distributor, handled internally).
@@ -840,9 +888,49 @@ Tracks can be added to a track group from dedicated endpoint in TrackGroup Servi
                 ]
             }
 
+### Search Tracks [POST /twirp/resonate.api.user.TrackService/SearchTracks]
+Search in tracks title
+
++ query (string) - min length: 3
+
++ Request (application/json)
+
+    {
+        "query": "best"
+    }
+
++ Response 200 (application/json)
+
+    {
+        "tracks": [
+            {
+                "id": "c19cd642-9df8-4f44-bb5a-166529043114",
+                "title": "best track ever",
+                "track_groups": [
+                    {
+                        "id": "d19cd642-9df8-4f44-bb5a-166529043114",
+                        "title": "album title",
+                        "cover": "blob",
+                        "display_artist": "album display artist name",
+                        "type": "lp",
+                        "about": "blabla",
+                        "total_tracks": 10
+                    }
+                ],
+                "artists": [
+                    {
+                        "id": "e19cd642-9df8-4f44-bb5a-166529043114",
+                        "display_name": "artist name",
+                        "avatar": "blob"
+                    }
+                ]
+            }
+        ]
+    }
+
 ## TrackGroups Collection [/twirp/resonate.api.user.TrackGroupService]
 
-### Create TrackGroup [POST /twirp/resonate.api.user.TrackGroupServiceTrackGroupService/CreateTrackGroup]
+### Create TrackGroup [POST /twirp/resonate.api.user.TrackGroupService/CreateTrackGroup]
 
 + type (string) - type of track group: lp, ep, single or playlist.
 For lp, ep, single: user_group_id is required.
@@ -1084,3 +1172,123 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
               ]
             }
         }
+
+### Search TrackGroups [POST /twirp/resonate.api.user.TrackGroupService/SearchTrackGroups]
+Search in track groups title
+
++ query (string) - min length: 3
+
++ Request (application/json)
+
+    {
+        "query": "best"
+    }
+
++ Response 200 (application/json)
+
+    {
+        "albums": [
+            {
+                "id": "c39cd642-9df8-4f44-bb5a-169829043110",
+                "title": "best album ever",
+                "cover": "blob",
+                "display_artist": "various",
+                "type": "lp",
+                "about": "blabla",
+                "total_tracks": 8,
+                "user_group": {
+                  "id": "bc9cd642-9df8-4f44-bb5a-169829043110",
+                  "display_name": "label name",
+                  "avatar": "blob"
+                }
+            }
+        ],
+        "playlists": [
+            {
+                "id": "z39cd642-9df8-4f44-bb5a-169829043110",
+                "title": "best playlist ever",
+                "cover": "blob",
+                "type": "playlist",
+                "about": "blabla",
+                "total_tracks": 5,
+                "user_group": {
+                  "id": "bc9cd642-9df8-4f44-bb5a-169829043110",
+                  "display_name": "dj JohnD",
+                  "avatar": "blob"
+                }
+            }
+        ]
+    }
+
+## Tags Collection [/twirp/resonate.api.user.TagService]
+
+### Search Tags of type "genre" [POST /twirp/resonate.api.user.TagService/SearchGenres]
+Search in track groups and tracks tags
+
++ query (string) - min length: 3
+
++ Request (application/json)
+
+    {
+        "query": "rock"
+    }
+
++ Response 200 (application/json)
+
+    {
+        "albums": [
+            {
+                "id": "c39cd642-9df8-4f44-bb5a-169829043110",
+                "title": "best album ever",
+                "cover": "blob",
+                "display_artist": "various",
+                "type": "lp",
+                "about": "blabla",
+                "total_tracks": 8,
+                "user_group": {
+                  "id": "bc9cd642-9df8-4f44-bb5a-169829043110",
+                  "display_name": "label name",
+                  "avatar": "blob"
+                }
+            }
+        ],
+        "playlists": [
+            {
+                "id": "z39cd642-9df8-4f44-bb5a-169829043110",
+                "title": "best playlist ever",
+                "cover": "blob",
+                "type": "playlist",
+                "about": "blabla",
+                "total_tracks": 5,
+                "user_group": {
+                  "id": "bc9cd642-9df8-4f44-bb5a-169829043110",
+                  "display_name": "dj JohnD",
+                  "avatar": "blob"
+                }
+            }
+        ],
+        "tracks": [
+            {
+                "id": "c19cd642-9df8-4f44-bb5a-166529043114",
+                "title": "best track ever",
+                "track_groups": [
+                    {
+                        "id": "d19cd642-9df8-4f44-bb5a-166529043114",
+                        "title": "album title",
+                        "cover": "blob",
+                        "display_artist": "album display artist name",
+                        "type": "lp",
+                        "about": "blabla",
+                        "total_tracks": 10
+                    }
+                ],
+                "artists": [
+                    {
+                        "id": "e19cd642-9df8-4f44-bb5a-166529043114",
+                        "display_name": "artist name",
+                        "avatar": "blob"
+                    }
+                ]
+            }
+        ]
+    }
