@@ -210,8 +210,8 @@ var _ = Describe("User server", func() {
 				Expect(resp.Playlists[0].Type).To(Equal(newUserPlaylist.Type))
 				Expect(resp.Playlists[0].About).To(Equal(newUserPlaylist.About))
 				Expect(resp.Playlists[0].Private).To(Equal(newUserPlaylist.Private))
-				Expect(len(resp.Playlists[0].Tracks)).To(Equal(1))
-				Expect(resp.Playlists[0].Tracks[0].Id).To(Equal(newTrack.Id.String()))
+				Expect(resp.Playlists[0].DisplayArtist).To(Equal(newUserPlaylist.DisplayArtist))
+				Expect(resp.Playlists[0].TotalTracks).To(Equal(int32(1)))
 			})
 			It("should respond with not_found error if user does not exist", func() {
 				id := uuid.NewV4()
@@ -315,9 +315,8 @@ var _ = Describe("User server", func() {
 				Expect(resp.Tracks[0].TrackGroups[0].Type).To(Equal(newAlbum.Type))
 				Expect(resp.Tracks[0].TrackGroups[0].About).To(Equal(newAlbum.About))
 				Expect(resp.Tracks[0].TrackGroups[0].Private).To(Equal(newAlbum.Private))
-				Expect(len(resp.Tracks[0].TrackGroups[0].Tracks)).To(Equal(2))
-				Expect(resp.Tracks[0].TrackGroups[0].Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
-				Expect(resp.Tracks[0].TrackGroups[0].Tracks[1].Id).To(Equal(newTrack.Id.String()))
+				Expect(resp.Tracks[0].TrackGroups[0].DisplayArtist).To(Equal(newAlbum.DisplayArtist))
+				Expect(resp.Tracks[0].TrackGroups[0].TotalTracks).To(Equal(int32(2)))
 
 				Expect(len(resp.Tracks[0].Artists)).To(Equal(1))
 				Expect(resp.Tracks[0].Artists[0].Id).To(Equal(newFollowedUserGroup.Id.String()))
@@ -382,9 +381,7 @@ var _ = Describe("User server", func() {
 				Expect(resp.Tracks[0].TrackGroups[0].Type).To(Equal(newAlbum.Type))
 				Expect(resp.Tracks[0].TrackGroups[0].About).To(Equal(newAlbum.About))
 				Expect(resp.Tracks[0].TrackGroups[0].Private).To(Equal(newAlbum.Private))
-				Expect(len(resp.Tracks[0].TrackGroups[0].Tracks)).To(Equal(2))
-				Expect(resp.Tracks[0].TrackGroups[0].Tracks[0].Id).To(Equal(newFavoriteTrack.Id.String()))
-				Expect(resp.Tracks[0].TrackGroups[0].Tracks[1].Id).To(Equal(newTrack.Id.String()))
+				Expect(resp.Tracks[0].TrackGroups[0].TotalTracks).To(Equal(int32(2)))
 
 				Expect(len(resp.Tracks[0].Artists)).To(Equal(2))
 				Expect(resp.Tracks[0].Artists[0].Id).To(Equal(newFollowedUserGroup.Id.String()))

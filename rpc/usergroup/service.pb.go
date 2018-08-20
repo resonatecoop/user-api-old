@@ -22,29 +22,29 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type UserGroup struct {
-	Id                   string                     `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	DisplayName          string                     `protobuf:"bytes,2,opt,name=display_name,json=displayName" json:"display_name,omitempty"`
-	Description          string                     `protobuf:"bytes,3,opt,name=description" json:"description,omitempty"`
-	ShortBio             string                     `protobuf:"bytes,4,opt,name=short_bio,json=shortBio" json:"short_bio,omitempty"`
-	Avatar               []byte                     `protobuf:"bytes,5,opt,name=avatar,proto3" json:"avatar,omitempty"`
-	Banner               []byte                     `protobuf:"bytes,6,opt,name=banner,proto3" json:"banner,omitempty"`
-	OwnerId              string                     `protobuf:"bytes,7,opt,name=owner_id,json=ownerId" json:"owner_id,omitempty"`
-	Type                 *GroupTaxonomy             `protobuf:"bytes,8,opt,name=type" json:"type,omitempty"`
-	Followers            []*user.User               `protobuf:"bytes,9,rep,name=followers" json:"followers,omitempty"`
-	Members              []*UserGroup               `protobuf:"bytes,10,rep,name=members" json:"members,omitempty"`
-	MemberOfGroups       []*UserGroup               `protobuf:"bytes,11,rep,name=memberOfGroups" json:"memberOfGroups,omitempty"`
-	Links                []*Link                    `protobuf:"bytes,12,rep,name=links" json:"links,omitempty"`
-	Tags                 []*tag.Tag                 `protobuf:"bytes,13,rep,name=tags" json:"tags,omitempty"`
-	Address              *user.StreetAddress        `protobuf:"bytes,14,opt,name=address" json:"address,omitempty"`
-	Privacy              *Privacy                   `protobuf:"bytes,16,opt,name=privacy" json:"privacy,omitempty"`
-	RecommendedArtists   []*tag.RelatedUserGroup    `protobuf:"bytes,17,rep,name=recommended_artists,json=recommendedArtists" json:"recommended_artists,omitempty"`
-	FeaturedTrackGroup   *track.RelatedTrackGroup   `protobuf:"bytes,18,opt,name=featured_track_group,json=featuredTrackGroup" json:"featured_track_group,omitempty"`
-	TrackGroups          []*track.RelatedTrackGroup `protobuf:"bytes,19,rep,name=track_groups,json=trackGroups" json:"track_groups,omitempty"`
-	HighlightedTracks    []*track.Track             `protobuf:"bytes,20,rep,name=highlighted_tracks,json=highlightedTracks" json:"highlighted_tracks,omitempty"`
-	GroupEmailAddress    string                     `protobuf:"bytes,22,opt,name=group_email_address,json=groupEmailAddress" json:"group_email_address,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
-	XXX_unrecognized     []byte                     `json:"-"`
-	XXX_sizecache        int32                      `json:"-"`
+	Id                   string                   `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	DisplayName          string                   `protobuf:"bytes,2,opt,name=display_name,json=displayName" json:"display_name,omitempty"`
+	Description          string                   `protobuf:"bytes,3,opt,name=description" json:"description,omitempty"`
+	ShortBio             string                   `protobuf:"bytes,4,opt,name=short_bio,json=shortBio" json:"short_bio,omitempty"`
+	Avatar               []byte                   `protobuf:"bytes,5,opt,name=avatar,proto3" json:"avatar,omitempty"`
+	Banner               []byte                   `protobuf:"bytes,6,opt,name=banner,proto3" json:"banner,omitempty"`
+	OwnerId              string                   `protobuf:"bytes,7,opt,name=owner_id,json=ownerId" json:"owner_id,omitempty"`
+	Type                 *GroupTaxonomy           `protobuf:"bytes,8,opt,name=type" json:"type,omitempty"`
+	Followers            []*user.User             `protobuf:"bytes,9,rep,name=followers" json:"followers,omitempty"`
+	Members              []*UserGroup             `protobuf:"bytes,10,rep,name=members" json:"members,omitempty"`
+	MemberOfGroups       []*UserGroup             `protobuf:"bytes,11,rep,name=memberOfGroups" json:"memberOfGroups,omitempty"`
+	Links                []*Link                  `protobuf:"bytes,12,rep,name=links" json:"links,omitempty"`
+	Tags                 []*tag.Tag               `protobuf:"bytes,13,rep,name=tags" json:"tags,omitempty"`
+	Address              *user.StreetAddress      `protobuf:"bytes,14,opt,name=address" json:"address,omitempty"`
+	Privacy              *Privacy                 `protobuf:"bytes,16,opt,name=privacy" json:"privacy,omitempty"`
+	RecommendedArtists   []*tag.RelatedUserGroup  `protobuf:"bytes,17,rep,name=recommended_artists,json=recommendedArtists" json:"recommended_artists,omitempty"`
+	FeaturedTrackGroup   *tag.RelatedTrackGroup   `protobuf:"bytes,18,opt,name=featured_track_group,json=featuredTrackGroup" json:"featured_track_group,omitempty"`
+	TrackGroups          []*tag.RelatedTrackGroup `protobuf:"bytes,19,rep,name=track_groups,json=trackGroups" json:"track_groups,omitempty"`
+	HighlightedTracks    []*track.Track           `protobuf:"bytes,20,rep,name=highlighted_tracks,json=highlightedTracks" json:"highlighted_tracks,omitempty"`
+	GroupEmailAddress    string                   `protobuf:"bytes,22,opt,name=group_email_address,json=groupEmailAddress" json:"group_email_address,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+	XXX_unrecognized     []byte                   `json:"-"`
+	XXX_sizecache        int32                    `json:"-"`
 }
 
 func (m *UserGroup) Reset()         { *m = UserGroup{} }
@@ -183,14 +183,14 @@ func (m *UserGroup) GetRecommendedArtists() []*tag.RelatedUserGroup {
 	return nil
 }
 
-func (m *UserGroup) GetFeaturedTrackGroup() *track.RelatedTrackGroup {
+func (m *UserGroup) GetFeaturedTrackGroup() *tag.RelatedTrackGroup {
 	if m != nil {
 		return m.FeaturedTrackGroup
 	}
 	return nil
 }
 
-func (m *UserGroup) GetTrackGroups() []*track.RelatedTrackGroup {
+func (m *UserGroup) GetTrackGroups() []*tag.RelatedTrackGroup {
 	if m != nil {
 		return m.TrackGroups
 	}

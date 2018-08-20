@@ -80,8 +80,8 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
   }
 
   // Get tracks
-  playlist := t.Type == "playlist"
-  tracks, twerr := models.GetTracks(t.Tracks, s.db, playlist, ctx)
+  showTrackGroup := t.Type == "playlist"
+  tracks, twerr := models.GetTracks(t.Tracks, s.db, showTrackGroup, ctx)
   if twerr != nil {
     return nil, twerr
   }

@@ -19,7 +19,9 @@ var (
 	service *trackserver.Server
 	newUser *models.User
 	newTrack *models.Track
+	newPrivateTrack *models.Track
 	newAlbum *models.TrackGroup
+	newPrivateAlbum *models.TrackGroup
 	newPlaylist *models.TrackGroup
 	newArtistGroupTaxonomy *models.GroupTaxonomy
 	newLabelGroupTaxonomy *models.GroupTaxonomy
@@ -93,6 +95,16 @@ var _ = BeforeSuite(func() {
 	err = db.Insert(newTrack)
 	Expect(err).NotTo(HaveOccurred())
 
+	newPrivateTrack = &models.Track{
+		CreatorId: newUser.Id,
+		UserGroupId: newArtistUserGroup.Id,
+		Artists: []uuid.UUID{newArtistUserGroup.Id},
+		Title: "private track title",
+		Status: "free",
+	}
+	err = db.Insert(newPrivateTrack)
+	Expect(err).NotTo(HaveOccurred())
+
 	favoritingUser := &models.User{Username: "fav", FullName: "fav name", Email: "fav@fake.com", FavoriteTracks: []uuid.UUID{newTrack.Id}}
 	err = db.Insert(favoritingUser)
 	Expect(err).NotTo(HaveOccurred())
@@ -115,6 +127,21 @@ var _ = BeforeSuite(func() {
 	err = db.Insert(newAlbum)
 	Expect(err).NotTo(HaveOccurred())
 
+	privateTracks := []uuid.UUID{newPrivateTrack.Id}
+	newPrivateAlbum = &models.TrackGroup{
+		CreatorId: newUser.Id,
+		UserGroupId: newArtistUserGroup.Id,
+		LabelId: newLabelUserGroup.Id,
+		Title: "private album",
+		ReleaseDate: time.Now(),
+		Type: "lp",
+		Cover: avatar,
+		Tracks: privateTracks,
+		Private: true,
+	}
+	err = db.Insert(newPrivateAlbum)
+	Expect(err).NotTo(HaveOccurred())
+
 	newPlaylist = &models.TrackGroup{
 		CreatorId: newUser.Id,
 		// UserGroupId: uuid.UUID{},
@@ -124,6 +151,7 @@ var _ = BeforeSuite(func() {
 		Type: "playlist",
 		Cover: avatar,
 		Tracks: tracks,
+		Private: true,
 	}
 	err = db.Insert(newPlaylist)
 	Expect(err).NotTo(HaveOccurred())
@@ -135,6 +163,10 @@ var _ = BeforeSuite(func() {
 	newTrack.TrackGroups = []uuid.UUID{newAlbum.Id, newPlaylist.Id}
 	newTrack.FavoriteOfUsers = []uuid.UUID{favoritingUser.Id}
 	_, err = db.Model(newTrack).Column("track_groups", "favorite_of_users").WherePK().Update()
+	Expect(err).NotTo(HaveOccurred())
+
+	newPrivateTrack.TrackGroups = []uuid.UUID{newPrivateAlbum.Id}
+	_, err = db.Model(newPrivateTrack).Column("track_groups").WherePK().Update()
 	Expect(err).NotTo(HaveOccurred())
 
 	newArtistUserGroup.Tracks = []uuid.UUID{newTrack.Id}

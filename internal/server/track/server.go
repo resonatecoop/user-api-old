@@ -70,6 +70,18 @@ func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, erro
 	return track, nil
 }
 
+func (s *Server) SearchTracks(ctx context.Context, q *tagpb.Query) (*tagpb.SearchResults, error) {
+  if len(q.Query) < 3 {
+    return nil, twirp.InvalidArgumentError("query", "must be a valid search query")
+  }
+
+  searchResults, twerr := models.SearchTracks(q.Query, s.db)
+  if twerr != nil {
+    return nil, twerr
+  }
+  return searchResults, nil
+}
+
 func (s *Server) CreateTrack(ctx context.Context, track *pb.Track) (*pb.Track, error) {
   // Track is created then added to a TrackGroup on track group creation
   err := checkRequiredAttributes(track)

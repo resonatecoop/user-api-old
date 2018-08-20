@@ -14,7 +14,7 @@ import (
 
   userpb "user-api/rpc/user"
 	pb "user-api/rpc/usergroup"
-	trackpb "user-api/rpc/track"
+	// trackpb "user-api/rpc/track"
 	tagpb "user-api/rpc/tag"
 	"user-api/internal"
 	"user-api/internal/database/models"
@@ -217,7 +217,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	if pgerr != nil {
 		return nil, internal.CheckError(pgerr, "track_group")
 	}
-	var featuredTrackGroup *trackpb.RelatedTrackGroup
+	var featuredTrackGroup *tagpb.RelatedTrackGroup
 	if (u.FeaturedTrackGroupId != uuid.UUID{}) {
 		featuredTrackGroups, pgerr := models.GetTrackGroups([]uuid.UUID{u.FeaturedTrackGroupId}, s.db, []string{"lp", "ep", "single", "playlist"})
 		if pgerr != nil {

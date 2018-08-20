@@ -9,7 +9,7 @@ import (
 
   "github.com/satori/go.uuid"
   pb "user-api/rpc/track"
-  // tagpb "user-api/rpc/tag"
+  tagpb "user-api/rpc/tag"
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/twitchtv/twirp"
@@ -46,6 +46,51 @@ type Track struct {
   Plays []User `pg:"many2many:plays"`
   // Composers with IPI
   // Performers with IPI
+}
+
+func SearchTracks(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Error) {
+  var tracks []Track
+
+  pgerr := db.Model(&tracks).
+    ColumnExpr("track.id, track.title, track.artists, track.track_groups").
+    Where("to_tsvector('english'::regconfig, COALESCE(title, '') || ' ' || COALESCE(f_arr2str(tags), '')) @@ (plainto_tsquery('english'::regconfig, ?)) = true", query).
+    Select()
+  if pgerr != nil {
+    return nil, internal.CheckError(pgerr, "track")
+  }
+
+  var searchTracks []*tagpb.SearchTrack
+  for _, track := range tracks {
+    artists, err := GetRelatedUserGroups(track.Artists, db)
+    if err != nil {
+      return nil, internal.CheckError(err, "user_group")
+    }
+    trackGroups, twerr := GetTrackGroups(track.TrackGroups, db, []string{"lp", "ep", "single"})
+    if twerr != nil {
+      return  nil, twerr
+    }
+
+    // Check if all trackGroups are public
+    var private bool
+    for _, trackGroup := range trackGroups {
+      if trackGroup.Private == true {
+        private = true
+        break
+      }
+    }
+    if private == false {
+      searchTrack := &tagpb.SearchTrack{
+        Id: track.Id.String(),
+        Title: track.Title,
+        Artists: artists,
+        TrackGroups: trackGroups,
+      }
+      searchTracks = append(searchTracks, searchTrack)
+    }
+  }
+  return &tagpb.SearchResults{
+    Tracks: searchTracks,
+  }, nil
 }
 
 // TODO add user fav and play count

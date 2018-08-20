@@ -163,10 +163,10 @@ func (m *User) GetResidenceAddress() *StreetAddress {
 }
 
 type Playlists struct {
-	Playlists            []*track.RelatedTrackGroup `protobuf:"bytes,1,rep,name=playlists" json:"playlists,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
-	XXX_unrecognized     []byte                     `json:"-"`
-	XXX_sizecache        int32                      `json:"-"`
+	Playlists            []*tag.RelatedTrackGroup `protobuf:"bytes,1,rep,name=playlists" json:"playlists,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+	XXX_unrecognized     []byte                   `json:"-"`
+	XXX_sizecache        int32                    `json:"-"`
 }
 
 func (m *Playlists) Reset()         { *m = Playlists{} }
@@ -193,7 +193,7 @@ func (m *Playlists) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Playlists proto.InternalMessageInfo
 
-func (m *Playlists) GetPlaylists() []*track.RelatedTrackGroup {
+func (m *Playlists) GetPlaylists() []*tag.RelatedTrackGroup {
 	if m != nil {
 		return m.Playlists
 	}

@@ -84,6 +84,49 @@ var _ = Describe("Track server", func() {
 		})
 	})
 
+	Describe("SearchTracks", func() {
+    Context("with valid query", func() {
+      It("should respond with tracks", func() {
+        q := &tagpb.Query{Query: "title"}
+        res, err := service.SearchTracks(context.Background(), q)
+
+        Expect(err).NotTo(HaveOccurred())
+        Expect(res).NotTo(BeNil())
+        Expect(len(res.Tracks)).To(Equal(1))
+        Expect(res.Tracks[0].Id).To(Equal(newTrack.Id.String()))
+        Expect(res.Tracks[0].Title).To(Equal(newTrack.Title))
+
+				Expect(len(res.Tracks[0].TrackGroups)).To(Equal(1))
+				Expect(res.Tracks[0].TrackGroups[0].Id).To(Equal(newAlbum.Id.String()))
+				Expect(res.Tracks[0].TrackGroups[0].Title).To(Equal(newAlbum.Title))
+				Expect(res.Tracks[0].TrackGroups[0].Cover).To(Equal(newAlbum.Cover))
+				Expect(res.Tracks[0].TrackGroups[0].DisplayArtist).To(Equal(newAlbum.DisplayArtist))
+				Expect(res.Tracks[0].TrackGroups[0].Type).To(Equal(newAlbum.Type))
+				Expect(res.Tracks[0].TrackGroups[0].About).To(Equal(newAlbum.About))
+        Expect(res.Tracks[0].TrackGroups[0].TotalTracks).To(Equal(int32(len(newAlbum.Tracks))))
+
+				Expect(len(res.Tracks[0].Artists)).To(Equal(1))
+        Expect(res.Tracks[0].Artists[0]).NotTo(BeNil())
+        Expect(res.Tracks[0].Artists[0].Id).To(Equal(newArtistUserGroup.Id.String()))
+        Expect(res.Tracks[0].Artists[0].DisplayName).To(Equal(newArtistUserGroup.DisplayName))
+        Expect(res.Tracks[0].Artists[0].Avatar).To(Equal(newArtistUserGroup.Avatar))
+      })
+    })
+    Context("with invalid query", func() {
+      It("should respond with invalid error", func() {
+        q := &tagpb.Query{Query: "ti"}
+        resp, err := service.SearchTracks(context.Background(), q)
+
+        Expect(resp).To(BeNil())
+        Expect(err).To(HaveOccurred())
+
+        twerr := err.(twirp.Error)
+        Expect(twerr.Code()).To(Equal(invalid_argument_code))
+        Expect(twerr.Meta("argument")).To(Equal("query"))
+      })
+    })
+  })
+
 	Describe("UpdateTrack", func() {
 		Context("with valid uuid", func() {
 			It("should update track if it exists", func() {

@@ -51,7 +51,7 @@ func SearchTrackGroups(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Er
   var trackGroups []TrackGroup
 
   pgerr := db.Model(&trackGroups).
-    ColumnExpr("track_group.id, track_group.title, track_group.tracks, track_group.user_group_id, track_group.type").
+    ColumnExpr("track_group.id, track_group.display_artist, track_group.title, track_group.tracks, track_group.user_group_id, track_group.type, track_group.cover, track_group.about").
     Where("to_tsvector('english'::regconfig, COALESCE(title, '') || ' ' || COALESCE(f_arr2str(tags), '')) @@ (plainto_tsquery('english'::regconfig, ?)) = true", query).
     Where("private = false").
     Select()
@@ -59,18 +59,22 @@ func SearchTrackGroups(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Er
     return nil, internal.CheckError(pgerr, "track_group")
   }
 
-  var playlists []*tagpb.SearchTrackGroup
-  var albums []*tagpb.SearchTrackGroup
+  var playlists []*tagpb.RelatedTrackGroup
+  var albums []*tagpb.RelatedTrackGroup
   for _, trackGroup := range trackGroups {
     userGroups, pgerr := GetRelatedUserGroups([]uuid.UUID{trackGroup.UserGroupId}, db)
     if pgerr != nil {
       return nil, internal.CheckError(pgerr, "user_group")
     }
-    searchTrackGroup := &tagpb.SearchTrackGroup{
+    searchTrackGroup := &tagpb.RelatedTrackGroup{
       Id: trackGroup.Id.String(),
       Title: trackGroup.Title,
       TotalTracks: int32(len(trackGroup.Tracks)),
       UserGroup: userGroups[0],
+      Cover: trackGroup.Cover,
+      DisplayArtist: trackGroup.DisplayArtist,
+      Type: trackGroup.Type,
+      About: trackGroup.About,
     }
     if trackGroup.Type == "playlist" {
       playlists = append(playlists, searchTrackGroup)
@@ -84,8 +88,8 @@ func SearchTrackGroups(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Er
   }, nil
 }
 
-func GetTrackGroups(ids []uuid.UUID, db *pg.DB, types []string) ([]*trackpb.RelatedTrackGroup, twirp.Error) {
-	var trackGroupsResponse []*trackpb.RelatedTrackGroup
+func GetTrackGroups(ids []uuid.UUID, db *pg.DB, types []string) ([]*tagpb.RelatedTrackGroup, twirp.Error) {
+	var trackGroupsResponse []*tagpb.RelatedTrackGroup
 	if len(ids) > 0 {
 		var t []TrackGroup
 		pgerr := db.Model(&t).
@@ -96,22 +100,15 @@ func GetTrackGroups(ids []uuid.UUID, db *pg.DB, types []string) ([]*trackpb.Rela
 			return nil, internal.CheckError(pgerr, "track_group")
 		}
 		for _, trackGroup := range t {
-      tracks := make([]*trackpb.Track, len(trackGroup.Tracks))
-      for i, id := range trackGroup.Tracks {
-        tracks[i] = &trackpb.Track{Id: id.String()}
-      }
-      // tracks, twerr := GetTracks(trackGroup.Tracks, db, false)
-      // if twerr != nil {
-      //   return nil, twerr
-      // }
-			trackGroupsResponse = append(trackGroupsResponse, &trackpb.RelatedTrackGroup{
+			trackGroupsResponse = append(trackGroupsResponse, &tagpb.RelatedTrackGroup{
         Id: trackGroup.Id.String(),
         Title: trackGroup.Title,
         Cover: trackGroup.Cover,
+        DisplayArtist: trackGroup.DisplayArtist,
         Type: trackGroup.Type,
         About: trackGroup.About,
         Private: trackGroup.Private,
-        Tracks: tracks,
+        TotalTracks: int32(len(trackGroup.Tracks)),
       })
 		}
 	}

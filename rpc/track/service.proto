@@ -11,6 +11,8 @@ service TrackService {
   rpc GetTrack(Track) returns (Track);
   rpc UpdateTrack(Track) returns (Empty);
   rpc DeleteTrack(Track) returns (Empty);
+
+  rpc SearchTracks(Query) returns (SearchResults);
 }
 
 message Track {
@@ -28,14 +30,4 @@ message Track {
   string track_server_id = 10;
   repeated Tag tags = 11;
   float duration = 12;
-}
-
-message RelatedTrackGroup {
-  string id = 1; // required
-  string title = 2; // required
-  bytes cover = 3; // required
-  string type = 4; // required
-  string about = 5;
-  bool private = 6;
-  repeated Track tracks = 7;
 }

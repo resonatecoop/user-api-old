@@ -12,9 +12,9 @@ message SearchResults {
   repeated RelatedUserGroup people = 1;
   repeated RelatedUserGroup artists = 2;
   repeated RelatedUserGroup labels = 3;
-  repeated SearchTrackGroup playlists = 4;
-  repeated SearchTrackGroup albums = 5;
-  // TODO tracks?
+  repeated RelatedTrackGroup playlists = 4;
+  repeated RelatedTrackGroup albums = 5;
+  repeated SearchTrack tracks = 6;
 }
 
 message Query {
@@ -38,6 +38,27 @@ message SearchTrackGroup {
   string title = 2;
   RelatedUserGroup user_group = 3;
   int32 total_tracks = 4;
+  bytes cover = 5;
+  string display_artist = 6;
+}
+
+message RelatedTrackGroup {
+  string id = 1; // required
+  string title = 2; // required
+  bytes cover = 3; // required
+  string type = 4; // required
+  string about = 5;
+  bool private = 6;
+  string display_artist = 7;
+  int32 total_tracks = 8;
+  RelatedUserGroup user_group = 9;
+}
+
+message SearchTrack {
+  string id = 1;
+  string title = 2;
+  repeated RelatedUserGroup artists = 3;
+  repeated RelatedTrackGroup track_groups = 4;
 }
 
 message Empty {}

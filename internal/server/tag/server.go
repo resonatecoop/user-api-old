@@ -35,19 +35,19 @@ func (s *Server) SearchGenres(ctx context.Context, q *pb.Query) (*pb.SearchResul
     tagIds = tagIds + "|" + tag.Id.String()
   }
 
-  var playlists []*pb.SearchTrackGroup
-  var albums []*pb.SearchTrackGroup
   trackGroupSearchResults, twerr := models.SearchTrackGroups(tagIds, s.db)
   if twerr != nil {
     return nil, twerr
   }
-  playlists = append(playlists, trackGroupSearchResults.Playlists...)
-  albums = append(albums, trackGroupSearchResults.Albums...)
 
-  // TODO SearchTracks
+  trackSearchResults, twerr := models.SearchTracks(tagIds, s.db)
+  if twerr != nil {
+    return nil, twerr
+  }
 
   return &pb.SearchResults{
-    Playlists: playlists,
-    Albums: albums,
+    Playlists: trackGroupSearchResults.Playlists,
+    Albums: trackGroupSearchResults.Albums,
+    Tracks: trackSearchResults.Tracks,
   }, nil
 }
