@@ -45,9 +45,17 @@ func (s *Server) SearchGenres(ctx context.Context, q *pb.Query) (*pb.SearchResul
     return nil, twerr
   }
 
+  userGroupSearchResults, twerr := models.SearchUserGroups(tagIds, s.db)
+  if twerr != nil {
+    return nil, twerr
+  }
+
   return &pb.SearchResults{
     Playlists: trackGroupSearchResults.Playlists,
     Albums: trackGroupSearchResults.Albums,
     Tracks: trackSearchResults.Tracks,
+    People: userGroupSearchResults.People,
+    Artists: userGroupSearchResults.Artists,
+    Labels: userGroupSearchResults.Labels,
   }, nil
 }

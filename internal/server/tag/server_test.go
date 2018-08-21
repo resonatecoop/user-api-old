@@ -27,6 +27,14 @@ var _ = Describe("Tag server", func() {
         Expect(err).NotTo(HaveOccurred())
         Expect(res).NotTo(BeNil())
 
+        Expect(len(res.Artists)).To(Equal(1))
+        Expect(res.Artists[0].Id).To(Equal(newArtistUserGroup.Id.String()))
+        Expect(res.Artists[0].DisplayName).To(Equal(newArtistUserGroup.DisplayName))
+        Expect(res.Artists[0].Avatar).To(Equal(newArtistUserGroup.Avatar))
+
+        Expect(len(res.People)).To(Equal(0))
+        Expect(len(res.Labels)).To(Equal(0))
+
         Expect(len(res.Playlists)).To(Equal(1))
         Expect(res.Playlists[0].Id).To(Equal(newPlaylist.Id.String()))
         Expect(res.Playlists[0].Title).To(Equal(newPlaylist.Title))

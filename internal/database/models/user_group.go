@@ -82,7 +82,7 @@ func SearchUserGroups(query string, db *pg.DB) (*tagpb.SearchResults, twirp.Erro
 
   pgerr := db.Model(&userGroups).
     Column("user_group.id", "user_group.display_name", "user_group.avatar", "Privacy", "Type").
-    Where("to_tsvector('english'::regconfig, COALESCE(display_name, '')) @@ (plainto_tsquery('english'::regconfig, ?)) = true", query).
+    Where("to_tsvector('english'::regconfig, COALESCE(display_name, '') || ' ' || COALESCE(f_arr2str(tags), '')) @@ (plainto_tsquery('english'::regconfig, ?)) = true", query).
     Where("privacy.private = false").
     Select()
   if pgerr != nil {

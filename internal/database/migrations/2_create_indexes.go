@@ -13,7 +13,8 @@ func init() {
       return err
     }
     if _, err := db.Exec(`
-      CREATE INDEX user_groups_gin_idx ON user_groups USING GIN (to_tsvector('english', coalesce(display_name, '')))
+      CREATE INDEX user_groups_gin_idx ON user_groups
+      USING GIN (to_tsvector('english', coalesce(display_name, '') || ' ' || COALESCE(f_arr2str(tags), '')))
     `); err != nil {
       return err
     }

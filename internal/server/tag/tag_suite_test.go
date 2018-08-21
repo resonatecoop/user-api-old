@@ -65,12 +65,14 @@ var _ = BeforeSuite(func() {
 
 	// Create a new user_group
 	avatar := make([]byte, 5)
+	tagIds := []uuid.UUID{newPopGenreTag.Id, newRockGenreTag.Id}
 	newArtistUserGroup = &models.UserGroup{
 		DisplayName: "artist",
 		Avatar: avatar,
 		OwnerId: newUser.Id,
 		TypeId: newArtistGroupTaxonomy.Id,
 		AddressId: newAddress.Id,
+		Tags: tagIds,
 	}
 	err = db.Insert(newArtistUserGroup)
 	Expect(err).NotTo(HaveOccurred())
@@ -86,7 +88,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Create a new track
-	tagIds := []uuid.UUID{newPopGenreTag.Id, newRockGenreTag.Id}
 	newTrack = &models.Track{
 		CreatorId: newUser.Id,
 		UserGroupId: newArtistUserGroup.Id,
