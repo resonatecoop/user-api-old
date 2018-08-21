@@ -311,18 +311,16 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 			}
 		}
 
-		// Update recommended artists
-		// recommendedArtistIds, pgerr := models.GetRelatedUserGroupIds(userGroup.RecommendedArtists, tx)
-		// if pgerr != nil {
-		// 	return pgerr, "user_group"
-		// }
-
 		// Update user group
 		u.Tags = tagIds
 		u.Links = linkIds
 		// u.RecommendedArtists = recommendedArtistIds
 		u.UpdatedAt = time.Now()
-		_, pgerr = tx.Model(u).WherePK().Returning("*").UpdateNotNull()
+		_, pgerr = tx.Model(u).
+			Column("updated_at", "links", "tags", "display_name", "avatar", "description", "short_bio", "banner", "group_email_address").
+			WherePK().
+			Returning("*").
+			Update()
 		if pgerr != nil {
 			return pgerr, "user_group"
 		}
@@ -759,18 +757,3 @@ func checkRequiredAttributes(userGroup *pb.UserGroup) (twirp.Error) {
 	}
 	return nil
 }
-
-
-// SELECT p.id, track.title, p.paid_plays, p.free_plays, p.total_credits
-// FROM (
-// 	SELECT play.track_id AS id,
-// 		count(case when play.type = 'paid' then 1 else null end) AS paid_plays,
-// 		count(case when play.type = 'free' then 1 else null end) AS free_plays,
-// 		SUM(play.credits) AS total_credits
-// 	FROM plays AS play
-// 	GROUP BY play.track_id
-// ) p
-//
-//  SELECT play.track_id AS id,                                                                                                                                                                          count(case when play.type = 'paid' then 1 else null end) AS paid_plays,                                                                                                                                                 count(case when play.type = 'free' then 1 else null end) AS free_plays,                                                                                                                                                 SUM(play.credits) AS total_credits                                                                                                                                                                                      FROM plays AS play                                                                                                                                                                                                      WHERE play.track_id IN ("2d552e35-3141-473a-b2ee-fbda7f0aebe","cbaa99c2-8c52-43c3-aa18-8027ac449d28") GROUP BY play.track_id;
-
-// 	JOIN tracks AS track ON track.user_group_id = '0779331a-b813-4964-a13c-1ef82c30cfe6'

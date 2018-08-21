@@ -789,7 +789,6 @@ var _ = Describe("User server", func() {
 					Id: newUser.Id.String(),
 					Username: "new username",
 					FullName: "full name",
-					DisplayName: "display name",
 					Email: "email@fake.com",
 					FirstName: "first name",
 				}
@@ -806,7 +805,6 @@ var _ = Describe("User server", func() {
 					Id: id.String(),
 					Username: "username",
 					FullName: "fullname",
-					DisplayName: "displayname",
 					Email: "email@fake.comm",
 					FirstName: "firstname",
 				}
@@ -826,7 +824,6 @@ var _ = Describe("User server", func() {
 					Id: id,
 					Username: "new username",
 					FullName: "full name",
-					DisplayName: "display name",
 					Email: "email@fake.com",
 					FirstName: "first name",
 				}

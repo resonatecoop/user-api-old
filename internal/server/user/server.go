@@ -300,7 +300,11 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*tagpb.Empty, e
 	}
 
 	u.UpdatedAt = time.Now()
-	_, pgerr := s.db.Model(u).WherePK().Returning("*").UpdateNotNull()
+	_, pgerr := s.db.Model(u).
+		Column("updated_at", "username", "full_name", "email", "member", "newsletter_notification").
+		WherePK().
+		Returning("*").
+		Update()
 	twerr := internal.CheckError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr

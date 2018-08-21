@@ -280,6 +280,7 @@ var _ = Describe("UserGroup server", func() {
 					Id: newArtist.Id.String(),
 					DisplayName: "new display name",
 					Description: "new description",
+					ShortBio: "short bio",
 					Avatar: newArtist.Avatar,
 					Address: &userpb.StreetAddress{Id: artistAddress.Id.String(), Data: map[string]string{"some": "new data"}},
 					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
@@ -307,6 +308,11 @@ var _ = Describe("UserGroup server", func() {
 				updatedUserGroup := new(models.UserGroup)
 				err = db.Model(updatedUserGroup).Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
+				Expect(updatedUserGroup.DisplayName).To(Equal(userGroup.DisplayName))
+				Expect(updatedUserGroup.ShortBio).To(Equal(userGroup.ShortBio))
+				Expect(updatedUserGroup.Avatar).To(Equal(userGroup.Avatar))
+				Expect(updatedUserGroup.Description).To(Equal(userGroup.Description))
+				Expect(updatedUserGroup.Banner).To(Equal(userGroup.Banner))
 				Expect(len(updatedUserGroup.Tags)).To(Equal(1))
 				Expect(updatedUserGroup.Tags[0]).NotTo(Equal(newGenreTag.Id))
 
