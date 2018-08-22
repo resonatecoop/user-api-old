@@ -100,7 +100,12 @@ Support pagination (?page=2?limit=50).
             ]
         }
 
-### Get Track History [POST /twirp/resonate.api.user.UserService/GetTrackHistory]
+### [DEPRECATED] Get Track History [POST /twirp/resonate.api.user.UserService/GetTrackHistory]
+
+MOVED TO PAYMENT API:
+- get track ids from Payment API
+- then use TrackService GetTracks to get tracks metadata
+
 
 Support pagination (?page=2?limit=50).
 
@@ -143,7 +148,9 @@ Support pagination (?page=2?limit=50).
             ]
         }
 
-### Get Owned Tracks [POST /twirp/resonate.api.user.UserService/GetOwnedTracks]
+### [DEPRECATED] Get Owned Tracks [POST /twirp/resonate.api.user.UserService/GetOwnedTracks]
+
+MIGHT BE MOVED TO PAYMENT API.
 
 Support pagination (?page=2?limit=50).
 
@@ -279,7 +286,9 @@ If the request body doesn't contain a certain user group attribute, it will be s
 
 + Response 204 (application/json)
 
-### Create Play [POST /twirp/resonate.api.user.UserService/CreatePlay]
+### [DEPRECATED] Create Play [POST /twirp/resonate.api.user.UserService/CreatePlay]
+
+MOVED TO PAYMENT API
 
 Create play after 45s streaming a track.
 Called from track server/payment apis.
@@ -626,7 +635,7 @@ To get more info on featured track group (release), call TrackGroupService GetTr
 
 
 ### Search UserGroups [POST /twirp/resonate.api.user.UserGroupService/SearchUserGroups]
-Search in user groups display_name
+Search by user groups display_name
 
 + query (string) - min length: 3
 
@@ -759,7 +768,9 @@ Can also be used for an artist (members array only contains 1 element with artis
 
 + Response 204 (application/json)
 
-### Get Track Analytics [POST /twirp/resonate.api.user.UserGroupService/GetTrackAnalytics]
+### [DEPRECATED] Get Track Analytics [POST /twirp/resonate.api.user.UserGroupService/GetTrackAnalytics]
+
+MOVED TO PAYMENT API.
 
 + Request (application/json)
 
@@ -889,42 +900,40 @@ Tracks can be added to a track group from dedicated endpoint in TrackGroup Servi
 
 + Response 204 (application/json)
 
-### Get Track [POST /twirp/resonate.api.user.TrackService/GetTrack]
-
+### Get Tracks [POST /twirp/resonate.api.user.TrackService/GetTracks]
 
 + Request (application/json)
 
         {
-            "id": "b09cd642-9df8-4f44-bb5a-169829043110"
+            "tracks": [
+              {"id": "b09cd642-9df8-4f44-bb5a-169829043110"}
+            ]
         }
 
 + Response 200 (application/json)
 
             {
-                "id": "b19cd642-9df8-4f44-bb5a-166529043110",
-                "track_server_id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378",
-                "owner_id": "d9b47086-3212-40c6-b9ec-c9b9cc29e378",
-                "user_group_id": "e9b47086-3212-40c6-b9ec-c9b9cc29e378",
-                "title": "Greatest track in the world",
-                "status": "free",
-                "duration": 250.25,
-                "track_number": 1,
-                "enabled": true,
-                "tags": [
-                  {"id": "z20cd642-9df8-4f44-bb5a-166529043113", "type": "genre", "name": "ambient"},
-                  {"id": "c90cd642-9df8-4f44-bb5a-166529043113", "type": "genre", "name": "experimental"}
-                ],
-                "artists": [
-                  {"id": "b19cd642-9df8-4f44-bb5a-166529043113", "display_name": "artist name 1", "avatar": "blob"},
-                  {"id": "b20cd642-9df8-4f44-bb5a-166529043113", "display_name": "artist name 2", "avatar": "blob"}
-                ],
-                "track_groups": [
-                  {"id": "c19cd642-9df8-4f44-bb5a-166529043113", "title": "album name", "cover": "blob"},
+                "tracks": [
+                    {
+                        "id": "b19cd642-9df8-4f44-bb5a-166529043110",
+                        "track_server_id": "c9b47086-3212-40c6-b9ec-c9b9cc29e378",
+                        "title": "Greatest track in the world",
+                        "status": "free",
+                        "duration": 250.25,
+                        "track_number": 1,
+                        "artists": [
+                          {"id": "b19cd642-9df8-4f44-bb5a-166529043113", "display_name": "artist name 1", "avatar": "blob"},
+                          {"id": "b20cd642-9df8-4f44-bb5a-166529043113", "display_name": "artist name 2", "avatar": "blob"}
+                        ],
+                        "track_groups": [
+                          {"id": "c19cd642-9df8-4f44-bb5a-166529043113", "title": "album name", "cover": "blob"},
+                        ]
+                    }
                 ]
             }
 
 ### Search Tracks [POST /twirp/resonate.api.user.TrackService/SearchTracks]
-Search in tracks title
+Search by tracks title
 
 + query (string) - min length: 3
 
@@ -1209,7 +1218,7 @@ Can be used to add a track to a playlist, lp, ep, single (all types of track gro
         }
 
 ### Search TrackGroups [POST /twirp/resonate.api.user.TrackGroupService/SearchTrackGroups]
-Search in track groups title
+Search by track groups title
 
 + query (string) - min length: 3
 
@@ -1258,7 +1267,7 @@ Search in track groups title
 ## Tags Collection [/twirp/resonate.api.user.TagService]
 
 ### Search Tags of type "genre" [POST /twirp/resonate.api.user.TagService/SearchGenres]
-Search in track groups and tracks tags
+Search by track groups and tracks tags
 
 + query (string) - min length: 3
 

@@ -55,14 +55,6 @@ type UserService interface {
 	GetPlaylists(context.Context, *User) (*Playlists, error)
 
 	GetFavoriteTracks(context.Context, *User) (*Tracks, error)
-
-	GetOwnedTracks(context.Context, *User) (*Tracks, error)
-
-	GetTrackHistory(context.Context, *User) (*Tracks, error)
-
-	GetSupportedArtists(context.Context, *User) (*Artists, error)
-
-	CreatePlay(context.Context, *CreatePlayRequest) (*CreatePlayResponse, error)
 }
 
 // ===========================
@@ -71,14 +63,14 @@ type UserService interface {
 
 type userServiceProtobufClient struct {
 	client HTTPClient
-	urls   [14]string
+	urls   [10]string
 }
 
 // NewUserServiceProtobufClient creates a Protobuf client that implements the UserService interface.
 // It communicates using Protobuf and can be configured with a custom HTTPClient.
 func NewUserServiceProtobufClient(addr string, client HTTPClient) UserService {
 	prefix := urlBase(addr) + UserServicePathPrefix
-	urls := [14]string{
+	urls := [10]string{
 		prefix + "CreateUser",
 		prefix + "GetUser",
 		prefix + "UpdateUser",
@@ -89,10 +81,6 @@ func NewUserServiceProtobufClient(addr string, client HTTPClient) UserService {
 		prefix + "RemoveFavoriteTrack",
 		prefix + "GetPlaylists",
 		prefix + "GetFavoriteTracks",
-		prefix + "GetOwnedTracks",
-		prefix + "GetTrackHistory",
-		prefix + "GetSupportedArtists",
-		prefix + "CreatePlay",
 	}
 	if httpClient, ok := client.(*http.Client); ok {
 		return &userServiceProtobufClient{
@@ -196,56 +184,20 @@ func (c *userServiceProtobufClient) GetFavoriteTracks(ctx context.Context, in *U
 	return out, err
 }
 
-func (c *userServiceProtobufClient) GetOwnedTracks(ctx context.Context, in *User) (*Tracks, error) {
-	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
-	ctx = ctxsetters.WithServiceName(ctx, "UserService")
-	ctx = ctxsetters.WithMethodName(ctx, "GetOwnedTracks")
-	out := new(Tracks)
-	err := doProtobufRequest(ctx, c.client, c.urls[10], in, out)
-	return out, err
-}
-
-func (c *userServiceProtobufClient) GetTrackHistory(ctx context.Context, in *User) (*Tracks, error) {
-	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
-	ctx = ctxsetters.WithServiceName(ctx, "UserService")
-	ctx = ctxsetters.WithMethodName(ctx, "GetTrackHistory")
-	out := new(Tracks)
-	err := doProtobufRequest(ctx, c.client, c.urls[11], in, out)
-	return out, err
-}
-
-func (c *userServiceProtobufClient) GetSupportedArtists(ctx context.Context, in *User) (*Artists, error) {
-	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
-	ctx = ctxsetters.WithServiceName(ctx, "UserService")
-	ctx = ctxsetters.WithMethodName(ctx, "GetSupportedArtists")
-	out := new(Artists)
-	err := doProtobufRequest(ctx, c.client, c.urls[12], in, out)
-	return out, err
-}
-
-func (c *userServiceProtobufClient) CreatePlay(ctx context.Context, in *CreatePlayRequest) (*CreatePlayResponse, error) {
-	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
-	ctx = ctxsetters.WithServiceName(ctx, "UserService")
-	ctx = ctxsetters.WithMethodName(ctx, "CreatePlay")
-	out := new(CreatePlayResponse)
-	err := doProtobufRequest(ctx, c.client, c.urls[13], in, out)
-	return out, err
-}
-
 // =======================
 // UserService JSON Client
 // =======================
 
 type userServiceJSONClient struct {
 	client HTTPClient
-	urls   [14]string
+	urls   [10]string
 }
 
 // NewUserServiceJSONClient creates a JSON client that implements the UserService interface.
 // It communicates using JSON and can be configured with a custom HTTPClient.
 func NewUserServiceJSONClient(addr string, client HTTPClient) UserService {
 	prefix := urlBase(addr) + UserServicePathPrefix
-	urls := [14]string{
+	urls := [10]string{
 		prefix + "CreateUser",
 		prefix + "GetUser",
 		prefix + "UpdateUser",
@@ -256,10 +208,6 @@ func NewUserServiceJSONClient(addr string, client HTTPClient) UserService {
 		prefix + "RemoveFavoriteTrack",
 		prefix + "GetPlaylists",
 		prefix + "GetFavoriteTracks",
-		prefix + "GetOwnedTracks",
-		prefix + "GetTrackHistory",
-		prefix + "GetSupportedArtists",
-		prefix + "CreatePlay",
 	}
 	if httpClient, ok := client.(*http.Client); ok {
 		return &userServiceJSONClient{
@@ -363,42 +311,6 @@ func (c *userServiceJSONClient) GetFavoriteTracks(ctx context.Context, in *User)
 	return out, err
 }
 
-func (c *userServiceJSONClient) GetOwnedTracks(ctx context.Context, in *User) (*Tracks, error) {
-	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
-	ctx = ctxsetters.WithServiceName(ctx, "UserService")
-	ctx = ctxsetters.WithMethodName(ctx, "GetOwnedTracks")
-	out := new(Tracks)
-	err := doJSONRequest(ctx, c.client, c.urls[10], in, out)
-	return out, err
-}
-
-func (c *userServiceJSONClient) GetTrackHistory(ctx context.Context, in *User) (*Tracks, error) {
-	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
-	ctx = ctxsetters.WithServiceName(ctx, "UserService")
-	ctx = ctxsetters.WithMethodName(ctx, "GetTrackHistory")
-	out := new(Tracks)
-	err := doJSONRequest(ctx, c.client, c.urls[11], in, out)
-	return out, err
-}
-
-func (c *userServiceJSONClient) GetSupportedArtists(ctx context.Context, in *User) (*Artists, error) {
-	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
-	ctx = ctxsetters.WithServiceName(ctx, "UserService")
-	ctx = ctxsetters.WithMethodName(ctx, "GetSupportedArtists")
-	out := new(Artists)
-	err := doJSONRequest(ctx, c.client, c.urls[12], in, out)
-	return out, err
-}
-
-func (c *userServiceJSONClient) CreatePlay(ctx context.Context, in *CreatePlayRequest) (*CreatePlayResponse, error) {
-	ctx = ctxsetters.WithPackageName(ctx, "resonate.api.user")
-	ctx = ctxsetters.WithServiceName(ctx, "UserService")
-	ctx = ctxsetters.WithMethodName(ctx, "CreatePlay")
-	out := new(CreatePlayResponse)
-	err := doJSONRequest(ctx, c.client, c.urls[13], in, out)
-	return out, err
-}
-
 // ==========================
 // UserService Server Handler
 // ==========================
@@ -476,18 +388,6 @@ func (s *userServiceServer) ServeHTTP(resp http.ResponseWriter, req *http.Reques
 		return
 	case "/twirp/resonate.api.user.UserService/GetFavoriteTracks":
 		s.serveGetFavoriteTracks(ctx, resp, req)
-		return
-	case "/twirp/resonate.api.user.UserService/GetOwnedTracks":
-		s.serveGetOwnedTracks(ctx, resp, req)
-		return
-	case "/twirp/resonate.api.user.UserService/GetTrackHistory":
-		s.serveGetTrackHistory(ctx, resp, req)
-		return
-	case "/twirp/resonate.api.user.UserService/GetSupportedArtists":
-		s.serveGetSupportedArtists(ctx, resp, req)
-		return
-	case "/twirp/resonate.api.user.UserService/CreatePlay":
-		s.serveCreatePlay(ctx, resp, req)
 		return
 	default:
 		msg := fmt.Sprintf("no handler for path %q", req.URL.Path)
@@ -1937,582 +1837,6 @@ func (s *userServiceServer) serveGetFavoriteTracksProtobuf(ctx context.Context, 
 	callResponseSent(ctx, s.hooks)
 }
 
-func (s *userServiceServer) serveGetOwnedTracks(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	header := req.Header.Get("Content-Type")
-	i := strings.Index(header, ";")
-	if i == -1 {
-		i = len(header)
-	}
-	switch strings.TrimSpace(strings.ToLower(header[:i])) {
-	case "application/json":
-		s.serveGetOwnedTracksJSON(ctx, resp, req)
-	case "application/protobuf":
-		s.serveGetOwnedTracksProtobuf(ctx, resp, req)
-	default:
-		msg := fmt.Sprintf("unexpected Content-Type: %q", req.Header.Get("Content-Type"))
-		twerr := badRouteError(msg, req.Method, req.URL.Path)
-		s.writeError(ctx, resp, twerr)
-	}
-}
-
-func (s *userServiceServer) serveGetOwnedTracksJSON(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "GetOwnedTracks")
-	ctx, err = callRequestRouted(ctx, s.hooks)
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-
-	reqContent := new(User)
-	unmarshaler := jsonpb.Unmarshaler{AllowUnknownFields: true}
-	if err = unmarshaler.Unmarshal(req.Body, reqContent); err != nil {
-		err = wrapErr(err, "failed to parse request json")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	// Call service method
-	var respContent *Tracks
-	func() {
-		defer func() {
-			// In case of a panic, serve a 500 error and then panic.
-			if r := recover(); r != nil {
-				s.writeError(ctx, resp, twirp.InternalError("Internal service panic"))
-				panic(r)
-			}
-		}()
-		respContent, err = s.GetOwnedTracks(ctx, reqContent)
-	}()
-
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *Tracks and nil error while calling GetOwnedTracks. nil responses are not supported"))
-		return
-	}
-
-	ctx = callResponsePrepared(ctx, s.hooks)
-
-	var buf bytes.Buffer
-	marshaler := &jsonpb.Marshaler{OrigName: true}
-	if err = marshaler.Marshal(&buf, respContent); err != nil {
-		err = wrapErr(err, "failed to marshal json response")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	ctx = ctxsetters.WithStatusCode(ctx, http.StatusOK)
-	resp.Header().Set("Content-Type", "application/json")
-	resp.WriteHeader(http.StatusOK)
-
-	respBytes := buf.Bytes()
-	if n, err := resp.Write(respBytes); err != nil {
-		msg := fmt.Sprintf("failed to write response, %d of %d bytes written: %s", n, len(respBytes), err.Error())
-		twerr := twirp.NewError(twirp.Unknown, msg)
-		callError(ctx, s.hooks, twerr)
-	}
-	callResponseSent(ctx, s.hooks)
-}
-
-func (s *userServiceServer) serveGetOwnedTracksProtobuf(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "GetOwnedTracks")
-	ctx, err = callRequestRouted(ctx, s.hooks)
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-
-	buf, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		err = wrapErr(err, "failed to read request body")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-	reqContent := new(User)
-	if err = proto.Unmarshal(buf, reqContent); err != nil {
-		err = wrapErr(err, "failed to parse request proto")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	// Call service method
-	var respContent *Tracks
-	func() {
-		defer func() {
-			// In case of a panic, serve a 500 error and then panic.
-			if r := recover(); r != nil {
-				s.writeError(ctx, resp, twirp.InternalError("Internal service panic"))
-				panic(r)
-			}
-		}()
-		respContent, err = s.GetOwnedTracks(ctx, reqContent)
-	}()
-
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *Tracks and nil error while calling GetOwnedTracks. nil responses are not supported"))
-		return
-	}
-
-	ctx = callResponsePrepared(ctx, s.hooks)
-
-	respBytes, err := proto.Marshal(respContent)
-	if err != nil {
-		err = wrapErr(err, "failed to marshal proto response")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	ctx = ctxsetters.WithStatusCode(ctx, http.StatusOK)
-	resp.Header().Set("Content-Type", "application/protobuf")
-	resp.WriteHeader(http.StatusOK)
-	if n, err := resp.Write(respBytes); err != nil {
-		msg := fmt.Sprintf("failed to write response, %d of %d bytes written: %s", n, len(respBytes), err.Error())
-		twerr := twirp.NewError(twirp.Unknown, msg)
-		callError(ctx, s.hooks, twerr)
-	}
-	callResponseSent(ctx, s.hooks)
-}
-
-func (s *userServiceServer) serveGetTrackHistory(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	header := req.Header.Get("Content-Type")
-	i := strings.Index(header, ";")
-	if i == -1 {
-		i = len(header)
-	}
-	switch strings.TrimSpace(strings.ToLower(header[:i])) {
-	case "application/json":
-		s.serveGetTrackHistoryJSON(ctx, resp, req)
-	case "application/protobuf":
-		s.serveGetTrackHistoryProtobuf(ctx, resp, req)
-	default:
-		msg := fmt.Sprintf("unexpected Content-Type: %q", req.Header.Get("Content-Type"))
-		twerr := badRouteError(msg, req.Method, req.URL.Path)
-		s.writeError(ctx, resp, twerr)
-	}
-}
-
-func (s *userServiceServer) serveGetTrackHistoryJSON(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "GetTrackHistory")
-	ctx, err = callRequestRouted(ctx, s.hooks)
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-
-	reqContent := new(User)
-	unmarshaler := jsonpb.Unmarshaler{AllowUnknownFields: true}
-	if err = unmarshaler.Unmarshal(req.Body, reqContent); err != nil {
-		err = wrapErr(err, "failed to parse request json")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	// Call service method
-	var respContent *Tracks
-	func() {
-		defer func() {
-			// In case of a panic, serve a 500 error and then panic.
-			if r := recover(); r != nil {
-				s.writeError(ctx, resp, twirp.InternalError("Internal service panic"))
-				panic(r)
-			}
-		}()
-		respContent, err = s.GetTrackHistory(ctx, reqContent)
-	}()
-
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *Tracks and nil error while calling GetTrackHistory. nil responses are not supported"))
-		return
-	}
-
-	ctx = callResponsePrepared(ctx, s.hooks)
-
-	var buf bytes.Buffer
-	marshaler := &jsonpb.Marshaler{OrigName: true}
-	if err = marshaler.Marshal(&buf, respContent); err != nil {
-		err = wrapErr(err, "failed to marshal json response")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	ctx = ctxsetters.WithStatusCode(ctx, http.StatusOK)
-	resp.Header().Set("Content-Type", "application/json")
-	resp.WriteHeader(http.StatusOK)
-
-	respBytes := buf.Bytes()
-	if n, err := resp.Write(respBytes); err != nil {
-		msg := fmt.Sprintf("failed to write response, %d of %d bytes written: %s", n, len(respBytes), err.Error())
-		twerr := twirp.NewError(twirp.Unknown, msg)
-		callError(ctx, s.hooks, twerr)
-	}
-	callResponseSent(ctx, s.hooks)
-}
-
-func (s *userServiceServer) serveGetTrackHistoryProtobuf(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "GetTrackHistory")
-	ctx, err = callRequestRouted(ctx, s.hooks)
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-
-	buf, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		err = wrapErr(err, "failed to read request body")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-	reqContent := new(User)
-	if err = proto.Unmarshal(buf, reqContent); err != nil {
-		err = wrapErr(err, "failed to parse request proto")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	// Call service method
-	var respContent *Tracks
-	func() {
-		defer func() {
-			// In case of a panic, serve a 500 error and then panic.
-			if r := recover(); r != nil {
-				s.writeError(ctx, resp, twirp.InternalError("Internal service panic"))
-				panic(r)
-			}
-		}()
-		respContent, err = s.GetTrackHistory(ctx, reqContent)
-	}()
-
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *Tracks and nil error while calling GetTrackHistory. nil responses are not supported"))
-		return
-	}
-
-	ctx = callResponsePrepared(ctx, s.hooks)
-
-	respBytes, err := proto.Marshal(respContent)
-	if err != nil {
-		err = wrapErr(err, "failed to marshal proto response")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	ctx = ctxsetters.WithStatusCode(ctx, http.StatusOK)
-	resp.Header().Set("Content-Type", "application/protobuf")
-	resp.WriteHeader(http.StatusOK)
-	if n, err := resp.Write(respBytes); err != nil {
-		msg := fmt.Sprintf("failed to write response, %d of %d bytes written: %s", n, len(respBytes), err.Error())
-		twerr := twirp.NewError(twirp.Unknown, msg)
-		callError(ctx, s.hooks, twerr)
-	}
-	callResponseSent(ctx, s.hooks)
-}
-
-func (s *userServiceServer) serveGetSupportedArtists(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	header := req.Header.Get("Content-Type")
-	i := strings.Index(header, ";")
-	if i == -1 {
-		i = len(header)
-	}
-	switch strings.TrimSpace(strings.ToLower(header[:i])) {
-	case "application/json":
-		s.serveGetSupportedArtistsJSON(ctx, resp, req)
-	case "application/protobuf":
-		s.serveGetSupportedArtistsProtobuf(ctx, resp, req)
-	default:
-		msg := fmt.Sprintf("unexpected Content-Type: %q", req.Header.Get("Content-Type"))
-		twerr := badRouteError(msg, req.Method, req.URL.Path)
-		s.writeError(ctx, resp, twerr)
-	}
-}
-
-func (s *userServiceServer) serveGetSupportedArtistsJSON(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "GetSupportedArtists")
-	ctx, err = callRequestRouted(ctx, s.hooks)
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-
-	reqContent := new(User)
-	unmarshaler := jsonpb.Unmarshaler{AllowUnknownFields: true}
-	if err = unmarshaler.Unmarshal(req.Body, reqContent); err != nil {
-		err = wrapErr(err, "failed to parse request json")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	// Call service method
-	var respContent *Artists
-	func() {
-		defer func() {
-			// In case of a panic, serve a 500 error and then panic.
-			if r := recover(); r != nil {
-				s.writeError(ctx, resp, twirp.InternalError("Internal service panic"))
-				panic(r)
-			}
-		}()
-		respContent, err = s.GetSupportedArtists(ctx, reqContent)
-	}()
-
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *Artists and nil error while calling GetSupportedArtists. nil responses are not supported"))
-		return
-	}
-
-	ctx = callResponsePrepared(ctx, s.hooks)
-
-	var buf bytes.Buffer
-	marshaler := &jsonpb.Marshaler{OrigName: true}
-	if err = marshaler.Marshal(&buf, respContent); err != nil {
-		err = wrapErr(err, "failed to marshal json response")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	ctx = ctxsetters.WithStatusCode(ctx, http.StatusOK)
-	resp.Header().Set("Content-Type", "application/json")
-	resp.WriteHeader(http.StatusOK)
-
-	respBytes := buf.Bytes()
-	if n, err := resp.Write(respBytes); err != nil {
-		msg := fmt.Sprintf("failed to write response, %d of %d bytes written: %s", n, len(respBytes), err.Error())
-		twerr := twirp.NewError(twirp.Unknown, msg)
-		callError(ctx, s.hooks, twerr)
-	}
-	callResponseSent(ctx, s.hooks)
-}
-
-func (s *userServiceServer) serveGetSupportedArtistsProtobuf(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "GetSupportedArtists")
-	ctx, err = callRequestRouted(ctx, s.hooks)
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-
-	buf, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		err = wrapErr(err, "failed to read request body")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-	reqContent := new(User)
-	if err = proto.Unmarshal(buf, reqContent); err != nil {
-		err = wrapErr(err, "failed to parse request proto")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	// Call service method
-	var respContent *Artists
-	func() {
-		defer func() {
-			// In case of a panic, serve a 500 error and then panic.
-			if r := recover(); r != nil {
-				s.writeError(ctx, resp, twirp.InternalError("Internal service panic"))
-				panic(r)
-			}
-		}()
-		respContent, err = s.GetSupportedArtists(ctx, reqContent)
-	}()
-
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *Artists and nil error while calling GetSupportedArtists. nil responses are not supported"))
-		return
-	}
-
-	ctx = callResponsePrepared(ctx, s.hooks)
-
-	respBytes, err := proto.Marshal(respContent)
-	if err != nil {
-		err = wrapErr(err, "failed to marshal proto response")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	ctx = ctxsetters.WithStatusCode(ctx, http.StatusOK)
-	resp.Header().Set("Content-Type", "application/protobuf")
-	resp.WriteHeader(http.StatusOK)
-	if n, err := resp.Write(respBytes); err != nil {
-		msg := fmt.Sprintf("failed to write response, %d of %d bytes written: %s", n, len(respBytes), err.Error())
-		twerr := twirp.NewError(twirp.Unknown, msg)
-		callError(ctx, s.hooks, twerr)
-	}
-	callResponseSent(ctx, s.hooks)
-}
-
-func (s *userServiceServer) serveCreatePlay(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	header := req.Header.Get("Content-Type")
-	i := strings.Index(header, ";")
-	if i == -1 {
-		i = len(header)
-	}
-	switch strings.TrimSpace(strings.ToLower(header[:i])) {
-	case "application/json":
-		s.serveCreatePlayJSON(ctx, resp, req)
-	case "application/protobuf":
-		s.serveCreatePlayProtobuf(ctx, resp, req)
-	default:
-		msg := fmt.Sprintf("unexpected Content-Type: %q", req.Header.Get("Content-Type"))
-		twerr := badRouteError(msg, req.Method, req.URL.Path)
-		s.writeError(ctx, resp, twerr)
-	}
-}
-
-func (s *userServiceServer) serveCreatePlayJSON(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "CreatePlay")
-	ctx, err = callRequestRouted(ctx, s.hooks)
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-
-	reqContent := new(CreatePlayRequest)
-	unmarshaler := jsonpb.Unmarshaler{AllowUnknownFields: true}
-	if err = unmarshaler.Unmarshal(req.Body, reqContent); err != nil {
-		err = wrapErr(err, "failed to parse request json")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	// Call service method
-	var respContent *CreatePlayResponse
-	func() {
-		defer func() {
-			// In case of a panic, serve a 500 error and then panic.
-			if r := recover(); r != nil {
-				s.writeError(ctx, resp, twirp.InternalError("Internal service panic"))
-				panic(r)
-			}
-		}()
-		respContent, err = s.CreatePlay(ctx, reqContent)
-	}()
-
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *CreatePlayResponse and nil error while calling CreatePlay. nil responses are not supported"))
-		return
-	}
-
-	ctx = callResponsePrepared(ctx, s.hooks)
-
-	var buf bytes.Buffer
-	marshaler := &jsonpb.Marshaler{OrigName: true}
-	if err = marshaler.Marshal(&buf, respContent); err != nil {
-		err = wrapErr(err, "failed to marshal json response")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	ctx = ctxsetters.WithStatusCode(ctx, http.StatusOK)
-	resp.Header().Set("Content-Type", "application/json")
-	resp.WriteHeader(http.StatusOK)
-
-	respBytes := buf.Bytes()
-	if n, err := resp.Write(respBytes); err != nil {
-		msg := fmt.Sprintf("failed to write response, %d of %d bytes written: %s", n, len(respBytes), err.Error())
-		twerr := twirp.NewError(twirp.Unknown, msg)
-		callError(ctx, s.hooks, twerr)
-	}
-	callResponseSent(ctx, s.hooks)
-}
-
-func (s *userServiceServer) serveCreatePlayProtobuf(ctx context.Context, resp http.ResponseWriter, req *http.Request) {
-	var err error
-	ctx = ctxsetters.WithMethodName(ctx, "CreatePlay")
-	ctx, err = callRequestRouted(ctx, s.hooks)
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-
-	buf, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		err = wrapErr(err, "failed to read request body")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-	reqContent := new(CreatePlayRequest)
-	if err = proto.Unmarshal(buf, reqContent); err != nil {
-		err = wrapErr(err, "failed to parse request proto")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	// Call service method
-	var respContent *CreatePlayResponse
-	func() {
-		defer func() {
-			// In case of a panic, serve a 500 error and then panic.
-			if r := recover(); r != nil {
-				s.writeError(ctx, resp, twirp.InternalError("Internal service panic"))
-				panic(r)
-			}
-		}()
-		respContent, err = s.CreatePlay(ctx, reqContent)
-	}()
-
-	if err != nil {
-		s.writeError(ctx, resp, err)
-		return
-	}
-	if respContent == nil {
-		s.writeError(ctx, resp, twirp.InternalError("received a nil *CreatePlayResponse and nil error while calling CreatePlay. nil responses are not supported"))
-		return
-	}
-
-	ctx = callResponsePrepared(ctx, s.hooks)
-
-	respBytes, err := proto.Marshal(respContent)
-	if err != nil {
-		err = wrapErr(err, "failed to marshal proto response")
-		s.writeError(ctx, resp, twirp.InternalErrorWith(err))
-		return
-	}
-
-	ctx = ctxsetters.WithStatusCode(ctx, http.StatusOK)
-	resp.Header().Set("Content-Type", "application/protobuf")
-	resp.WriteHeader(http.StatusOK)
-	if n, err := resp.Write(respBytes); err != nil {
-		msg := fmt.Sprintf("failed to write response, %d of %d bytes written: %s", n, len(respBytes), err.Error())
-		twerr := twirp.NewError(twirp.Unknown, msg)
-		callError(ctx, s.hooks, twerr)
-	}
-	callResponseSent(ctx, s.hooks)
-}
-
 func (s *userServiceServer) ServiceDescriptor() ([]byte, int) {
 	return twirpFileDescriptor0, 0
 }
@@ -2942,63 +2266,59 @@ func callError(ctx context.Context, h *twirp.ServerHooks, err twirp.Error) conte
 }
 
 var twirpFileDescriptor0 = []byte{
-	// 918 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0xdb, 0x6e, 0xdb, 0x46,
-	0x10, 0x85, 0x2e, 0xd6, 0x65, 0x74, 0xb1, 0xbd, 0x29, 0x6c, 0x46, 0x6d, 0x03, 0x95, 0x69, 0x51,
-	0xa1, 0x17, 0xb9, 0x70, 0x1f, 0x52, 0xa4, 0x68, 0x0a, 0xc7, 0x17, 0xc5, 0x4d, 0x63, 0x17, 0x74,
-	0xfc, 0xd0, 0xbe, 0x10, 0x1b, 0x71, 0x94, 0x12, 0xa6, 0x48, 0x76, 0x77, 0x29, 0x43, 0xdf, 0xd0,
-	0x4f, 0xe8, 0xb7, 0xf4, 0xdf, 0x82, 0x9d, 0x5d, 0xca, 0x16, 0x2c, 0x3a, 0x81, 0x90, 0x17, 0x81,
-	0x73, 0xce, 0x9c, 0x33, 0xcb, 0xd9, 0xdd, 0xa1, 0x60, 0x47, 0xa4, 0xe3, 0xbd, 0x4c, 0xa2, 0xd8,
-	0x93, 0x28, 0x66, 0xe1, 0x18, 0x87, 0xa9, 0x48, 0x54, 0xc2, 0xb6, 0x05, 0xca, 0x24, 0xe6, 0x0a,
-	0x87, 0x3c, 0x0d, 0x87, 0x3a, 0xa1, 0xd7, 0xd7, 0xbf, 0xdf, 0xf3, 0x34, 0xdc, 0xd3, 0x1a, 0x25,
-	0xf8, 0xf8, 0x6a, 0x59, 0xd4, 0x7b, 0xb4, 0x9c, 0xc1, 0xdf, 0x2e, 0xf3, 0xee, 0x7f, 0x55, 0xa8,
-	0x5e, 0x4a, 0x14, 0xac, 0x0b, 0xe5, 0x30, 0x70, 0x4a, 0xfd, 0xd2, 0xa0, 0xe9, 0x95, 0xc3, 0x80,
-	0xf5, 0xa0, 0xa1, 0xa5, 0x31, 0x9f, 0xa2, 0x53, 0x26, 0x74, 0x11, 0xb3, 0x4f, 0x60, 0x03, 0xa7,
-	0x3c, 0x8c, 0x9c, 0x0a, 0x11, 0x26, 0x60, 0x5f, 0x40, 0x3b, 0x08, 0x65, 0x1a, 0xf1, 0xb9, 0x4f,
-	0xaa, 0x2a, 0x91, 0x2d, 0x8b, 0x9d, 0x69, 0xe1, 0xa7, 0xd0, 0x9c, 0x64, 0x51, 0x64, 0xf8, 0x0d,
-	0xe3, 0xaa, 0x01, 0x22, 0x3f, 0x07, 0x98, 0x84, 0x42, 0x2a, 0xc3, 0xd6, 0x88, 0x6d, 0x12, 0x92,
-	0x6b, 0x23, 0x9e, 0xb3, 0x75, 0xa3, 0xd5, 0x00, 0x91, 0x3b, 0x50, 0x9b, 0xe2, 0xf4, 0x0d, 0x0a,
-	0xa7, 0xd1, 0x2f, 0x0d, 0x1a, 0x9e, 0x8d, 0x34, 0xce, 0x67, 0x5c, 0x71, 0xe1, 0x34, 0xfb, 0xa5,
-	0x41, 0xdb, 0xb3, 0x11, 0x7b, 0x02, 0xbb, 0x31, 0x5e, 0xcb, 0x08, 0x95, 0x42, 0xe1, 0xc7, 0x89,
-	0x0a, 0x27, 0xe1, 0x98, 0xab, 0x30, 0x89, 0x1d, 0x20, 0x83, 0x9d, 0x1b, 0xfa, 0xec, 0x16, 0xcb,
-	0xbe, 0x86, 0xcd, 0x09, 0x9f, 0x25, 0x22, 0x54, 0xe8, 0x53, 0xbf, 0xa5, 0xd3, 0xea, 0x57, 0x06,
-	0x4d, 0xaf, 0x9b, 0xc3, 0xaf, 0x09, 0xa5, 0xc4, 0x24, 0x8a, 0x92, 0x6b, 0x0c, 0xfc, 0xb7, 0x22,
-	0xc9, 0x52, 0xe9, 0xb4, 0x6d, 0xa2, 0x85, 0x47, 0x84, 0xb2, 0x97, 0xb0, 0x99, 0x5c, 0xc7, 0x28,
-	0xfc, 0x64, 0x92, 0x27, 0x76, 0xfa, 0x95, 0x41, 0x6b, 0xff, 0xf1, 0xf0, 0xce, 0x86, 0x0f, 0x3d,
-	0x8c, 0xb8, 0xc2, 0x40, 0xef, 0x18, 0xc9, 0xbd, 0x0e, 0x69, 0xcf, 0x27, 0xd6, 0xec, 0x15, 0xe8,
-	0x53, 0x12, 0x06, 0x18, 0x8f, 0xd1, 0xe7, 0x41, 0x20, 0x50, 0x4a, 0xa7, 0xdb, 0x2f, 0x0d, 0x5a,
-	0xfb, 0xfd, 0x15, 0x76, 0x17, 0x4a, 0x20, 0xaa, 0x03, 0x93, 0xe7, 0x6d, 0x2d, 0xa4, 0x16, 0x71,
-	0xcf, 0xa1, 0xf9, 0x47, 0xc4, 0xe7, 0x51, 0x28, 0x95, 0x64, 0xcf, 0xa1, 0x99, 0xe6, 0x81, 0x53,
-	0xa2, 0x25, 0x7e, 0x59, 0xbc, 0x44, 0x6a, 0x83, 0x59, 0xe3, 0x8d, 0xcc, 0x7d, 0x0a, 0x35, 0xdb,
-	0x9f, 0x1f, 0xa0, 0x66, 0xfb, 0x67, 0xac, 0x9c, 0x15, 0x56, 0x94, 0xea, 0xd9, 0x3c, 0xf7, 0xff,
-	0x12, 0x74, 0x96, 0x16, 0x7c, 0xe7, 0xcc, 0x3e, 0x83, 0x6a, 0xc0, 0x15, 0x77, 0xca, 0xe4, 0xf8,
-	0xcd, 0xfb, 0x5e, 0x78, 0x78, 0xc4, 0x15, 0x3f, 0x8e, 0x95, 0x98, 0x7b, 0xa4, 0x63, 0x8f, 0xa1,
-	0x93, 0xa2, 0xd0, 0x9a, 0xc8, 0x27, 0xa3, 0x0a, 0x9d, 0x85, 0x76, 0x0e, 0xea, 0xfc, 0xde, 0x13,
-	0x68, 0x2e, 0x74, 0x6c, 0x0b, 0x2a, 0x57, 0x38, 0xb7, 0x4b, 0xd0, 0x8f, 0xfa, 0x6e, 0xcc, 0x78,
-	0x94, 0xe5, 0x97, 0xc6, 0x04, 0x4f, 0xcb, 0x3f, 0x95, 0xdc, 0x17, 0x50, 0x3f, 0x10, 0x8a, 0x5a,
-	0xf9, 0x0b, 0xd4, 0xb9, 0x79, 0xb4, 0x6f, 0xff, 0x41, 0x7b, 0x9d, 0x6b, 0xdc, 0x33, 0xd8, 0xd4,
-	0xe8, 0xeb, 0x64, 0xc1, 0xb1, 0x5d, 0xa8, 0x6b, 0x91, 0xbf, 0xe8, 0x47, 0x4d, 0x87, 0xa7, 0x01,
-	0x73, 0xa1, 0x43, 0x04, 0x1d, 0x2d, 0x4d, 0x9b, 0x75, 0xb5, 0xb2, 0x5c, 0x7a, 0x1a, 0xb8, 0x07,
-	0xd0, 0x32, 0x7e, 0xd4, 0xf0, 0x62, 0xaf, 0x87, 0xd0, 0xa0, 0xbd, 0xb8, 0xb1, 0xa9, 0x53, 0x7c,
-	0x1a, 0xb8, 0x7f, 0x43, 0x55, 0x9f, 0x94, 0x75, 0xb4, 0x8c, 0x41, 0x55, 0xcd, 0x53, 0xb4, 0xd3,
-	0x84, 0x9e, 0x99, 0x03, 0xf5, 0xb1, 0xc0, 0x20, 0x54, 0x92, 0xe6, 0x48, 0xd9, 0xcb, 0x43, 0x37,
-	0x84, 0xed, 0x43, 0x81, 0x5c, 0xa1, 0xae, 0xe7, 0xe1, 0x3f, 0x19, 0x4a, 0xc5, 0xbe, 0x85, 0xaa,
-	0x3e, 0x64, 0x54, 0xb3, 0xb5, 0xbf, 0xbb, 0xa2, 0x9b, 0x94, 0x4d, 0x49, 0xfa, 0x6a, 0x66, 0x69,
-	0xa0, 0x7b, 0xeb, 0xe7, 0x35, 0xca, 0x54, 0xa3, 0x6b, 0xe1, 0x43, 0x5b, 0xea, 0x0a, 0xd8, 0xed,
-	0x52, 0x32, 0x4d, 0x62, 0x89, 0xec, 0x3b, 0x60, 0xb9, 0x9c, 0x86, 0xdd, 0x38, 0xc9, 0x62, 0x45,
-	0x95, 0x37, 0xbc, 0x2d, 0xcb, 0x68, 0xc1, 0xa1, 0xc6, 0x3f, 0xb8, 0xd8, 0xfe, 0xbf, 0x0d, 0xb3,
-	0x0b, 0x17, 0x66, 0x3e, 0xb3, 0x67, 0x00, 0xa6, 0x38, 0x8d, 0xe7, 0x55, 0xaf, 0xa4, 0x89, 0x5e,
-	0x11, 0xc1, 0x7e, 0x86, 0xfa, 0x08, 0xd5, 0x9a, 0xe2, 0x5f, 0x01, 0x2e, 0x69, 0x79, 0xf7, 0xeb,
-	0x57, 0x5d, 0xda, 0xe3, 0x69, 0xaa, 0xe6, 0xda, 0xe0, 0x08, 0x23, 0x5c, 0xdf, 0xe0, 0x25, 0xb4,
-	0x4e, 0x68, 0x50, 0x9a, 0xf3, 0xed, 0x16, 0x38, 0xdc, 0xba, 0x03, 0xf7, 0x98, 0xbd, 0x82, 0xce,
-	0x65, 0x3c, 0xf9, 0x68, 0x76, 0xbf, 0xc3, 0xd6, 0x41, 0x10, 0x9c, 0xdc, 0x1e, 0xf8, 0xec, 0x51,
-	0xa1, 0x23, 0xf1, 0xf7, 0xb8, 0x9d, 0xc3, 0x03, 0x0f, 0xa7, 0xc9, 0x0c, 0x3f, 0x96, 0xe1, 0x31,
-	0xb4, 0x47, 0xa8, 0x6e, 0x06, 0x77, 0x61, 0xf7, 0x3f, 0x2b, 0xb8, 0x27, 0x46, 0x36, 0x82, 0xed,
-	0x11, 0xaa, 0x93, 0xe5, 0xcf, 0x5a, 0xa1, 0xd7, 0xc3, 0xa2, 0xf9, 0x2d, 0xd9, 0x11, 0x74, 0x47,
-	0xa8, 0xce, 0xaf, 0x63, 0xfb, 0x55, 0x58, 0xcf, 0xe5, 0x18, 0x36, 0x47, 0xa8, 0x28, 0x78, 0x11,
-	0x4a, 0x95, 0x88, 0xf9, 0x5a, 0x36, 0xbf, 0xc1, 0x83, 0x11, 0xaa, 0x8b, 0x2c, 0x4d, 0x13, 0xa1,
-	0x30, 0xc8, 0x27, 0x72, 0xa1, 0x55, 0x6f, 0x05, 0x91, 0x8b, 0xfe, 0xcc, 0xaf, 0x28, 0x8d, 0xbe,
-	0x55, 0x1f, 0xc3, 0x3b, 0x93, 0xaa, 0xf7, 0xd5, 0x7b, 0xb2, 0xcc, 0x90, 0x79, 0x5e, 0xfb, 0xab,
-	0xaa, 0xa9, 0x37, 0x35, 0xfa, 0x9b, 0xf6, 0xe3, 0xbb, 0x00, 0x00, 0x00, 0xff, 0xff, 0x94, 0x8b,
-	0xae, 0x33, 0x15, 0x0a, 0x00, 0x00,
+	// 853 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0xdb, 0x6e, 0x1b, 0x37,
+	0x10, 0x85, 0x2e, 0x96, 0xac, 0x91, 0xe4, 0x0b, 0x5b, 0xd8, 0x1b, 0xb5, 0x0d, 0xd4, 0x4d, 0x81,
+	0x0a, 0xbd, 0xc8, 0x85, 0xfb, 0x90, 0x22, 0x45, 0x53, 0x38, 0x8e, 0xad, 0x1a, 0x69, 0xec, 0x62,
+	0x13, 0xbf, 0xf4, 0x65, 0xc1, 0x88, 0xa3, 0x94, 0xf0, 0x6a, 0x77, 0x4b, 0x52, 0x32, 0xf4, 0x2d,
+	0xfd, 0x96, 0x7e, 0x47, 0x7f, 0xa7, 0xe0, 0x90, 0x2b, 0x5b, 0x88, 0xd6, 0x09, 0x8c, 0xbc, 0x18,
+	0x3b, 0xe7, 0xcc, 0x39, 0x43, 0x0e, 0xc9, 0xb1, 0x60, 0x4f, 0xe5, 0xe3, 0x83, 0x99, 0x46, 0x75,
+	0xa0, 0x51, 0xcd, 0xe5, 0x18, 0x87, 0xb9, 0xca, 0x4c, 0xc6, 0x76, 0x15, 0xea, 0x2c, 0xe5, 0x06,
+	0x87, 0x3c, 0x97, 0x43, 0x9b, 0xd0, 0xeb, 0xdb, 0xbf, 0xdf, 0xf3, 0x5c, 0x1e, 0x58, 0x8d, 0x51,
+	0x7c, 0x7c, 0xb5, 0x2a, 0xea, 0x3d, 0x5c, 0xcd, 0xe0, 0x6f, 0x57, 0xf9, 0xf0, 0x9f, 0x3a, 0xd4,
+	0x2f, 0x35, 0x2a, 0xb6, 0x05, 0x55, 0x29, 0x82, 0x4a, 0xbf, 0x32, 0x68, 0x45, 0x55, 0x29, 0x58,
+	0x0f, 0x36, 0xad, 0x34, 0xe5, 0x53, 0x0c, 0xaa, 0x84, 0x2e, 0x63, 0xf6, 0x29, 0x6c, 0xe0, 0x94,
+	0xcb, 0x24, 0xa8, 0x11, 0xe1, 0x02, 0xf6, 0x25, 0x74, 0x84, 0xd4, 0x79, 0xc2, 0x17, 0x31, 0xa9,
+	0xea, 0x44, 0xb6, 0x3d, 0x76, 0x6e, 0x85, 0x9f, 0x41, 0x6b, 0x32, 0x4b, 0x12, 0xc7, 0x6f, 0x38,
+	0x57, 0x0b, 0x10, 0xf9, 0x05, 0xc0, 0x44, 0x2a, 0x6d, 0x1c, 0xdb, 0x20, 0xb6, 0x45, 0x48, 0xa1,
+	0x4d, 0x78, 0xc1, 0x36, 0x9d, 0xd6, 0x02, 0x44, 0xee, 0x41, 0x63, 0x8a, 0xd3, 0x37, 0xa8, 0x82,
+	0xcd, 0x7e, 0x65, 0xb0, 0x19, 0xf9, 0xc8, 0xe2, 0x7c, 0xce, 0x0d, 0x57, 0x41, 0xab, 0x5f, 0x19,
+	0x74, 0x22, 0x1f, 0xb1, 0xc7, 0xb0, 0x9f, 0xe2, 0xb5, 0x4e, 0xd0, 0x18, 0x54, 0x71, 0x9a, 0x19,
+	0x39, 0x91, 0x63, 0x6e, 0x64, 0x96, 0x06, 0x40, 0x06, 0x7b, 0x37, 0xf4, 0xf9, 0x2d, 0x96, 0x7d,
+	0x0d, 0xdb, 0x13, 0x3e, 0xcf, 0x94, 0x34, 0x18, 0x53, 0xbf, 0x75, 0xd0, 0xee, 0xd7, 0x06, 0xad,
+	0x68, 0xab, 0x80, 0x5f, 0x13, 0x4a, 0x89, 0x59, 0x92, 0x64, 0xd7, 0x28, 0xe2, 0xb7, 0x2a, 0x9b,
+	0xe5, 0x3a, 0xe8, 0xf8, 0x44, 0x0f, 0x8f, 0x08, 0x65, 0x2f, 0x60, 0x3b, 0xbb, 0x4e, 0x51, 0xc5,
+	0xd9, 0xa4, 0x48, 0xec, 0xf6, 0x6b, 0x83, 0xf6, 0xe1, 0xa3, 0xe1, 0x3b, 0x07, 0x3e, 0x8c, 0x30,
+	0xe1, 0x06, 0x85, 0x3d, 0x31, 0x92, 0x47, 0x5d, 0xd2, 0x5e, 0x4c, 0xbc, 0xd9, 0x4b, 0xb0, 0xb7,
+	0x44, 0x0a, 0x4c, 0xc7, 0x18, 0x73, 0x21, 0x14, 0x6a, 0x1d, 0x6c, 0xf5, 0x2b, 0x83, 0xf6, 0x61,
+	0x7f, 0x8d, 0xdd, 0x2b, 0xa3, 0x10, 0xcd, 0x91, 0xcb, 0x8b, 0x76, 0x96, 0x52, 0x8f, 0x84, 0x17,
+	0xd0, 0xfa, 0x23, 0xe1, 0x8b, 0x44, 0x6a, 0xa3, 0xd9, 0x33, 0x68, 0xe5, 0x45, 0x10, 0x54, 0x68,
+	0x89, 0x5f, 0x95, 0x2f, 0x91, 0xda, 0xe0, 0xd6, 0x78, 0x23, 0x0b, 0x9f, 0x40, 0xc3, 0xf7, 0xe7,
+	0x07, 0x68, 0xf8, 0xfe, 0x39, 0xab, 0x60, 0x8d, 0x15, 0xa5, 0x46, 0x3e, 0x2f, 0xfc, 0xb7, 0x02,
+	0xdd, 0x95, 0x05, 0xbf, 0x73, 0x67, 0x9f, 0x42, 0x5d, 0x70, 0xc3, 0x83, 0x2a, 0x39, 0x7e, 0xf3,
+	0xbe, 0x0d, 0x0f, 0x9f, 0x73, 0xc3, 0x4f, 0x52, 0xa3, 0x16, 0x11, 0xe9, 0xd8, 0x23, 0xe8, 0xe6,
+	0xa8, 0xac, 0x26, 0x89, 0xc9, 0xa8, 0x46, 0x77, 0xa1, 0x53, 0x80, 0x36, 0xbf, 0xf7, 0x18, 0x5a,
+	0x4b, 0x1d, 0xdb, 0x81, 0xda, 0x15, 0x2e, 0xfc, 0x12, 0xec, 0xa7, 0x7d, 0x1b, 0x73, 0x9e, 0xcc,
+	0x8a, 0x47, 0xe3, 0x82, 0x27, 0xd5, 0x9f, 0x2a, 0xe1, 0x6f, 0xd0, 0x3c, 0x52, 0x86, 0x5a, 0xf9,
+	0x0b, 0x34, 0xb9, 0xfb, 0xf4, 0xbb, 0xff, 0xa0, 0xb3, 0x2e, 0x34, 0xe1, 0x39, 0x6c, 0x5b, 0xf4,
+	0x75, 0xb6, 0xe4, 0xd8, 0x3e, 0x34, 0xad, 0x28, 0x5e, 0xf6, 0xa3, 0x61, 0xc3, 0x33, 0xc1, 0x42,
+	0xe8, 0x12, 0x41, 0x57, 0xcb, 0xd2, 0x6e, 0x5d, 0xed, 0x59, 0x21, 0x3d, 0x13, 0xe1, 0x11, 0xb4,
+	0x9d, 0x1f, 0x35, 0xbc, 0xdc, 0xeb, 0x01, 0x6c, 0xd2, 0x59, 0xdc, 0xd8, 0x34, 0x29, 0x3e, 0x13,
+	0xe1, 0x5f, 0x50, 0xb7, 0x37, 0xe5, 0x3e, 0x5a, 0xc6, 0xa0, 0x6e, 0x16, 0x39, 0xfa, 0x69, 0x42,
+	0xdf, 0x2c, 0x80, 0xe6, 0x58, 0xa1, 0x90, 0x46, 0xd3, 0x1c, 0xa9, 0x46, 0x45, 0x18, 0x4a, 0xd8,
+	0x3d, 0x56, 0xc8, 0x0d, 0xda, 0x7a, 0x11, 0xfe, 0x3d, 0x43, 0x6d, 0xd8, 0xb7, 0x50, 0xb7, 0x97,
+	0x8c, 0x6a, 0xb6, 0x0f, 0xf7, 0xd7, 0x74, 0x93, 0xb2, 0x29, 0xc9, 0x3e, 0xcd, 0x59, 0x2e, 0x6c,
+	0x6f, 0xe3, 0xa2, 0x46, 0x95, 0x6a, 0x6c, 0x79, 0xf8, 0xd8, 0x97, 0xba, 0x02, 0x76, 0xbb, 0x94,
+	0xce, 0xb3, 0x54, 0x23, 0xfb, 0x0e, 0x58, 0x21, 0xa7, 0x61, 0x37, 0xce, 0x66, 0xa9, 0xa1, 0xca,
+	0x1b, 0xd1, 0x8e, 0x67, 0xac, 0xe0, 0xd8, 0xe2, 0x1f, 0x5c, 0xec, 0xf0, 0xbf, 0x0d, 0x77, 0x0a,
+	0xaf, 0xdc, 0x7c, 0x66, 0x4f, 0x01, 0x5c, 0x71, 0x1a, 0xcf, 0xeb, 0xb6, 0x64, 0x89, 0x5e, 0x19,
+	0xc1, 0x7e, 0x86, 0xe6, 0x08, 0xcd, 0x3d, 0xc5, 0xbf, 0x02, 0x5c, 0xd2, 0xf2, 0xee, 0xd6, 0xaf,
+	0x7b, 0xb4, 0x27, 0xd3, 0xdc, 0x2c, 0xac, 0xc1, 0x73, 0x4c, 0xf0, 0xfe, 0x06, 0x2f, 0xa0, 0x7d,
+	0x4a, 0x83, 0xd2, 0xdd, 0xef, 0xb0, 0xc4, 0xe1, 0xd6, 0x1b, 0xb8, 0xc3, 0xec, 0x25, 0x74, 0x2f,
+	0xd3, 0xc9, 0x47, 0xb3, 0xfb, 0x1d, 0x76, 0x8e, 0x84, 0x38, 0xbd, 0x3d, 0xf0, 0xd9, 0xc3, 0x52,
+	0x47, 0xe2, 0xef, 0x70, 0xbb, 0x80, 0x4f, 0x22, 0x9c, 0x66, 0x73, 0xfc, 0x58, 0x86, 0x27, 0xd0,
+	0x19, 0xa1, 0xb9, 0x19, 0xdc, 0xa5, 0xdd, 0xff, 0xbc, 0xe4, 0x9d, 0x38, 0xd9, 0x08, 0x76, 0x47,
+	0x68, 0x4e, 0x57, 0xff, 0xad, 0x95, 0x7a, 0x3d, 0x28, 0x9b, 0xdf, 0xfa, 0x59, 0xe3, 0xcf, 0xba,
+	0x0d, 0xdf, 0x34, 0xe8, 0x27, 0xc7, 0x8f, 0xff, 0x07, 0x00, 0x00, 0xff, 0xff, 0x99, 0x6a, 0x40,
+	0x73, 0xe1, 0x08, 0x00, 0x00,
 }

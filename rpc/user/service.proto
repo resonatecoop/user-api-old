@@ -19,11 +19,11 @@ service UserService {
   // User Library
   rpc GetPlaylists(User) returns (Playlists);
   rpc GetFavoriteTracks(User) returns (Tracks);
-  rpc GetOwnedTracks(User) returns (Tracks);
-  rpc GetTrackHistory(User) returns (Tracks);
+  // rpc GetOwnedTracks(User) returns (Tracks);
+  // rpc GetTrackHistory(User) returns (Tracks);
 
-  rpc GetSupportedArtists(User) returns (Artists);
-  rpc CreatePlay(CreatePlayRequest) returns (CreatePlayResponse);
+  // rpc GetSupportedArtists(User) returns (Artists);
+  // rpc CreatePlay(CreatePlayRequest) returns (CreatePlayResponse); Payment API
 }
 
 message User {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/twitchtv/twirp"
-	// "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	// userpb "user-api/rpc/user"
 	pb "user-api/rpc/track"
@@ -24,7 +24,26 @@ func NewServer(db *pg.DB) *Server {
 	return &Server{db: db}
 }
 
-func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, error) {
+func (s *Server) GetTracks(ctx context.Context, req *pb.TracksList) (*pb.TracksList, error) {
+	trackIds := make([]uuid.UUID, len(req.Tracks))
+	for i, track := range req.Tracks {
+		id, twerr := internal.GetUuidFromString(track.Id)
+		if twerr != nil {
+			return nil, twerr
+		}
+		trackIds[i] = id
+	}
+	tracksResponse, twerr := models.GetTracks(trackIds, s.db, true, ctx)
+	if twerr != nil {
+		return nil, twerr
+	}
+	return &pb.TracksList{
+		Tracks: tracksResponse,
+	}, nil
+}
+
+
+/*func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, error) {
 	t, err := getTrackModel(track)
 	if err != nil {
 		return nil, err
@@ -68,7 +87,7 @@ func (s *Server) GetTrack(ctx context.Context, track *pb.Track) (*pb.Track, erro
 	track.TrackGroups = trackGroups
 
 	return track, nil
-}
+}*/
 
 func (s *Server) SearchTracks(ctx context.Context, q *tagpb.Query) (*tagpb.SearchResults, error) {
   if len(q.Query) < 3 {

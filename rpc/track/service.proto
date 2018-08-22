@@ -8,7 +8,7 @@ option go_package = "track";
 
 service TrackService {
   rpc CreateTrack(Track) returns (Track);
-  rpc GetTrack(Track) returns (Track);
+  rpc GetTracks(TracksList) returns (TracksList);
   rpc UpdateTrack(Track) returns (Empty);
   rpc DeleteTrack(Track) returns (Empty);
 
@@ -30,4 +30,8 @@ message Track {
   string track_server_id = 10;
   repeated Tag tags = 11;
   float duration = 12;
+}
+
+message TracksList {
+  repeated Track tracks = 1;
 }

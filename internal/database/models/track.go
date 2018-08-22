@@ -43,7 +43,7 @@ type Track struct {
   Artists []uuid.UUID `sql:",type:uuid[]" pg:",array"` // for display purposes
   Tags []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
-  Plays []User `pg:"many2many:plays"`
+  // Plays []User `pg:"many2many:plays"` Payment API
   // Composers with IPI
   // Performers with IPI
 }
@@ -93,7 +93,6 @@ func SearchTracks(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Error) 
   }, nil
 }
 
-// TODO add user fav and play count
 func GetTracks(ids []uuid.UUID, db *pg.DB, showTrackGroup bool, ctx context.Context) ([]*pb.Track, twirp.Error) {
 	var tracksResponse []*pb.Track
 	if len(ids) > 0 {

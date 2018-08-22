@@ -23,5 +23,5 @@ type User struct {
   Playlists []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   OwnerOfGroups []UserGroup `pg:"fk:owner_id"`
-  Plays []Track `pg:"many2many:plays"`
+  // Plays []Track `pg:"many2many:plays"` Payment API
 }

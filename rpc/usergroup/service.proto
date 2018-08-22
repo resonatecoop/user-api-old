@@ -22,7 +22,7 @@ service UserGroupService {
   rpc AddMembers(UserGroupMembers) returns (Empty);
   rpc DeleteMembers(UserGroupMembers) returns (Empty);
 
-  rpc GetTrackAnalytics(UserGroup) returns (UserGroupTrackAnalytics);
+  // rpc GetTrackAnalytics(UserGroup) returns (UserGroupTrackAnalytics); Payment API
 
   rpc SearchUserGroups(Query) returns (SearchResults);
 }
@@ -101,12 +101,6 @@ message Link {
   string uri = 4;
   bool personal_data = 5;
 }
-
-// message Tag {
-//   string id = 1;
-//   string type = 2;
-//   string name = 3;
-// }
 
 message Privacy {
   string id = 1;

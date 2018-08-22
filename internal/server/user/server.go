@@ -102,7 +102,7 @@ func (s *Server) GetFavoriteTracks(ctx context.Context, user *pb.User) (*pb.Trac
 	}, nil
 }
 
-func (s *Server) GetOwnedTracks(ctx context.Context, user *pb.User) (*pb.Tracks, error) {
+/*func (s *Server) GetOwnedTracks(ctx context.Context, user *pb.User) (*pb.Tracks, error) {
 	u, twerr := getUserModel(user)
 	if twerr != nil {
 		return nil, twerr
@@ -207,7 +207,7 @@ func (s *Server) GetSupportedArtists(ctx context.Context, user *pb.User) (*pb.Ar
 	return &pb.Artists{
 		Artists: artists,
 	}, nil
-}
+}*/
 
 func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 	requiredErr := checkRequiredAttributes(user)
@@ -237,7 +237,7 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	}, nil
 }
 
-func (s *Server) CreatePlay(ctx context.Context, playRequest *pb.CreatePlayRequest) (*pb.CreatePlayResponse, error) {
+/*func (s *Server) CreatePlay(ctx context.Context, playRequest *pb.CreatePlayRequest) (*pb.CreatePlayResponse, error) {
 	if playRequest.Play == nil {
 		return nil, twirp.RequiredArgumentError("play")
 	}
@@ -285,7 +285,7 @@ func (s *Server) CreatePlay(ctx context.Context, playRequest *pb.CreatePlayReque
 		UpdatedPlayCount: updatedPlayCount,
 		UpdatedCredits: playRequest.UpdatedCredits,
 	}, nil
-}
+}*/
 
 func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*tagpb.Empty, error) {
 	err := checkRequiredAttributes(user)

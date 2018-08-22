@@ -27,8 +27,8 @@ var (
 	newFollowedUserGroup *models.UserGroup
 	newAlbum *models.TrackGroup
 	newUserPlaylist *models.TrackGroup
-	newTrackPlay *models.Play
-	newFavoriteTrackPlay *models.Play
+	// newTrackPlay *models.Play
+	// newFavoriteTrackPlay *models.Play
 )
 
 func TestUser(t *testing.T) {
@@ -63,55 +63,6 @@ var _ = BeforeSuite(func() {
 		newUser = &models.User{Username: "username", FullName: "full name", Email: "email@fake.com"}
 		err = db.Insert(newUser)
 		Expect(err).NotTo(HaveOccurred())
-
-		/*newLabel := &models.UserGroup{
-			DisplayName: "label",
-			Avatar: avatar,
-			OwnerId: newUser.Id,
-			TypeId: newLabelGroupTaxonomy.Id,
-			AddressId: newAddress.Id,
-		}
-		err = db.Insert(newLabel)
-		Expect(err).NotTo(HaveOccurred())
-
-		newLabelTrackGroup := &models.TrackGroup{
-			CreatorId: newUser.Id,
-			UserGroupId: newLabel.Id,
-			Title: "label compilation",
-			ReleaseDate: time.Now(),
-			Type: "lp",
-			Cover: avatar,
-			Private: false,
-		}
-		err = db.Insert(newLabelTrackGroup)
-		Expect(err).NotTo(HaveOccurred())
-
-		newLabelTracks := []uuid.UUID{}
-		for i := 1; i <= 6; i++ {
-			newLabelTrack := &models.Track{
-				CreatorId: newUser.Id,
-				UserGroupId: newLabel.Id,
-				TrackGroups: []uuid.UUID{newLabelTrackGroup.Id},
-				Title: "compilation track title",
-				Status: "paid",
-			}
-			err = db.Insert(newLabelTrack)
-			Expect(err).NotTo(HaveOccurred())
-			newLabelTracks = append(newLabelTracks, newLabelTrack.Id)
-			for i := 1; i <= 9; i++ {
-				newLabelTrackPlay := &models.Play{
-					UserId: newUser.Id,
-					TrackId: newLabelTrack.Id,
-					Type: "paid",
-					Credits: 0.02, // constant for simplicity
-				}
-				err = db.Insert(newLabelTrackPlay)
-				Expect(err).NotTo(HaveOccurred())
-			}
-		}
-		newLabelTrackGroup.Tracks = newLabelTracks
-		_, err = db.Model(newLabelTrackGroup).Column("tracks").WherePK().Update()
-		Expect(err).NotTo(HaveOccurred())*/
 
 		followers := []uuid.UUID{newUser.Id}
 		newFollowedUserGroup = &models.UserGroup{
@@ -158,14 +109,14 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newAlbum)
 		Expect(err).NotTo(HaveOccurred())
 
-		newTrackPlay = &models.Play{
+		/*newTrackPlay = &models.Play{
 			UserId: newUser.Id,
 			TrackId: newTrack.Id,
 			Type: "free",
 			Credits: 0.00,
 		}
 		err = db.Insert(newTrackPlay)
-		Expect(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())*/
 
 		tracks := []uuid.UUID{newTrack.Id}
 		newUserPlaylist = &models.TrackGroup{
@@ -201,7 +152,7 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newUserGroup)
 		Expect(err).NotTo(HaveOccurred())
 
-		newUserGroupTrackGroup := &models.TrackGroup{
+		/*newUserGroupTrackGroup := &models.TrackGroup{
 			CreatorId: newUser.Id,
 			UserGroupId: newUserGroup.Id,
 			Title: "user group album",
@@ -256,19 +207,19 @@ var _ = BeforeSuite(func() {
 			Credits: 0.02,
 		}
 		err = db.Insert(newFavoriteTrackPlay)
-		Expect(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())*/
 
 		newFavoriteTrack.TrackGroups = []uuid.UUID{newAlbum.Id}
 		_, err = db.Model(newFavoriteTrack).Column("track_groups").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
-		newUserGroup.Tracks = newUserGroupTracks
+		/*newUserGroup.Tracks = newUserGroupTracks
 		_, err = db.Model(newUserGroup).Column("tracks").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
 		newUserGroupTrackGroup.Tracks = newUserGroupTracks
 		_, err = db.Model(newUserGroupTrackGroup).Column("tracks").WherePK().Update()
-		Expect(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())*/
 
 		newTrack.TrackGroups = []uuid.UUID{newAlbum.Id, newUserPlaylist.Id}
 		newTrack.Artists = []uuid.UUID{newFollowedUserGroup.Id, newUserGroup.Id}
@@ -320,13 +271,6 @@ var _ = AfterSuite(func() {
 	err = db.Model(&groupTaxonomies).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&groupTaxonomies).Delete()
-	Expect(err).NotTo(HaveOccurred())
-
-	// Delete all plays
-	var plays []models.Play
-	err = db.Model(&plays).Select()
-	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&plays).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all tags

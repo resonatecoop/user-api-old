@@ -184,7 +184,7 @@ var _ = Describe("UserGroup server", func() {
 		})
 	})
 
-	Describe("GetTrackAnalytics", func() {
+	/*Describe("GetTrackAnalytics", func() {
 		Context("with valid uuid", func() {
 			It("should respond with artist track analytics", func() {
 				userGroup := &pb.UserGroup{Id: newArtist.Id.String()}
@@ -269,7 +269,7 @@ var _ = Describe("UserGroup server", func() {
 				Expect(twerr.Meta("argument")).To(Equal("id"))
 			})
 		})
-	})
+	})*/
 
 	Describe("UpdateUserGroup", func() {
 		Context("with valid uuid", func() {

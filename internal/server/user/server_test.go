@@ -67,7 +67,7 @@ var _ = Describe("User server", func() {
 		})
 	})
 
-	Describe("CreatePlay", func() {
+	/*Describe("CreatePlay", func() {
 		Context("with valid track id and user id", func() {
 			It("should create a play and respond with updated play count and credits", func() {
 				playRequest := &pb.CreatePlayRequest{
@@ -194,7 +194,7 @@ var _ = Describe("User server", func() {
 				})
 			})
 		})
-	})
+	})*/
 
 	Describe("GetPlaylists", func() {
 		Context("with valid uuid", func() {
@@ -245,7 +245,7 @@ var _ = Describe("User server", func() {
 	})
 
 
-	Describe("GetSupportedArtists", func() {
+	/*Describe("GetSupportedArtists", func() {
 		Context("with valid uuid", func() {
 			It("should respond with owned tracks", func() {
 				user := &pb.User{Id: newUser.Id.String()}
@@ -286,7 +286,7 @@ var _ = Describe("User server", func() {
 				Expect(twerr.Meta("argument")).To(Equal("id"))
 			})
 		})
-	})
+	})*/
 
 	Describe("GetFavoriteTracks", func() {
 		Context("with valid uuid", func() {
@@ -354,7 +354,7 @@ var _ = Describe("User server", func() {
 		})
 	})
 
-	Describe("GetOwnedTracks", func() {
+	/*Describe("GetOwnedTracks", func() {
 		Context("with valid uuid", func() {
 			It("should respond with owned tracks", func() {
 				user := &pb.User{Id: newUser.Id.String()}
@@ -479,7 +479,7 @@ var _ = Describe("User server", func() {
 				Expect(twerr.Meta("argument")).To(Equal("id"))
 			})
 		})
-	})
+	})*/
 
 
 	Describe("AddFavoriteTrack", func() {

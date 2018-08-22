@@ -40,7 +40,7 @@ func init() {
       &models.Track{},
       &models.TrackGroup{},
       &models.UserGroupMember{},
-      &models.Play{},
+      // &models.Play{},
     } {
       _, err := orm.CreateTable(db, model, &orm.CreateTableOptions{
         FKConstraints: true,
@@ -69,7 +69,7 @@ func init() {
       return err
     }
     for _, model := range []interface{}{
-      &models.Play{},
+      // &models.Play{},
       &models.Tag{},
       &models.TrackGroup{},
       &models.Track{},

@@ -566,7 +566,7 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 	return &tagpb.Empty{}, nil
 }
 
-func (s *Server) GetTrackAnalytics(ctx context.Context, userGroup *pb.UserGroup) (*pb.UserGroupTrackAnalytics, error) {
+/*func (s *Server) GetTrackAnalytics(ctx context.Context, userGroup *pb.UserGroup) (*pb.UserGroupTrackAnalytics, error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)
 	if err != nil {
 		return nil, err
@@ -634,7 +634,7 @@ func (s *Server) GetTrackAnalytics(ctx context.Context, userGroup *pb.UserGroup)
 	}
 
 	return &pb.UserGroupTrackAnalytics{}, nil
-}
+}*/
 
 func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)
