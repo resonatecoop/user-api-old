@@ -39,7 +39,7 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
-	db := database.Connect(true)
+	db := database.Connect(false)
 
 	newUserServer := userServer.NewServer(db)
 	userTwirpHandler := WithURLQuery(userRpc.NewUserServiceServer(newUserServer, nil))

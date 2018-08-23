@@ -43,6 +43,7 @@ func CheckError(err error, table string) (twirp.Error) {
         return twirp.NotFoundError(message)
       } else {
 				message = pgerr.Field('M')
+        fmt.Println(twirp.NewError("unknown", message))
 				return twirp.NewError("unknown", message)
 			}
 		}

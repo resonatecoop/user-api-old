@@ -842,7 +842,7 @@ var _ = Describe("User server", func() {
 	Describe("CreateUser", func() {
 		Context("with all required attributes", func() {
 			It("should create a new user", func() {
-				user := &pb.User{Username: "janed", FullName: "jane d", DisplayName: "jad", Email: "jane@d.com"}
+				user := &pb.User{Username: "janed", FullName: "jane d", Email: "jane@d.com"}
 				resp, err := service.CreateUser(context.Background(), user)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -853,7 +853,7 @@ var _ = Describe("User server", func() {
 			})
 
 			It("should not create a user with same email", func() {
-				user := &pb.User{Username: "janedoe", FullName: "jane doe", DisplayName: "jadoe", Email: "jane@d.com"}
+				user := &pb.User{Username: "janedoe", FullName: "jane doe", Email: "jane@d.com"}
 				resp, err := service.CreateUser(context.Background(), user)
 
 				Expect(resp).To(BeNil())
@@ -865,7 +865,7 @@ var _ = Describe("User server", func() {
 			})
 
 			It("should not create a user with same username", func() {
-				user := &pb.User{Username: "janed", FullName: "jane doe", DisplayName: "jadoe", Email: "jane@doe.com"}
+				user := &pb.User{Username: "janed", FullName: "jane doe", Email: "jane@doe.com"}
 				resp, err := service.CreateUser(context.Background(), user)
 
 				Expect(resp).To(BeNil())
@@ -879,7 +879,7 @@ var _ = Describe("User server", func() {
 
 		Context("with missing required attributes", func() {
 			It("should not create a user without email", func() {
-				user := &pb.User{Username: "johnd", FullName: "john doe", DisplayName: "john", Email: ""}
+				user := &pb.User{Username: "johnd", FullName: "john doe", Email: ""}
 				resp, err := service.CreateUser(context.Background(), user)
 
 				Expect(resp).To(BeNil())
@@ -901,7 +901,7 @@ var _ = Describe("User server", func() {
 				Expect(twerr.Meta("argument")).To(Equal("username"))
 			})
 			It("should not create a user without full_name", func() {
-				user := &pb.User{Username: "johnd", FullName: "", DisplayName: "john", Email: "john@doe.com"}
+				user := &pb.User{Username: "johnd", FullName: "", Email: "john@doe.com"}
 				resp, err := service.CreateUser(context.Background(), user)
 
 				Expect(resp).To(BeNil())
