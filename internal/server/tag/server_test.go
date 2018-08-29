@@ -20,7 +20,7 @@ var _ = Describe("Tag server", func() {
 
   Describe("SearchGenres", func() {
     Context("with valid query", func() {
-      It("should respond with tracks and track groups (playlists and albums)", func() {
+      It("should respond with user groups, tracks and track groups (playlists and albums)", func() {
         q := &pb.Query{Query: "pop"}
         res, err := service.SearchGenres(context.Background(), q)
 

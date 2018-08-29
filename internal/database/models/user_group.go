@@ -48,7 +48,6 @@ type UserGroup struct {
   HighlightedTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"`
   FeaturedTrackGroupId uuid.UUID `sql:"type:uuid,default:uuid_nil()"`
 
-  Kvstore map[string]string `pg:",hstore"`
   Followers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
 
   AdminUsers []uuid.UUID `sql:",type:uuid[]" pg:",array"`
@@ -61,9 +60,10 @@ type UserGroup struct {
   Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group owner or displayed as artist for these tracks
   TrackGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group owner or label for these track groups
 
-  // SubGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"`
-  // artist
-  // Labels []uuid.UUID `sql:",type:uuid[]" pg:",array"`
+  Kvstore map[string]string `pg:",hstore"`
+
+  // Publisher map[string]string `pg:",hstore"`
+  // Pro map[string]string `pg:",hstore"`
 }
 
 func (u *UserGroup) BeforeInsert(db orm.DB) error {
@@ -75,6 +75,158 @@ func (u *UserGroup) BeforeInsert(db orm.DB) error {
   u.PrivacyId = newPrivacy.Id
 
   return nil
+}
+
+func (u *UserGroup) Create(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, table
+  }
+  defer tx.Rollback()
+
+  groupTaxonomy := new(GroupTaxonomy)
+  pgerr := tx.Model(groupTaxonomy).Where("type = ?", userGroup.Type.Type).First()
+  if pgerr != nil {
+    return pgerr, "group_taxonomy"
+  }
+  u.TypeId = groupTaxonomy.Id
+
+  var newAddress *StreetAddress
+  if userGroup.Address != nil {
+    newAddress = &StreetAddress{Data: userGroup.Address.Data}
+    _, pgerr = tx.Model(newAddress).Returning("*").Insert()
+    if pgerr != nil {
+      return pgerr, "street_address"
+    }
+  }
+  u.AddressId = newAddress.Id
+
+  linkIds, pgerr := getLinkIds(userGroup.Links, tx)
+  if pgerr != nil {
+    return pgerr, "link"
+  }
+  u.Links = linkIds
+
+  tagIds, pgerr := GetTagIds(userGroup.Tags, tx)
+  if pgerr != nil {
+    return pgerr, "tag"
+  }
+  u.Tags = tagIds
+
+  recommendedArtistIds, pgerr := GetRelatedUserGroupIds(userGroup.RecommendedArtists, tx)
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+  u.RecommendedArtists = recommendedArtistIds
+
+  _, pgerr = tx.Model(u).Returning("*").Insert()
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  _, pgerr = tx.Exec(`
+    UPDATE user_groups
+    SET recommended_by = (select array_agg(distinct e) from unnest(recommended_by || ?) e)
+    WHERE id IN (?)
+  `, pg.Array([]uuid.UUID{u.Id}), pg.In(recommendedArtistIds))
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  pgerr = tx.Model(u).
+    Column("Privacy").
+    WherePK().
+    Select()
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  // Building response
+  userGroup.Address.Id = u.AddressId.String()
+  userGroup.Type.Id = u.TypeId.String()
+  userGroup.Privacy = &pb.Privacy{
+    Id: u.Privacy.Id.String(),
+    Private: u.Privacy.Private,
+    OwnedTracks: u.Privacy.OwnedTracks,
+    SupportedArtists: u.Privacy.SupportedArtists,
+  }
+
+  return tx.Commit(), table
+}
+
+func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
+  var table string
+  tx, err := db.Begin()
+  if err != nil {
+    return err, "user_group"
+  }
+  defer tx.Rollback()
+
+  // Update address
+  addressId, twerr := internal.GetUuidFromString(userGroup.Address.Id)
+  if twerr != nil {
+    return twerr, "street_address"
+  }
+  address := &StreetAddress{Id: addressId, Data: userGroup.Address.Data}
+  _, pgerr := tx.Model(address).Column("data").WherePK().Update()
+  // _, pgerr := db.Model(address).Set("data = ?", pg.Hstore(userGroup.Address.Data)).Where("id = ?id").Update()
+  if pgerr != nil {
+    return pgerr, "street_address"
+  }
+
+  // Update privacy
+  privacyId, twerr := internal.GetUuidFromString(userGroup.Privacy.Id)
+  if twerr != nil {
+    return twerr, "user_group_privacy"
+  }
+  privacy := &UserGroupPrivacy{Id: privacyId, Private: userGroup.Privacy.Private, OwnedTracks: userGroup.Privacy.OwnedTracks, SupportedArtists: userGroup.Privacy.SupportedArtists}
+  _, pgerr = tx.Model(privacy).WherePK().Returning("*").UpdateNotNull()
+  if pgerr != nil {
+    return pgerr, "user_group_privacy"
+  }
+
+  // Update tags
+  tagIds, pgerr := GetTagIds(userGroup.Tags, tx)
+  if pgerr != nil {
+    return pgerr, "tag"
+  }
+
+  // Update links
+  linkIds, pgerr := getLinkIds(userGroup.Links, tx)
+  if pgerr != nil {
+    return pgerr, "link"
+  }
+  // Delete links if needed
+  pgerr = tx.Model(u).WherePK().Column("links").Select()
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+  linkIdsToDelete := internal.Difference(u.Links, linkIds)
+  if len(linkIdsToDelete) > 0 {
+    _, pgerr = tx.Model((*Link)(nil)).
+      Where("id in (?)", pg.In(linkIdsToDelete)).
+      Delete()
+    if pgerr != nil {
+      return pgerr, "link"
+    }
+  }
+
+  // Update user group
+  u.Tags = tagIds
+  u.Links = linkIds
+  // u.RecommendedArtists = recommendedArtistIds
+  u.UpdatedAt = time.Now()
+  _, pgerr = tx.Model(u).
+    Column("updated_at", "links", "tags", "display_name", "avatar", "description", "short_bio", "banner", "group_email_address").
+    WherePK().
+    Returning("*").
+    Update()
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  return tx.Commit(), table
 }
 
 func SearchUserGroups(query string, db *pg.DB) (*tagpb.SearchResults, twirp.Error) {
@@ -393,4 +545,27 @@ func GetRelatedUserGroupIds(userGroups []*tagpb.RelatedUserGroup, db *pg.Tx) ([]
 		relatedUserGroupIds[i] = relatedUserGroups[i].Id
 	}
 	return relatedUserGroupIds, nil
+}
+
+func getLinkIds(l []*pb.Link, db *pg.Tx) ([]uuid.UUID, error) {
+	links := make([]*Link, len(l))
+	linkIds := make([]uuid.UUID, len(l))
+	for i, link := range l {
+		if link.Id == "" {
+			links[i] = &Link{Platform: link.Platform, Uri: link.Uri}
+			_, pgerr := db.Model(links[i]).Returning("*").Insert()
+			if pgerr != nil {
+				return nil, pgerr
+			}
+			linkIds[i] = links[i].Id
+			link.Id = links[i].Id.String()
+		} else {
+			linkId, twerr := internal.GetUuidFromString(link.Id)
+			if twerr != nil {
+				return nil, twerr.(error)
+			}
+			linkIds[i] = linkId
+		}
+	}
+	return linkIds, nil
 }
