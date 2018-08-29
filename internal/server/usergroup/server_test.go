@@ -39,6 +39,8 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.Avatar).To(Equal(newArtist.Avatar))
 				Expect(resp.Banner).To(Equal(newArtist.Banner))
 				Expect(resp.GroupEmailAddress).To(Equal(newArtist.GroupEmailAddress))
+				Expect(resp.Publisher).To(Equal(newArtist.Publisher))
+				Expect(resp.Pro).To(Equal(newArtist.Pro))
 				Expect(resp.OwnerId).To(Equal(newArtist.OwnerId.String()))
 				Expect(resp.Type.Id).To(Equal(newArtistGroupTaxonomy.Id.String()))
 				Expect(resp.Type.Type).To(Equal("artist"))
@@ -282,6 +284,14 @@ var _ = Describe("UserGroup server", func() {
 					Description: "new description",
 					ShortBio: "short bio",
 					Avatar: newArtist.Avatar,
+					Publisher: map[string]string{
+						"name": "new publisher name",
+						"number": "new 1E3",
+					},
+					Pro: map[string]string{
+						"name": "new PRO name",
+						"number": "new 2BA",
+					},
 					Address: &userpb.StreetAddress{Id: artistAddress.Id.String(), Data: map[string]string{"some": "new data"}},
 					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
 					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
@@ -313,6 +323,8 @@ var _ = Describe("UserGroup server", func() {
 				Expect(updatedUserGroup.Avatar).To(Equal(userGroup.Avatar))
 				Expect(updatedUserGroup.Description).To(Equal(userGroup.Description))
 				Expect(updatedUserGroup.Banner).To(Equal(userGroup.Banner))
+				Expect(updatedUserGroup.Publisher).To(Equal(userGroup.Publisher))
+				Expect(updatedUserGroup.Pro).To(Equal(userGroup.Pro))
 				Expect(len(updatedUserGroup.Tags)).To(Equal(1))
 				Expect(updatedUserGroup.Tags[0]).NotTo(Equal(newGenreTag.Id))
 
@@ -1012,13 +1024,23 @@ var _ = Describe("UserGroup server", func() {
 					RecommendedArtists: []*tagpb.RelatedUserGroup{
 						&tagpb.RelatedUserGroup{Id: newRecommendedArtist.Id.String()},
 					},
+					Publisher: map[string]string{
+						"name": "publisher name",
+						"number": "1E3",
+					},
+					Pro: map[string]string{
+						"name": "PRO name",
+						"number": "2BA",
+					},
 				}
 				resp, err := service.CreateUserGroup(context.Background(), userGroup)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.Id).NotTo(Equal(""))
-				Expect(resp.DisplayName).To(Equal("group2"))
-				Expect(resp.ShortBio).To(Equal("short bio"))
+				Expect(resp.DisplayName).To(Equal(userGroup.DisplayName))
+				Expect(resp.ShortBio).To(Equal(userGroup.ShortBio))
+				Expect(resp.Publisher).To(Equal(userGroup.Publisher))
+				Expect(resp.Pro).To(Equal(userGroup.Pro))
 				Expect(resp.Avatar).To(Equal(avatar))
 				Expect(resp.Type.Id).To(Equal(newArtistGroupTaxonomy.Id.String()))
 				Expect(resp.Type.Type).To(Equal("artist"))
@@ -1032,10 +1054,10 @@ var _ = Describe("UserGroup server", func() {
 
 				id, err := uuid.FromString(resp.Id)
 				Expect(err).NotTo(HaveOccurred())
-				updatedUserGroup := new(models.UserGroup)
-				err = db.Model(updatedUserGroup).Where("id = ?", id).Select()
+				createdUserGroup := new(models.UserGroup)
+				err = db.Model(createdUserGroup).Where("id = ?", id).Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(updatedUserGroup.RecommendedArtists).To(ContainElement(newRecommendedArtist.Id))
+				Expect(createdUserGroup.RecommendedArtists).To(ContainElement(newRecommendedArtist.Id))
 
 				recommended := new(models.UserGroup)
 				err = db.Model(recommended).Where("id = ?", newRecommendedArtist.Id).Select()

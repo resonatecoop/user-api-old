@@ -364,7 +364,15 @@ To add members/memberOfGroups, refer to dedicated endpoint.
             "recommended_artists": [
               {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31"},
               {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31"}
-            ]
+            ],
+            "publisher": {
+              "name": "Publisher name",
+              "number": "123"
+            },
+            "pro": {
+              "name": "Performing Rights Organization name",
+              "number": "123"
+            }
         }
 
 + Response 201 (application/json)
@@ -403,7 +411,15 @@ To add members/memberOfGroups, refer to dedicated endpoint.
                 "recommended_artists": [
                   {"id": "166f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"},
                   {"id": "366f3a00-1022-4cb6-beda-8f7eeef8bd31", "display_name": "name", "avatar": "blob"}
-                ]
+                ],
+                "publisher": {
+                  "name": "Publisher name",
+                  "number": "123"
+                },
+                "pro": {
+                  "name": "Performing Rights Organization name",
+                  "number": "123"
+                }
             }
 
 ### Update UserGroup [POST /twirp/resonate.api.user.UserGroupService/UpdateUserGroup]
@@ -412,7 +428,7 @@ Updatable fields are: display_name, avatar, banner, description, short_bio, link
 If the request body doesn't contain a certain user group attribute, it will be set to its zero value (if not required).
 
 To update address or privacy, update desired fields (data for address; private, owned_track and supported_artists for privacy).
-Type and owner_id are not updatable.
+Type and owner_id are not updatable. (TODO: make type updatable if user => artist or user => label only)
 
 To add or remove tags or links:
 - add {...obj} to the corresponding array in the request body with info (type, name for tags; platform, uri for links).
@@ -432,6 +448,14 @@ To add or remove recommended_artists, cf. dedicated endpoints Add/RemoveRecommen
             "banner": "blob",
             "avatar": "blob",
             "owner_id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31",
+            "publisher": {
+              "name": "New publisher name",
+              "number": "456"
+            },
+            "pro": {
+              "name": "New Performing Rights Organization name",
+              "number": "789"
+            },
             "privacy": {
                 "id": "427f3a00-1022-4cb6-beda-8f7eeef8bd31",
                 "private": false,
@@ -544,11 +568,23 @@ To get more info on featured track group (release), call TrackGroupService GetTr
             "owner": {
                 "id": "636f3a00-1022-4cb6-beda-8f7eeef8bd31"
             },
+            "type": {
+              "id": "176f3a00-1022-4cb6-beda-8f7eeef8bd31",
+              "type": "artist",
+            },
             "display_name": "BestArtistEver"
             "description": "long bio",
             "short_bio": "short bio",
             "avatar": "blob",
             "banner": "blob",
+            "publisher": {
+              "name": "Publisher name",
+              "number": "456"
+            },
+            "pro": {
+              "name": "SACEM",
+              "number": "789"
+            },
             "privacy": {
               "id": "427f3a00-1022-4cb6-beda-8f7eeef8bd31",
               "private": false,

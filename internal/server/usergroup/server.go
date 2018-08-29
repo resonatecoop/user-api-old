@@ -47,6 +47,8 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		Avatar: userGroup.Avatar,
 		Banner: userGroup.Banner,
 		GroupEmailAddress: userGroup.GroupEmailAddress,
+		Publisher: userGroup.Publisher,
+		Pro: userGroup.Pro,
 	}
 
 	pgerr, table := u.Create(s.db, userGroup)
@@ -67,6 +69,8 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		Tags: userGroup.Tags,
 		RecommendedArtists: userGroup.RecommendedArtists,
 		Privacy: userGroup.Privacy,
+		Publisher: userGroup.Publisher,
+		Pro: userGroup.Pro,
 	}, nil
 }
 
@@ -163,6 +167,8 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		Avatar: u.Avatar,
 		Banner: u.Banner,
 		GroupEmailAddress: u.GroupEmailAddress,
+		Publisher: u.Publisher,
+		Pro: u.Pro,
 		OwnerId: u.OwnerId.String(),
 		Type: groupType,
 		Privacy: privacy,
@@ -520,6 +526,8 @@ func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error)
 		Avatar: userGroup.Avatar,
 		Banner: userGroup.Banner,
 		GroupEmailAddress: userGroup.GroupEmailAddress,
+		Publisher: userGroup.Publisher,
+		Pro: userGroup.Pro,
 	}, nil
 }
 

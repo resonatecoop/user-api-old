@@ -62,8 +62,8 @@ type UserGroup struct {
 
   Kvstore map[string]string `pg:",hstore"`
 
-  // Publisher map[string]string `pg:",hstore"`
-  // Pro map[string]string `pg:",hstore"`
+  Publisher map[string]string `pg:",hstore"`
+  Pro map[string]string `pg:",hstore"`
 }
 
 func (u *UserGroup) BeforeInsert(db orm.DB) error {
@@ -218,7 +218,7 @@ func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
   // u.RecommendedArtists = recommendedArtistIds
   u.UpdatedAt = time.Now()
   _, pgerr = tx.Model(u).
-    Column("updated_at", "links", "tags", "display_name", "avatar", "description", "short_bio", "banner", "group_email_address").
+    Column("updated_at", "pro", "publisher", "links", "tags", "display_name", "avatar", "description", "short_bio", "banner", "group_email_address").
     WherePK().
     Returning("*").
     Update()

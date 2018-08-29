@@ -125,6 +125,14 @@ var _ = BeforeSuite(func() {
 			Links: links,
 			Tags: genreTags,
 			RecommendedArtists: []uuid.UUID{newUserProfile.Id},
+			Publisher: map[string]string{
+				"name": "publisher name",
+				"number": "1E3",
+			},
+			Pro: map[string]string{
+				"name": "PRO name",
+				"number": "2BA",
+			},
 		}
 		_, err = db.Model(newArtist).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())

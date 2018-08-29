@@ -50,8 +50,8 @@ message UserGroup {
   repeated RelatedTrackGroup track_groups = 19;
   repeated Track highlighted_tracks = 20;
 
-  // map<string, string> publisher = 21;
-  // map<string, string> pro = 22;
+  map<string, string> publisher = 21;
+  map<string, string> pro = 22;
 
   string group_email_address = 23;
 }
