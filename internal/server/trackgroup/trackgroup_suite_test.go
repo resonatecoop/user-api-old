@@ -26,6 +26,8 @@ var (
 	newLabelGroupTaxonomy *models.GroupTaxonomy
 	newArtistUserGroup *models.UserGroup
 	newLabelUserGroup *models.UserGroup
+	label *models.UserGroup
+	artist *models.UserGroup
 	newGenreTag *models.Tag
 )
 
@@ -59,7 +61,7 @@ var _ = BeforeSuite(func() {
 	err = db.Insert(newUser)
 	Expect(err).NotTo(HaveOccurred())
 
-	// Create a new user_group
+	// Create new user_groups
 	avatar := make([]byte, 5)
 	newArtistUserGroup = &models.UserGroup{
 		DisplayName: "artist",
@@ -79,6 +81,26 @@ var _ = BeforeSuite(func() {
 		AddressId: newAddress.Id,
 	}
 	err = db.Insert(newLabelUserGroup)
+	Expect(err).NotTo(HaveOccurred())
+
+	artist = &models.UserGroup{
+		DisplayName: "new artist",
+		Avatar: avatar,
+		OwnerId: newUser.Id,
+		TypeId: newArtistGroupTaxonomy.Id,
+		AddressId: newAddress.Id,
+	}
+	err = db.Insert(artist)
+	Expect(err).NotTo(HaveOccurred())
+
+	label = &models.UserGroup{
+		DisplayName: "new label",
+		Avatar: avatar,
+		OwnerId: newUser.Id,
+		TypeId: newLabelGroupTaxonomy.Id,
+		AddressId: newAddress.Id,
+	}
+	err = db.Insert(label)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Create a new track

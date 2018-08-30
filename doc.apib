@@ -862,8 +862,11 @@ If user_group is label (grouped by user_group):
 ## Tracks Collection [/twirp/resonate.api.user.TrackService]
 
 ### Create Track [POST /twirp/resonate.api.user.TrackService/CreateTrack]
+
 Used by track server API.
 Tracks are created and only after the TrackGroup they are part of is created.
+
++ status (string): free, paid, both (first play free)
 
 + Request (application/json)
         {
@@ -908,6 +911,7 @@ Tracks are created and only after the TrackGroup they are part of is created.
 ### Update Track [POST /twirp/resonate.api.user.TrackService/UpdateTrack]
 
 CreatorId and UserGroupId are immutable.
+Updatable fields: title, status, track_number, duration, track_server_id
 
 Tracks can be added to a track group from dedicated endpoint in TrackGroup Service AddTracksToTrackGroup or on TrackGroup creation
 
@@ -1108,7 +1112,7 @@ For playlist: user_group_id can be set (public playlist owned by a user group pr
 
 ### Update TrackGroup [POST /twirp/resonate.api.user.TrackGroupService/UpdateTrackGroup]
 
-title, release_date, cover, about, display_artist, multiple_composers and private can be updated.
+Updatable fields: title, user_group_id, label_id, type, release_date, cover, about, display_artist, multiple_composers and private
 
 + Request (application/json)
 

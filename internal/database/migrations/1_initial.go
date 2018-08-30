@@ -17,7 +17,7 @@ func init() {
     // if _, err := db.Exec( /* language=sql */ `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`); err != nil {
     //   return err
     // }
-    if _, err := db.Exec(`CREATE TYPE track_status AS ENUM ('paid', 'free');`); err != nil {
+    if _, err := db.Exec(`CREATE TYPE track_status AS ENUM ('paid', 'free', 'both');`); err != nil {
       return err
     }
 

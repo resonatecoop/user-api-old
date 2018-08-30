@@ -2,7 +2,7 @@ package models
 
 import (
   "time"
-  "fmt"
+  // "fmt"
   // "log"
 
   "github.com/satori/go.uuid"
@@ -232,7 +232,6 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
 }
 
 func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string) {
-  // Update tags? might not need tx here if not
   var table string
   tx, err := db.Begin()
   if err != nil {
@@ -245,9 +244,36 @@ func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
     return err, table
   }
 
+  trackGroupToUpdate := &TrackGroup{Id: t.Id}
+  pgerr := tx.Model(trackGroupToUpdate).
+      Column("user_group_id", "label_id").
+      WherePK().
+      Select()
+  if pgerr != nil {
+    return pgerr, "track_group"
+  }
+
+  // Update usergroup and label trackgroups array if needed
+  pgerr, table = t.UpdateUserGroupTrackGroups(tx, trackGroupToUpdate.UserGroupId, t.UserGroupId)
+  if pgerr != nil {
+    return pgerr, table
+  }
+  pgerr, table = t.UpdateUserGroupTrackGroups(tx, trackGroupToUpdate.LabelId, t.LabelId)
+  if pgerr != nil {
+    return pgerr, table
+  }
+
+  // Update tags
+  tagIds, pgerr := GetTagIds(trackGroup.Tags, tx)
+  if pgerr != nil {
+    return pgerr, "tag"
+  }
+  t.Tags = tagIds
+
   t.UpdatedAt = time.Now()
-  _, pgerr := tx.Model(t).
-    Column("title", "updated_at", "release_date", "cover", "display_artist", "multiple_composers", "private", "about").
+  _, pgerr = tx.Model(t).
+    Column("title", "updated_at", "release_date", "cover", "display_artist", "type",
+      "multiple_composers", "private", "about", "user_group_id", "label_id", "tags").
     WherePK().
     Returning("*").
     Update()
@@ -274,8 +300,6 @@ func (t *TrackGroup) Delete(tx *pg.Tx) (error, string) {
     WHERE id IN (?)
   `, t.Id, pg.In(userGroupIds))
   if pgerr != nil {
-    fmt.Println("user_group ERR")
-
     return pgerr, "user_group"
   }
 
@@ -420,5 +444,36 @@ func (t *TrackGroup) GetIds(trackGroup *pb.TrackGroup) (error, string) {
   }
 
   t.CreatorId = creatorId
+  return nil, ""
+}
+
+func (t *TrackGroup) UpdateUserGroupTrackGroups(tx *pg.Tx, oldUserGroupId, newUserGroupId uuid.UUID) (error, string) {
+  if oldUserGroupId != newUserGroupId {
+    // Verify that new user group exists
+    u := &UserGroup{Id: newUserGroupId}
+    pgerr := tx.Model(u).WherePK().Select()
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
+
+    // Remove track group from old user group track_groups array
+    _, pgerr = tx.ExecOne(`
+      UPDATE user_groups
+      SET track_groups = array_remove(track_groups, ?)
+      WHERE id = ?
+    `, t.Id, oldUserGroupId)
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
+    // Add track group to new user group track_groups array
+    _, pgerr = tx.ExecOne(`
+      UPDATE user_groups
+      SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
+      WHERE id = ?
+    `, pg.Array([]uuid.UUID{t.Id}), newUserGroupId)
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
+  }
   return nil, ""
 }

@@ -124,6 +124,11 @@ func (s *Server) CreateTrack(ctx context.Context, track *pb.Track) (*pb.Track, e
 }
 
 func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*tagpb.Empty, error) {
+	err := checkRequiredAttributes(track)
+	if err != nil {
+		return nil, err
+	}
+
 	t, err := getTrackModel(track)
 	if err != nil {
 		return nil, err

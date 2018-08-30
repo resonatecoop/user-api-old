@@ -132,6 +132,11 @@ func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
 }
 
 func (s *Server) UpdateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (*tagpb.Empty, error) {
+  twerr := checkRequiredAttributes(trackGroup)
+  if twerr != nil {
+    return nil, twerr
+  }
+
   t, twerr := getTrackGroupModel(trackGroup)
 	if twerr != nil {
 		return nil, twerr
