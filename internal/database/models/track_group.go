@@ -88,7 +88,8 @@ func SearchTrackGroups(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Er
   }, nil
 }
 
-func GetTrackGroups(ids []uuid.UUID, db *pg.DB, types []string) ([]*tagpb.RelatedTrackGroup, twirp.Error) {
+// Get related track groups from ids
+func GetTrackGroupsFromIds(ids []uuid.UUID, db *pg.DB, types []string) ([]*tagpb.RelatedTrackGroup, twirp.Error) {
 	var trackGroupsResponse []*tagpb.RelatedTrackGroup
 	if len(ids) > 0 {
 		var t []TrackGroup
@@ -100,20 +101,38 @@ func GetTrackGroups(ids []uuid.UUID, db *pg.DB, types []string) ([]*tagpb.Relate
 			return nil, internal.CheckError(pgerr, "track_group")
 		}
 		for _, trackGroup := range t {
-			trackGroupsResponse = append(trackGroupsResponse, &tagpb.RelatedTrackGroup{
-        Id: trackGroup.Id.String(),
-        Title: trackGroup.Title,
-        Cover: trackGroup.Cover,
-        DisplayArtist: trackGroup.DisplayArtist,
-        Type: trackGroup.Type,
-        About: trackGroup.About,
-        Private: trackGroup.Private,
-        TotalTracks: int32(len(trackGroup.Tracks)),
-      })
+			trackGroupsResponse = append(trackGroupsResponse, getTrackGroupResponse(trackGroup))
 		}
 	}
-
 	return trackGroupsResponse, nil
+}
+
+// Get related track groups from TrackGroup models
+func GetTrackGroups(t []TrackGroup) ([]*tagpb.RelatedTrackGroup) {
+  var trackGroupsResponse []*tagpb.RelatedTrackGroup
+  trackGroupIds := map[uuid.UUID]bool{}
+  for _, trackGroup := range t {
+    if trackGroupIds[trackGroup.Id] == true {
+      // do not append duplicate track group
+    } else {
+      trackGroupIds[trackGroup.Id] = true
+      trackGroupsResponse = append(trackGroupsResponse, getTrackGroupResponse(trackGroup))
+    }
+  }
+	return trackGroupsResponse
+}
+
+func getTrackGroupResponse(trackGroup TrackGroup) (*tagpb.RelatedTrackGroup) {
+  return &tagpb.RelatedTrackGroup {
+    Id: trackGroup.Id.String(),
+    Title: trackGroup.Title,
+    Cover: trackGroup.Cover,
+    DisplayArtist: trackGroup.DisplayArtist,
+    Type: trackGroup.Type,
+    About: trackGroup.About,
+    Private: trackGroup.Private,
+    TotalTracks: int32(len(trackGroup.Tracks)),
+  }
 }
 
 func GetTrackGroupIds(t []*pb.TrackGroup, db *pg.Tx) ([]uuid.UUID, error) {
@@ -139,6 +158,26 @@ func GetTrackGroupIds(t []*pb.TrackGroup, db *pg.Tx) ([]uuid.UUID, error) {
 	return trackGroupIds, nil
 }
 
+func userGroupsExist(tx *pg.Tx, trackGroup *pb.TrackGroup, userGroupId, labelId uuid.UUID) (error) {
+  var userGroupIds []uuid.UUID
+  if trackGroup.UserGroupId != "" {
+    userGroupIds = append(userGroupIds, userGroupId)
+  }
+  if trackGroup.LabelId != "" {
+    userGroupIds = append(userGroupIds, labelId)
+  }
+  userGroupIds = internal.RemoveDuplicates(userGroupIds)
+
+  for _, id := range userGroupIds {
+    u := &UserGroup{Id: id}
+    pgerr := tx.Model(u).WherePK().Select()
+    if pgerr != nil {
+      return pgerr
+    }
+  }
+  return nil
+}
+
 func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string) {
   var table string
   tx, err := db.Begin()
@@ -153,21 +192,9 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
   }
 
   // make sure owner user group (with UserGroupId) and label (LabelId) exists if specified
-  var userGroupIds []uuid.UUID
-  if trackGroup.UserGroupId != "" {
-    userGroupIds = append(userGroupIds, t.UserGroupId)
-  }
-  if trackGroup.LabelId != "" {
-    userGroupIds = append(userGroupIds, t.LabelId)
-  }
-  userGroupIds = internal.RemoveDuplicates(userGroupIds)
-
-  for _, id := range userGroupIds {
-    u := &UserGroup{Id: id}
-    pgerr := tx.Model(u).WherePK().Select()
-    if pgerr != nil {
-      return pgerr, "user_group"
-    }
+  pgerr := userGroupsExist(tx, trackGroup, t.UserGroupId, t.LabelId)
+  if pgerr != nil {
+    return pgerr, "user_group"
   }
 
   // Select or create tags
@@ -192,17 +219,6 @@ func (t *TrackGroup) Create(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
   trackGroup.Id = t.Id.String()
 
   trackGroupIdArr := []uuid.UUID{t.Id}
-  // Add track group to owner user group/label track_groups if exist
-  if trackGroup.UserGroupId != "" || trackGroup.LabelId != "" {
-    _, pgerr = tx.Exec(`
-      UPDATE user_groups
-      SET track_groups = (select array_agg(distinct e) from unnest(track_groups || ?) e)
-      WHERE id IN (?)
-    `, pg.Array(trackGroupIdArr), pg.In(userGroupIds))
-    if pgerr != nil {
-      return pgerr, "user_group"
-    }
-  }
 
   // Add track group to user playlists if of type playlist
   if trackGroup.Type == "playlist" {
@@ -246,11 +262,17 @@ func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
 
   trackGroupToUpdate := &TrackGroup{Id: t.Id}
   pgerr := tx.Model(trackGroupToUpdate).
-      Column("user_group_id", "label_id").
+      Column("user_group_id", "label_id", "tracks").
       WherePK().
       Select()
   if pgerr != nil {
     return pgerr, "track_group"
+  }
+
+  // make sure owner user group (with UserGroupId) and label (LabelId) exists if specified
+  pgerr = userGroupsExist(tx, trackGroup, t.UserGroupId, t.LabelId)
+  if pgerr != nil {
+    return pgerr, "user_group"
   }
 
   columns := []string{"title", "updated_at", "release_date", "cover", "display_artist", "type",
@@ -258,52 +280,24 @@ func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
 
   // Update usergroup and label trackgroups array if needed
   if trackGroupToUpdate.UserGroupId != t.UserGroupId {
-    pgerr, table = t.UpdateUserGroupTrackGroups(tx, trackGroupToUpdate.UserGroupId, t.UserGroupId)
-    if pgerr != nil {
-      return pgerr, table
-    }
     columns = append(columns, "user_group_id")
 
-    // Update release tracks user_group_id
-  /*  if t.Type != "playlist" {
-      trackIds := trackGroupToUpdate.Tracks
+    // Update release's tracks user_group_id as well
+    if trackGroup.Type != "playlist" && len(trackGroupToUpdate.Tracks) > 0 {
       var tracks []Track
       _, pgerr = tx.Model(&tracks).
         Set("user_group_id = ?", t.UserGroupId).
-        Where("id IN (?)", pg.In(trackIds)).
+        Where("id IN (?)", pg.In(trackGroupToUpdate.Tracks)).
         Update()
       if pgerr != nil {
         return pgerr, "tracks"
       }
-      // Remove tracks from old user group tracks array (if not part of track artists)
-      var oldUserGroup UserGroup
-      _, pgerr = tx.Model(&oldUserGroup).
-        Set("tracks = (select array_agg(e) from unnest(tracks) e where e <> all(?))", pg.Array(trackIds)).
-        Where("id = ?", trackGroupToUpdate.UserGroupId).
-        Update()
-      if pgerr != nil {
-        return pgerr, "user_group"
-      }
-      // Add tracks to new user group tracks arr
-      var newUserGroup UserGroup
-      _, pgerr = tx.Model(&newUserGroup).
-        Set("tracks = (select array_agg(distinct e) from unnest(tracks || ?) e)", pg.Array(trackIds)).
-        Where("id = ?", t.UserGroupId).
-        Update()
-      if pgerr != nil {
-        return pgerr, "user_group"
-      }
-    }*/
+    }
   }
 
   if trackGroupToUpdate.LabelId != t.LabelId {
-    pgerr, table = t.UpdateUserGroupTrackGroups(tx, trackGroupToUpdate.LabelId, t.LabelId)
-    if pgerr != nil {
-      return pgerr, table
-    }
     columns = append(columns, "label_id")
   }
-
 
   // Update tags
   tagIds, pgerr := GetTagIds(trackGroup.Tags, tx)
@@ -334,17 +328,6 @@ func (t *TrackGroup) Delete(tx *pg.Tx) (error, string) {
   pgerr := tx.Model(t).WherePK().Select()
   if pgerr != nil {
     return pgerr, "track_group"
-  }
-
-  // Delete track group from user group/label track_groups array
-  userGroupIds := internal.RemoveDuplicates([]uuid.UUID{t.LabelId, t.UserGroupId})
-  var userGroups []UserGroup
-  _, pgerr = tx.Model(&userGroups).
-    Set("track_groups = array_remove(track_groups, ?)", t.Id).
-    Where("id IN (?)", pg.In(userGroupIds)).
-    Update()
-  if pgerr != nil {
-    return pgerr, "user_group"
   }
 
   // Delete playlist track group from user (CreatorId) playlists and tracks track group

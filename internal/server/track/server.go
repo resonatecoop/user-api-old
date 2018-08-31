@@ -187,7 +187,7 @@ func checkRequiredAttributes(track *pb.Track) (twirp.Error) {
 	track.Artists = artists
 
   // Get track_groups (id, title, cover) that are not playlists (i.e. LP, EP or Single)
-	trackGroups, twerr := models.GetTrackGroups(t.TrackGroups, s.db, []string{"lp", "ep", "single"})
+	trackGroups, twerr := models.GetTrackGroupsFromIds(t.TrackGroups, s.db, []string{"lp", "ep", "single"})
 	if twerr != nil {
 		return nil, twerr
 	}

@@ -56,9 +56,9 @@ type UserGroup struct {
   MemberOfGroups []UserGroup `pg:"many2many:user_group_members,fk:member_id,joinFK:user_group_id"`
 
   OwnerOfTracks []Track `pg:"fk:user_group_id"` // user group gets paid for these tracks
-  OwnerOfTrackGroups []TrackGroup `pg:"fk:user_group_id"`
-  Tracks []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group owner or displayed as artist for these tracks
-  TrackGroups []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group owner or label for these track groups
+  ArtistOfTracks []uuid.UUID `sql:",type:uuid[]" pg:",array"` // user group displayed as artist for these tracks
+  OwnerOfTrackGroups []TrackGroup `pg:"fk:user_group_id"` // user group owner of these track groups
+  LabelOfTrackGroups []TrackGroup `pg:"fk:label_id"` // label of these track groups
 
   Kvstore map[string]string `pg:",hstore"`
 
@@ -268,33 +268,41 @@ func SearchUserGroups(query string, db *pg.DB) (*tagpb.SearchResults, twirp.Erro
 
 func (u *UserGroup) Delete(tx *pg.Tx) (error, string) {
   pgerr := tx.Model(u).
-    Column("user_group.links","user_group.followers", "user_group.recommended_by", "user_group.recommended_artists", "user_group.tracks", "Address", "Privacy", "OwnerOfTrackGroups").
+    Column("user_group.links","user_group.followers", "user_group.recommended_by", "user_group.recommended_artists", "Address", "Privacy",
+      "OwnerOfTrackGroups", "LabelOfTrackGroups", "user_group.artist_of_tracks").
     WherePK().
     Select()
   if pgerr != nil {
     return pgerr, "user_group"
   }
 
-  // ownerOfTrackIds := make([]uuid.UUID, len(u.OwnerOfTracks))
-  // for i, track := range(u.OwnerOfTracks) {
-  //   ownerOfTrackIds[i] = track.Id
-  // }
-
   // These tracks contain the user group to delete as artist
   // so we have to remove it from the tracks' artists list
-  // If the user group to delete is as well owner of some of these tracks
-  // they'll be deleted from trackGroup.Delete
-  if len(u.Tracks) > 0 {
+  if len(u.ArtistOfTracks) > 0 {
     _, pgerr = tx.Exec(`
       UPDATE tracks
       SET artists = array_remove(artists, ?)
       WHERE id IN (?)
-    `, u.Id, pg.In(u.Tracks))
+    `, u.Id, pg.In(u.ArtistOfTracks))
     if pgerr != nil {
       return pgerr, "track"
     }
   }
 
+  // These track groups contain the user group to delete as label
+  // so we have to set their label_id as null
+  if len(u.LabelOfTrackGroups) > 0 {
+    _, pgerr = tx.Model(&u.LabelOfTrackGroups).
+      Set("label_id = uuid_nil()").
+      Update()
+    if pgerr != nil {
+      return pgerr, "track"
+    }
+  }
+
+  // Delete track groups owned by user group to delete
+  // if a track is a release (lp, ep, single), its tracks are owned by the same user group
+  // and they'll be deleted as well
   for _, trackGroup := range(u.OwnerOfTrackGroups) {
     pgerr, table := trackGroup.Delete(tx)
     if pgerr != nil {

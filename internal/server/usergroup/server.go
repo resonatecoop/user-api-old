@@ -95,7 +95,8 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	u := &models.UserGroup{Id: id}
 
 	pgerr := s.db.Model(u).
-		Column("user_group.*", "Privacy", "Type", "Address", "Members", "MemberOfGroups").
+		Column("user_group.*", "Privacy", "Type", "Address", "Members", "MemberOfGroups",
+			"OwnerOfTrackGroups", "LabelOfTrackGroups").
 		WherePK().
 		Select()
 	if pgerr != nil {
@@ -142,13 +143,12 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	if pgerr != nil {
 		return nil, internal.CheckError(pgerr, "track")
 	}
-	trackGroups, pgerr := models.GetTrackGroups(u.TrackGroups, s.db, []string{"lp", "ep", "single", "playlist"})
-	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "track_group")
-	}
+
+	trackGroups := models.GetTrackGroups(append(u.OwnerOfTrackGroups, u.LabelOfTrackGroups...))
+
 	var featuredTrackGroup *tagpb.RelatedTrackGroup
 	if (u.FeaturedTrackGroupId != uuid.UUID{}) {
-		featuredTrackGroups, pgerr := models.GetTrackGroups([]uuid.UUID{u.FeaturedTrackGroupId}, s.db, []string{"lp", "ep", "single", "playlist"})
+		featuredTrackGroups, pgerr := models.GetTrackGroupsFromIds([]uuid.UUID{u.FeaturedTrackGroupId}, s.db, []string{"lp", "ep", "single", "playlist"})
 		if pgerr != nil {
 			return nil, internal.CheckError(pgerr, "track_group")
 		}

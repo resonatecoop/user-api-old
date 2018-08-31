@@ -66,7 +66,7 @@ func SearchTracks(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Error) 
     if err != nil {
       return nil, internal.CheckError(err, "user_group")
     }
-    trackGroups, twerr := GetTrackGroups(track.TrackGroups, db, []string{"lp", "ep", "single"})
+    trackGroups, twerr := GetTrackGroupsFromIds(track.TrackGroups, db, []string{"lp", "ep", "single"})
     if twerr != nil {
       return  nil, twerr
     }
@@ -130,7 +130,7 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, showTrackGroup bool, ctx context.Cont
       }
       trackResponse.Artists = artists
       if showTrackGroup == true {
-        trackGroups, twerr := GetTrackGroups(track.TrackGroups, db, []string{"lp", "ep", "single"})
+        trackGroups, twerr := GetTrackGroupsFromIds(track.TrackGroups, db, []string{"lp", "ep", "single"})
         if twerr != nil {
           return  nil, twerr
         }
@@ -191,7 +191,7 @@ func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
 
   trackToUpdate := &Track{Id: t.Id}
   pgerr := tx.Model(trackToUpdate).
-      Column("tags", "artists").
+      Column("tags", "artists", "user_group_id").
       WherePK().
       Select()
   if pgerr != nil {
@@ -210,41 +210,45 @@ func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
     columns = append(columns, "tags")
   }
 
+  // Update user_group_id
+  if trackToUpdate.UserGroupId != t.UserGroupId {
+    // Verify that new user group exists
+    u := &UserGroup{Id: t.UserGroupId}
+    pgerr := tx.Model(u).WherePK().Select()
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
+    columns = append(columns, "user_group_id")
+  }
+
   // Update artists
   artistIds, pgerr := GetRelatedUserGroupIds(track.Artists, tx)
   if pgerr != nil {
     return pgerr, "user_group"
   }
-  userGroupsToAddIds := internal.Difference(artistIds, trackToUpdate.Artists)
-  userGroupsToRemoveIds := internal.Difference(trackToUpdate.Artists, artistIds)
-  if len(userGroupsToAddIds) > 0 || len(userGroupsToRemoveIds) > 0 {
+  artistsToAddIds := internal.Difference(artistIds, trackToUpdate.Artists)
+  artistsToRemoveIds := internal.Difference(trackToUpdate.Artists, artistIds)
+  if len(artistsToAddIds) > 0 || len(artistsToRemoveIds) > 0 {
     t.Artists = artistIds
     columns = append(columns, "artists")
   }
 
-  // Update user_group_id
-  if trackToUpdate.UserGroupId != t.UserGroupId {
-    columns = append(columns, "user_group_id")
-    userGroupsToRemoveIds = internal.RemoveDuplicates(append(userGroupsToRemoveIds, trackToUpdate.UserGroupId))
-    userGroupsToAddIds = internal.RemoveDuplicates(append(userGroupsToAddIds, t.UserGroupId))
-  }
-
-  // Update user groups track array
-  if len(userGroupsToAddIds) > 0 || len(userGroupsToRemoveIds) > 0 {
-    // Remove track from userGroupsToRemove tracks array
-    var userGroupsToRemove []UserGroup
-    _, pgerr = tx.Model(&userGroupsToRemove).
-      Set("tracks = array_remove(tracks, ?)", t.Id).
-      Where("id IN (?)", pg.In(userGroupsToRemoveIds)).
+  // Update artists' artist_of_tracks array
+  if len(artistsToAddIds) > 0 || len(artistsToRemoveIds) > 0 {
+    // Remove track from artistsToRemove artist_of_tracks array
+    var artistsToRemove []UserGroup
+    _, pgerr = tx.Model(&artistsToRemove).
+      Set("artist_of_tracks = array_remove(artist_of_tracks, ?)", t.Id).
+      Where("id IN (?)", pg.In(artistsToRemoveIds)).
       Update()
     if pgerr != nil {
       return pgerr, "user_group"
     }
-    // Add track to userGroupsToAdd tracks arr
-    var userGroupsToAdd []UserGroup
-    _, pgerr = tx.Model(&userGroupsToAdd).
-      Set("tracks = (select array_agg(distinct e) from unnest(tracks || ?) e)", pg.Array([]uuid.UUID{t.Id})).
-      Where("id IN (?)", pg.In(userGroupsToAddIds)).
+    // Add track to artistsToAdd artist_of_tracks arr
+    var artistsToAdd []UserGroup
+    _, pgerr = tx.Model(&artistsToAdd).
+      Set("artist_of_tracks = (select array_agg(distinct e) from unnest(artist_of_tracks || ?) e)", pg.Array([]uuid.UUID{t.Id})).
+      Where("id IN (?)", pg.In(artistsToAddIds)).
       Update()
     if pgerr != nil {
       return pgerr, "user_group"
@@ -298,53 +302,18 @@ func (t *Track) Create(db *pg.DB, track *pb.Track) (error, string) {
   }
   track.Id = t.Id.String()
 
-  // Add track to involved user groups
-  // userGroupId can be part of artistIds (artist adding his/her track)
-  // or not (label adding a track for one or more artists)
-  userGroupIds := internal.RemoveDuplicates(append(artistIds, t.UserGroupId))
+  // Add track to artists' artist_of_tracks array
   trackIdArr := []uuid.UUID{t.Id}
   _, pgerr = tx.Exec(`
     UPDATE user_groups
-    SET tracks = (select array_agg(distinct e) from unnest(tracks || ?) e)
+    SET artist_of_tracks = (select array_agg(distinct e) from unnest(artist_of_tracks || ?) e)
     WHERE id IN (?)
-  `, pg.Array(trackIdArr), pg.In(userGroupIds))
+  `, pg.Array(trackIdArr), pg.In(artistIds))
   if pgerr != nil {
     return pgerr, "user_group"
   }
 
   return tx.Commit(), table
-}
-
-func (t *Track) UpdateUserGroupTracks(tx *pg.Tx, oldUserGroupId, newUserGroupId uuid.UUID) (error) {
-  if oldUserGroupId != newUserGroupId {
-    // Verify that new user group exists
-    u := &UserGroup{Id: newUserGroupId}
-    pgerr := tx.Model(u).WherePK().Select()
-    if pgerr != nil {
-      return pgerr
-    }
-
-    // Remove track from old user group tracks array
-    var oldUserGroup UserGroup
-    _, pgerr = tx.Model(&oldUserGroup).
-      Set("tracks = array_remove(tracks, ?)", t.Id).
-      Where("id = ?", oldUserGroupId).
-      Update()
-    if pgerr != nil {
-      return pgerr
-    }
-
-    // Add track group to new user group track_groups array
-    var newUserGroup UserGroup
-    _, pgerr = tx.Model(&newUserGroup).
-      Set("tracks = (select array_agg(distinct e) from unnest(tracks || ?) e)", pg.Array([]uuid.UUID{t.Id})).
-      Where("id = ?", newUserGroupId).
-      Update()
-    if pgerr != nil {
-      return pgerr
-    }
-  }
-  return nil
 }
 
 func (t *Track) Delete(tx *pg.Tx) (error, string) {
@@ -355,15 +324,16 @@ func (t *Track) Delete(tx *pg.Tx) (error, string) {
     return pgerr, "track"
   }
 
-  // Delete track from user_group/artists tracks array
-  userGroupIds := internal.RemoveDuplicates(append(t.Artists, t.UserGroupId))
-  _, pgerr = tx.Exec(`
-    UPDATE user_groups
-    SET tracks = array_remove(tracks, ?)
-    WHERE id IN (?)
-  `, t.Id, pg.In(userGroupIds))
-  if pgerr != nil {
-    return pgerr, "user_group"
+  // Delete track from artists' artist_of_tracks array
+  if len(t.Artists) > 0 {
+    _, pgerr = tx.Exec(`
+      UPDATE user_groups
+      SET artist_of_tracks = array_remove(artist_of_tracks, ?)
+      WHERE id IN (?)
+    `, t.Id, pg.In(t.Artists))
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
   }
 
   // Delete track from track_groups tracks array

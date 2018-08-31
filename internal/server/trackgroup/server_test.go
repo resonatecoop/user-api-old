@@ -227,24 +227,14 @@ var _ = Describe("TrackGroup server", func() {
         Expect(addedTag.Name).To(Equal("rock"))
 
         Expect(t.UserGroupId).To(Equal(artist.Id))
-        oldUserGroup := new(models.UserGroup)
-        err = db.Model(oldUserGroup).Where("id = ?", newArtistUserGroup.Id).Select()
-        Expect(err).NotTo(HaveOccurred())
-        Expect(oldUserGroup.TrackGroups).NotTo(ContainElement(newAlbum.Id))
-        newUserGroup := new(models.UserGroup)
-        err = db.Model(newUserGroup).Where("id = ?", artist.Id).Select()
-        Expect(err).NotTo(HaveOccurred())
-        Expect(newUserGroup.TrackGroups).To(ContainElement(newAlbum.Id))
-
         Expect(t.LabelId).To(Equal(label.Id))
-        oldLabel := new(models.UserGroup)
-        err = db.Model(oldLabel).Where("id = ?", newLabelUserGroup.Id).Select()
+
+        var tracksInAlbum []models.Track
+        err = db.Model(&tracksInAlbum).Where("id IN (?)", pg.In(t.Tracks)).Select()
         Expect(err).NotTo(HaveOccurred())
-        Expect(oldLabel.TrackGroups).NotTo(ContainElement(newAlbum.Id))
-        newLabel := new(models.UserGroup)
-        err = db.Model(newLabel).Where("id = ?", label.Id).Select()
-        Expect(err).NotTo(HaveOccurred())
-        Expect(newLabel.TrackGroups).To(ContainElement(newAlbum.Id))
+        for _, track := range tracksInAlbum {
+          Expect(track.UserGroupId).To(Equal(artist.Id))
+        }
 
 				// unchanged
 				Expect(t.CreatorId).To(Equal(newAlbum.CreatorId))
@@ -707,17 +697,18 @@ var _ = Describe("TrackGroup server", func() {
         Expect(resp.Tracks[0].Artists[0].DisplayName).To(Equal(newArtistUserGroup.DisplayName))
 				Expect(resp.Tracks[0].Artists[0].Avatar).To(Equal(newArtistUserGroup.Avatar))
 
-        artist := new(models.UserGroup)
-        err = db.Model(artist).Where("id = ?", newArtistUserGroup.Id).Select()
-        Expect(err).NotTo(HaveOccurred())
-        label := new(models.UserGroup)
-        err = db.Model(label).Where("id = ?", newLabelUserGroup.Id).Select()
-        Expect(err).NotTo(HaveOccurred())
-				trackGroupId, err := uuid.FromString(resp.Id)
-				Expect(err).NotTo(HaveOccurred())
-        Expect(artist.TrackGroups).To(ContainElement(trackGroupId))
-				Expect(label.TrackGroups).To(ContainElement(trackGroupId))
+        // artist := new(models.UserGroup)
+        // err = db.Model(artist).Where("id = ?", newArtistUserGroup.Id).Select()
+        // Expect(err).NotTo(HaveOccurred())
+        // label := new(models.UserGroup)
+        // err = db.Model(label).Where("id = ?", newLabelUserGroup.Id).Select()
+        // Expect(err).NotTo(HaveOccurred())
 
+        // Expect(artist.TrackGroups).To(ContainElement(trackGroupId))
+				// Expect(label.TrackGroups).To(ContainElement(trackGroupId))
+
+        trackGroupId, err := uuid.FromString(resp.Id)
+				Expect(err).NotTo(HaveOccurred())
         track := new(models.Track)
         err = db.Model(track).Where("id = ?", newTrack.Id).Select()
         Expect(err).NotTo(HaveOccurred())
@@ -1269,15 +1260,15 @@ var _ = Describe("TrackGroup server", func() {
 
         Expect(err).NotTo(HaveOccurred())
 
-        owner := new(models.UserGroup)
-        err = db.Model(owner).Where("id = ?", trackGroupToDelete.UserGroupId).Select()
-        Expect(err).NotTo(HaveOccurred())
-        Expect(owner.TrackGroups).NotTo(ContainElement(trackGroupToDelete.Id))
-
-        label := new(models.UserGroup)
-        err = db.Model(label).Where("id = ?", trackGroupToDelete.LabelId).Select()
-        Expect(err).NotTo(HaveOccurred())
-        Expect(label.TrackGroups).NotTo(ContainElement(trackGroupToDelete.Id))
+        // owner := new(models.UserGroup)
+        // err = db.Model(owner).Where("id = ?", trackGroupToDelete.UserGroupId).Select()
+        // Expect(err).NotTo(HaveOccurred())
+        // Expect(owner.TrackGroups).NotTo(ContainElement(trackGroupToDelete.Id))
+        //
+        // label := new(models.UserGroup)
+        // err = db.Model(label).Where("id = ?", trackGroupToDelete.LabelId).Select()
+        // Expect(err).NotTo(HaveOccurred())
+        // Expect(label.TrackGroups).NotTo(ContainElement(trackGroupToDelete.Id))
 
         var tracks []models.Track
         err = db.Model(&tracks).

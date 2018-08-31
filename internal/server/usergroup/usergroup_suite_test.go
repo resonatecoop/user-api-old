@@ -91,12 +91,14 @@ var _ = BeforeSuite(func() {
 
 		// Create user groups
 		avatar := make([]byte, 5)
+		labelAddress := &models.StreetAddress{Data: map[string]string{"some": "label data"}}
+		err = db.Insert(labelAddress)
 		newLabel = &models.UserGroup{
 			DisplayName: "best label ever",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
 			TypeId: newLabelGroupTaxonomy.Id,
-			AddressId: newAddress.Id,
+			AddressId: labelAddress.Id,
 		}
 		_, err = db.Model(newLabel).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
@@ -206,6 +208,20 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(featuringTrack)
 		Expect(err).NotTo(HaveOccurred())
 
+		// Create a label compilation
+		newCompilation := &models.TrackGroup{
+			CreatorId: newUser.Id,
+			UserGroupId: newLabel.Id,
+			LabelId: newLabel.Id,
+			Title: "compil title",
+			ReleaseDate: time.Now(),
+			Type: "lp",
+			Cover: avatar,
+			Tracks: []uuid.UUID{featuringTrack.Id},
+		}
+		err = db.Insert(newCompilation)
+		Expect(err).NotTo(HaveOccurred())
+
 		// Create a new album
 		tracks := []uuid.UUID{newTrack.Id}
 		newAlbum = &models.TrackGroup{
@@ -226,57 +242,26 @@ var _ = BeforeSuite(func() {
 		_, err = db.Model(newUserProfile).Column("recommended_by").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
-		newArtist.Tracks = []uuid.UUID{newTrack.Id, featuringTrack.Id}
-		newArtist.TrackGroups = []uuid.UUID{newAlbum.Id}
+		newArtist.ArtistOfTracks = []uuid.UUID{newTrack.Id, featuringTrack.Id}
 		newArtist.RecommendedBy = []uuid.UUID{newRecommendedArtist.Id}
 		newArtist.HighlightedTracks = []uuid.UUID{newTrack.Id}
 		newArtist.FeaturedTrackGroupId = newAlbum.Id
 		_, err = db.Model(newArtist).
-			Column("tracks", "track_groups", "recommended_by", "highlighted_tracks", "featured_track_group_id").
+			Column("artist_of_tracks", "recommended_by", "highlighted_tracks", "featured_track_group_id").
 			WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
-		newRecommendedArtist.Tracks = []uuid.UUID{featuringTrack.Id}
-		_, err = db.Model(newRecommendedArtist).Column("tracks").WherePK().Update()
-		Expect(err).NotTo(HaveOccurred())
-
-		newLabel.TrackGroups = []uuid.UUID{newAlbum.Id}
-		newLabel.Tracks = []uuid.UUID{featuringTrack.Id}
-		_, err = db.Model(newLabel).Column("tracks", "track_groups").WherePK().Update()
+		newRecommendedArtist.ArtistOfTracks = []uuid.UUID{featuringTrack.Id}
+		_, err = db.Model(newRecommendedArtist).Column("artist_of_tracks").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
 		newTrack.TrackGroups = []uuid.UUID{newAlbum.Id}
 		_, err = db.Model(newTrack).Column("track_groups").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
 
-		// Create plays
-		/*for i := 1; i <= 3; i++ {
-			newTrackPlay := &models.Play{
-				UserId: newUser.Id,
-				TrackId: newTrack.Id,
-				Type: "paid",
-				Credits: 0.02, // constant for simplicity
-			}
-			err = db.Insert(newTrackPlay)
-			Expect(err).NotTo(HaveOccurred())
-		}
-		newFreeTrackPlay := &models.Play{
-			UserId: newUser.Id,
-			TrackId: newTrack.Id,
-			Type: "free",
-			Credits: 0.00,
-		}
-		err = db.Insert(newFreeTrackPlay)
+		featuringTrack.TrackGroups = []uuid.UUID{newCompilation.Id}
+		_, err = db.Model(featuringTrack).Column("track_groups").WherePK().Update()
 		Expect(err).NotTo(HaveOccurred())
-
-		featuringTrackPlay := &models.Play{
-			UserId: newUser.Id,
-			TrackId: featuringTrack.Id,
-			Type: "paid",
-			Credits: 0.02,
-		}
-		err = db.Insert(featuringTrackPlay)
-		Expect(err).NotTo(HaveOccurred())*/
 })
 
 var _ = AfterSuite(func() {
@@ -302,8 +287,10 @@ var _ = AfterSuite(func() {
 	var userGroupMembers []models.UserGroupMember
 	err = db.Model(&userGroupMembers).Select()
 	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&userGroupMembers).Delete()
-	Expect(err).NotTo(HaveOccurred())
+	if len(userGroupMembers) > 0 {
+		_, err = db.Model(&userGroupMembers).Delete()
+		Expect(err).NotTo(HaveOccurred())
+	}
 
 	// Delete all userGroups
 	var userGroups []models.UserGroup
@@ -323,8 +310,10 @@ var _ = AfterSuite(func() {
 	var privacies []models.UserGroupPrivacy
 	err = db.Model(&privacies).Select()
 	Expect(err).NotTo(HaveOccurred())
-	_, err = db.Model(&privacies).Delete()
-	Expect(err).NotTo(HaveOccurred())
+	if len(privacies) > 0 {
+		_, err = db.Model(&privacies).Delete()
+		Expect(err).NotTo(HaveOccurred())
+	}
 
 	// Delete all users
 	var users []models.User

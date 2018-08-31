@@ -16,7 +16,7 @@ import (
 	tagpb "user-api/rpc/tag"
 	userpb "user-api/rpc/user"
 	// trackpb "user-api/rpc/track"
-	"user-api/internal"
+	// "user-api/internal"
 	"user-api/internal/database/models"
 )
 
@@ -27,7 +27,7 @@ var _ = Describe("UserGroup server", func() {
 
 	Describe("GetUserGroup", func() {
 		Context("with valid uuid", func() {
-			It("should respond with user_group if it exists", func() {
+			It("should respond with user_group (artist) if it exists", func() {
 				userGroup := &pb.UserGroup{Id: newArtist.Id.String()}
 				resp, err := service.GetUserGroup(context.Background(), userGroup)
 
@@ -95,6 +95,14 @@ var _ = Describe("UserGroup server", func() {
 				Expect(resp.HighlightedTracks[0].Duration).To(Equal(newTrack.Duration))
 				Expect(resp.HighlightedTracks[0].Status).To(Equal(newTrack.Status))
 				Expect(resp.HighlightedTracks[0].TrackNumber).To(Equal(newTrack.TrackNumber))
+			})
+			It("should respond with user_group (label) if it exists", func() {
+				userGroup := &pb.UserGroup{Id: newLabel.Id.String()}
+				resp, err := service.GetUserGroup(context.Background(), userGroup)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(len(resp.TrackGroups)).To(Equal(2))
 			})
 			It("should respond with not_found error if user_group does not exist", func() {
 				id := uuid.NewV4()
@@ -880,7 +888,7 @@ var _ = Describe("UserGroup server", func() {
 
 	Describe("DeleteUserGroup", func() {
 		Context("with valid uuid", func() {
-			It("should delete user_group if it exists", func() {
+			It("should delete user_group (artist) if it exists", func() {
 				userGroup := &pb.UserGroup{Id: newArtist.Id.String()}
 
 				userGroupToDelete := new(models.UserGroup)
@@ -896,18 +904,21 @@ var _ = Describe("UserGroup server", func() {
 				err = db.Model(&links).
 					Where("id in (?)", pg.In(userGroupToDelete.Links)).
 					Select()
+				Expect(err).NotTo(HaveOccurred())
 				Expect(len(links)).To(Equal(0))
 
 				var privacies []*models.UserGroupPrivacy
 				err = db.Model(&privacies).
 					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.PrivacyId})).
 					Select()
+				Expect(err).NotTo(HaveOccurred())
 				Expect(len(privacies)).To(Equal(0))
 
 				var addresses []*models.StreetAddress
 				err = db.Model(&addresses).
 					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.AddressId})).
 					Select()
+				Expect(err).NotTo(HaveOccurred())
 				Expect(len(privacies)).To(Equal(0))
 
 				var userGroupMembers []models.UserGroupMember
@@ -958,15 +969,88 @@ var _ = Describe("UserGroup server", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(ownerOfTracks)).To(Equal(0))
 
-				trackIds := internal.Difference(userGroupToDelete.Tracks, ownerOfTrackIds)
-				var tracks []models.Track
-				err = db.Model(&tracks).
-					Where("id in (?)", pg.In(trackIds)).
+				var artistOfTracks []models.Track
+				err = db.Model(&artistOfTracks).
+					Where("id in (?)", pg.In(userGroupToDelete.ArtistOfTracks)).
 					Select()
 				Expect(err).NotTo(HaveOccurred())
-				for _, t := range tracks {
+				for _, t := range artistOfTracks {
 					Expect(t.Artists).NotTo(ContainElement(userGroupToDelete.Id))
 				}
+
+				var userGroups []models.UserGroup
+				err = db.Model(&userGroups).
+					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.Id})).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(userGroups)).To(Equal(0))
+			})
+			It("should delete user_group (label) if it exists", func() {
+				userGroup := &pb.UserGroup{Id: newLabel.Id.String()}
+
+				userGroupToDelete := new(models.UserGroup)
+				err := db.Model(userGroupToDelete).
+					Column("OwnerOfTracks", "OwnerOfTrackGroups", "user_group.*", "LabelOfTrackGroups").
+					Where("id = ?", newLabel.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = service.DeleteUserGroup(context.Background(), userGroup)
+				Expect(err).NotTo(HaveOccurred())
+
+				var privacies []*models.UserGroupPrivacy
+				err = db.Model(&privacies).
+					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.PrivacyId})).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(privacies)).To(Equal(0))
+
+				var addresses []*models.StreetAddress
+				err = db.Model(&addresses).
+					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.AddressId})).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(privacies)).To(Equal(0))
+
+				var userGroupMembers []models.UserGroupMember
+				err = db.Model(&userGroupMembers).
+					Where("user_group_id = ?", newLabel.Id).
+					WhereOr("member_id = ?", newLabel.Id).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(userGroupMembers)).To(Equal(0))
+
+				ownerOfTrackGroupIds := make([]uuid.UUID, len(userGroupToDelete.OwnerOfTrackGroups))
+				for i, trackGroup := range(userGroupToDelete.OwnerOfTrackGroups) {
+				  ownerOfTrackGroupIds[i] = trackGroup.Id
+				}
+				var ownerOfTrackGroups []models.TrackGroup
+				err = db.Model(&ownerOfTrackGroups).
+					Where("id in (?)", pg.In(ownerOfTrackGroupIds)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(ownerOfTrackGroups)).To(Equal(0))
+
+				labelOfTrackGroupIds := make([]uuid.UUID, len(userGroupToDelete.LabelOfTrackGroups))
+				for i, trackGroup := range(userGroupToDelete.LabelOfTrackGroups) {
+					labelOfTrackGroupIds[i] = trackGroup.Id
+				}
+				var labelOfTrackGroups []models.TrackGroup
+				err = db.Model(&labelOfTrackGroups).
+					Where("id in (?)", pg.In(labelOfTrackGroupIds)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(labelOfTrackGroups)).To(Equal(0))
+
+				ownerOfTrackIds := make([]uuid.UUID, len(userGroupToDelete.OwnerOfTracks))
+				for i, track := range(userGroupToDelete.OwnerOfTracks) {
+				  ownerOfTrackIds[i] = track.Id
+				}
+				var ownerOfTracks []models.Track
+				err = db.Model(&ownerOfTracks).
+					Where("id in (?)", pg.In(ownerOfTrackIds)).
+					Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(len(ownerOfTracks)).To(Equal(0))
 
 				var userGroups []models.UserGroup
 				err = db.Model(&userGroups).

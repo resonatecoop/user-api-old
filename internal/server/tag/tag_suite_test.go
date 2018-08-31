@@ -155,13 +155,8 @@ var _ = BeforeSuite(func() {
 	_, err = db.Model(newTrack).Column("track_groups", "favorite_of_users").WherePK().Update()
 	Expect(err).NotTo(HaveOccurred())
 
-	newArtistUserGroup.Tracks = []uuid.UUID{newTrack.Id}
-	newArtistUserGroup.TrackGroups = []uuid.UUID{newAlbum.Id}
-	_, err = db.Model(newArtistUserGroup).Column("tracks", "track_groups").WherePK().Update()
-	Expect(err).NotTo(HaveOccurred())
-
-	newLabelUserGroup.TrackGroups = []uuid.UUID{newAlbum.Id}
-	_, err = db.Model(newLabelUserGroup).Column("tracks", "track_groups").WherePK().Update()
+	newArtistUserGroup.ArtistOfTracks = []uuid.UUID{newTrack.Id, playlistTrack.Id}
+	_, err = db.Model(newArtistUserGroup).Column("artist_of_tracks").WherePK().Update()
 	Expect(err).NotTo(HaveOccurred())
 })
 
