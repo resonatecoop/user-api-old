@@ -911,7 +911,7 @@ Tracks are created and only after the TrackGroup they are part of is created.
 ### Update Track [POST /twirp/resonate.api.user.TrackService/UpdateTrack]
 
 CreatorId and UserGroupId are immutable.
-Updatable fields: title, status, track_number, duration, track_server_id
+Updatable fields: title, status, track_number, duration, track_server_id, tags
 
 Tracks can be added to a track group from dedicated endpoint in TrackGroup Service AddTracksToTrackGroup or on TrackGroup creation
 
@@ -926,6 +926,10 @@ Tracks can be added to a track group from dedicated endpoint in TrackGroup Servi
           "creator_id": "b19cd642-9df8-4f44-bb5a-166529043111",
           "user_group_id": "b19cd642-9df8-4f44-bb5a-166529043112",
           "track_server_id": "c29cd642-9df8-4f44-bb5a-166529043112",
+          "tags": [
+            {"id": "c29cd642-9df8-4f44-bb5a-166529043119", "type": "genre", "name": "pop"},
+            {"type": "genre", "name": "rock"}
+          ],
         }
 
 + Response 204 (application/json)

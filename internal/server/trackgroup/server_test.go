@@ -280,7 +280,7 @@ var _ = Describe("TrackGroup server", func() {
 				twerr := err.(twirp.Error)
 				Expect(twerr.Code()).To(Equal(not_found_code))
 			})
-      It("should not update track group if user_group does not exist", func() {
+      It("should respond with not_found error if user_group does not exist", func() {
         userGroupId := uuid.NewV4()
         for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id || userGroupId == artist.Id || userGroupId == label.Id {
           userGroupId = uuid.NewV4()
@@ -316,7 +316,7 @@ var _ = Describe("TrackGroup server", func() {
         twerr := err.(twirp.Error)
         Expect(twerr.Code()).To(Equal(not_found_code))
       })
-      It("should not update track group if label does not exist", func() {
+      It("should respond with not_found error if label does not exist", func() {
         userGroupId := uuid.NewV4()
         for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id || userGroupId == artist.Id || userGroupId == label.Id {
           userGroupId = uuid.NewV4()
@@ -407,6 +407,7 @@ var _ = Describe("TrackGroup server", func() {
         Expect(err).To(HaveOccurred())
         twerr := err.(twirp.Error)
         Expect(twerr.Code()).To(Equal(invalid_argument_code))
+        Expect(twerr.Meta("argument")).To(Equal("user_group id"))
       })
       It("should not update track group if label_id is invalid", func() {
         cover := make([]byte, 5)
@@ -433,6 +434,7 @@ var _ = Describe("TrackGroup server", func() {
         Expect(err).To(HaveOccurred())
         twerr := err.(twirp.Error)
         Expect(twerr.Code()).To(Equal(invalid_argument_code))
+        Expect(twerr.Meta("argument")).To(Equal("user_group id"))
       })
 		})
   })

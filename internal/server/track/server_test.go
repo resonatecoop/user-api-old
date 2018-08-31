@@ -141,8 +141,22 @@ var _ = Describe("Track server", func() {
 					Status: "paid",
 					Duration: 250.12,
 					CreatorId: newUser.Id.String(),
-					UserGroupId: newArtistUserGroup.Id.String(),
+					UserGroupId: artist.Id.String(),
 					TrackServerId: trackServerId.String(),
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
+							Id: artist.Id.String(),
+						},
+						&tagpb.RelatedUserGroup{
+							Id: featuredArtist.Id.String(),
+						},
+					},
+					Tags: []*tagpb.Tag{
+						&tagpb.Tag{
+							Type: "genre",
+							Name: "pop",
+						},
+					},
 				}
 				_, err := service.UpdateTrack(context.Background(), track)
 
@@ -157,12 +171,89 @@ var _ = Describe("Track server", func() {
 				Expect(t.Duration).To(Equal(track.Duration))
 				Expect(t.TrackServerId.String()).To(Equal(track.TrackServerId))
 
+				Expect(t.UserGroupId).To(Equal(artist.Id))
+        oldUserGroup := new(models.UserGroup)
+        err = db.Model(oldUserGroup).Where("id = ?", newArtistUserGroup.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(oldUserGroup.Tracks).NotTo(ContainElement(newTrack.Id))
+        newUserGroup := new(models.UserGroup)
+        err = db.Model(newUserGroup).Where("id = ?", artist.Id).Select()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(newUserGroup.Tracks).To(ContainElement(newTrack.Id))
+
+				Expect(len(t.Artists)).To(Equal(2))
+				Expect(t.Artists).To(ContainElement(artist.Id))
+				Expect(t.Artists).To(ContainElement(featuredArtist.Id))
+				newArtist := new(models.UserGroup)
+				err = db.Model(newArtist).Where("id = ?", artist.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(newArtist.Tracks).To(ContainElement(newTrack.Id))
+				newFeaturedArtist := new(models.UserGroup)
+				err = db.Model(newFeaturedArtist).Where("id = ?", featuredArtist.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(newFeaturedArtist.Tracks).To(ContainElement(newTrack.Id))
+
+				Expect(len(t.Tags)).To(Equal(1))
+				addedTag := models.Tag{Id: t.Tags[0]}
+				err = db.Model(&addedTag).WherePK().Returning("*").Select()
+				Expect(addedTag.Type).To(Equal("genre"))
+				Expect(addedTag.Name).To(Equal("pop"))
+
 				// unchanged
 				Expect(t.CreatorId.String()).To(Equal(track.CreatorId))
-				Expect(t.UserGroupId.String()).To(Equal(track.UserGroupId))
-				Expect(len(t.Tags)).To(Equal(1))
-				Expect(len(t.Artists)).To(Equal(1))
 				Expect(len(t.TrackGroups)).To(Equal(2))
+			})
+			It("should respond with not_found error if one of the artists does not exist", func() {
+				userGroupId := uuid.NewV4()
+				for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id || userGroupId == artist.Id || userGroupId == featuredArtist.Id {
+					userGroupId = uuid.NewV4()
+				}
+				track := &pb.Track{
+					Id: newTrack.Id.String(),
+					Title: "best track ever",
+					TrackNumber: 1,
+					Status: "paid",
+					Duration: 250.12,
+					CreatorId:  newTrack.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
+							Id: userGroupId.String(),
+						},
+						&tagpb.RelatedUserGroup{
+							Id: featuredArtist.Id.String(),
+						},
+					},
+				}
+				resp, err := service.UpdateTrack(context.Background(), track)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+			It("should respond with not_found error if user group does not exist", func() {
+				userGroupId := uuid.NewV4()
+				for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id || userGroupId == artist.Id || userGroupId == featuredArtist.Id {
+					userGroupId = uuid.NewV4()
+				}
+				track := &pb.Track{
+					Id: newTrack.Id.String(),
+					Title: "best track ever",
+					TrackNumber: 1,
+					Status: "paid",
+					Duration: 250.12,
+					CreatorId: newUser.Id.String(),
+					UserGroupId: userGroupId.String(),
+				}
+				resp, err := service.UpdateTrack(context.Background(), track)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(not_found_code))
 			})
 			It("should respond with not_found error if track does not exist", func() {
 				id := uuid.NewV4()
@@ -186,6 +277,7 @@ var _ = Describe("Track server", func() {
 				twerr := err.(twirp.Error)
 				Expect(twerr.Code()).To(Equal(not_found_code))
 			})
+
 		})
 		Context("with invalid uuid", func() {
 			It("should respond with invalid_argument error", func() {
@@ -207,6 +299,52 @@ var _ = Describe("Track server", func() {
 				twerr := err.(twirp.Error)
 				Expect(twerr.Code()).To(Equal(invalid_argument_code))
 				Expect(twerr.Meta("argument")).To(Equal("id"))
+			})
+			It("should not update track if user_group_id is invalid", func() {
+				track := &pb.Track{
+					Id: newTrack.Id.String(),
+					Title: "best track ever",
+					TrackNumber: 1,
+					Status: "paid",
+					Duration: 250.12,
+					CreatorId: newUser.Id.String(),
+					UserGroupId: "",
+				}
+				resp, err := service.UpdateTrack(context.Background(), track)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("user_group_id"))
+			})
+			It("should not update track if one of the artists' ids is invalid", func() {
+				track := &pb.Track{
+					Id: newTrack.Id.String(),
+					Title: "best track ever",
+					TrackNumber: 1,
+					Status: "paid",
+					Duration: 250.12,
+					CreatorId: newUser.Id.String(),
+					UserGroupId: newArtistUserGroup.Id.String(),
+					Artists: []*tagpb.RelatedUserGroup{
+						&tagpb.RelatedUserGroup{
+							Id: "2a5",
+						},
+						&tagpb.RelatedUserGroup{
+							Id: featuredArtist.Id.String(),
+						},
+					},
+				}
+				resp, err := service.UpdateTrack(context.Background(), track)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("user_group id"))
 			})
 		})
 	})
@@ -255,7 +393,7 @@ var _ = Describe("Track server", func() {
 				artist := new(models.UserGroup)
 				err = db.Model(artist).Where("id = ?", newArtistUserGroup.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(len(artist.Tracks)).To(Equal(2))
+				Expect(len(artist.Tracks)).To(Equal(1))
 
 				trackId, err := uuid.FromString(resp.Id)
 				Expect(err).NotTo(HaveOccurred())
@@ -440,7 +578,7 @@ var _ = Describe("Track server", func() {
 			})
 			It("should not create a track if user_group does not exist", func() {
 				userGroupId := uuid.NewV4()
-				for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id {
+				for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id || userGroupId == artist.Id || userGroupId == featuredArtist.Id {
 					userGroupId = uuid.NewV4()
 				}
 				track := &pb.Track{
@@ -464,7 +602,7 @@ var _ = Describe("Track server", func() {
 			})
 			It("should not create a track if one of the artists does not exist", func() {
 				userGroupId := uuid.NewV4()
-				for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id {
+				for userGroupId == newLabelUserGroup.Id || userGroupId == newArtistUserGroup.Id || userGroupId == artist.Id || userGroupId == featuredArtist.Id {
 					userGroupId = uuid.NewV4()
 				}
 				track := &pb.Track{

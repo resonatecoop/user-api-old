@@ -28,6 +28,8 @@ var (
 	newArtistUserGroup *models.UserGroup
 	newLabelUserGroup *models.UserGroup
 	newGenreTag *models.Tag
+	artist *models.UserGroup
+	featuredArtist *models.UserGroup
 )
 
 func TestTrack(t *testing.T) {
@@ -70,6 +72,26 @@ var _ = BeforeSuite(func() {
 		AddressId: newAddress.Id,
 	}
 	err = db.Insert(newArtistUserGroup)
+	Expect(err).NotTo(HaveOccurred())
+
+	artist = &models.UserGroup{
+		DisplayName: "new artist",
+		Avatar: avatar,
+		OwnerId: newUser.Id,
+		TypeId: newArtistGroupTaxonomy.Id,
+		AddressId: newAddress.Id,
+	}
+	err = db.Insert(artist)
+	Expect(err).NotTo(HaveOccurred())
+
+	featuredArtist = &models.UserGroup{
+		DisplayName: "featured artist",
+		Avatar: avatar,
+		OwnerId: newUser.Id,
+		TypeId: newArtistGroupTaxonomy.Id,
+		AddressId: newAddress.Id,
+	}
+	err = db.Insert(featuredArtist)
 	Expect(err).NotTo(HaveOccurred())
 
 	newLabelUserGroup = &models.UserGroup{

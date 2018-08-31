@@ -92,3 +92,16 @@ func RemoveDuplicates(elements []uuid.UUID) []uuid.UUID {
   // Return the new slice.
   return result
 }
+
+// Compare two uuid slices
+func Equal(a, b []uuid.UUID) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
