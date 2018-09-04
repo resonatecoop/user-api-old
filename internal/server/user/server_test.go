@@ -836,6 +836,23 @@ var _ = Describe("User server", func() {
 				Expect(twerr.Code()).To(Equal(invalid_argument_code))
 				Expect(twerr.Meta("argument")).To(Equal("id"))
 			})
+			It("should not update user with invalid email", func() {
+				user := &pb.User{
+					Id: newUser.Id.String(),
+					Username: "new username",
+					FullName: "full name",
+					Email: "ç$€§/az@gmail.com",
+					FirstName: "first name",
+				}
+				resp, err := service.UpdateUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("email"))
+			})
 		})
 	})
 
@@ -877,7 +894,7 @@ var _ = Describe("User server", func() {
 			})
 		})
 
-		Context("with missing required attributes", func() {
+		Context("with invalid or missing required attributes", func() {
 			It("should not create a user without email", func() {
 				user := &pb.User{Username: "johnd", FullName: "john doe", Email: ""}
 				resp, err := service.CreateUser(context.Background(), user)
@@ -910,6 +927,21 @@ var _ = Describe("User server", func() {
 				twerr := err.(twirp.Error)
 				Expect(twerr.Code()).To(Equal(invalid_argument_code))
 				Expect(twerr.Meta("argument")).To(Equal("full_name"))
+			})
+			It("should not create a user with invalid email", func() {
+				user := &pb.User{
+					Username: "abcd",
+					FullName: "full name",
+					Email: "ç$€§/az@gmail.com",
+				}
+				resp, err := service.CreateUser(context.Background(), user)
+
+				Expect(resp).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("email"))
 			})
 		})
 	})

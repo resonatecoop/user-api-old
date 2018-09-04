@@ -105,7 +105,7 @@ Check out `doc.apib` for API documentation.
 
 We use Ginkgo and Gomega for testing.
 
-For the moment, you need to create the testing database and run migrations manually before running tests.
+At the moment, you need to create the testing database and run migrations manually before running tests.
 
 * Create user and database as follow:
 

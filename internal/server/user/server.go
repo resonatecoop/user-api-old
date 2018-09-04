@@ -4,6 +4,7 @@ import (
 	// "fmt"
 	"time"
 	"context"
+	"regexp"
 
 	"github.com/go-pg/pg"
 	"github.com/twitchtv/twirp"
@@ -277,6 +278,10 @@ func checkRequiredAttributes(user *pb.User) (twirp.Error) {
 			argument = "full_name"
 		}
 		return twirp.RequiredArgumentError(argument)
+	}
+	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	if re.MatchString(user.Email) == false {
+		return twirp.InvalidArgumentError("email", "must be a valid email")
 	}
 	return nil
 }
