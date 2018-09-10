@@ -349,8 +349,37 @@ var _ = Describe("UserGroup server", func() {
 				err = db.Model(newLink).WherePK().Returning("*").Select()
 				Expect(err).To(HaveOccurred())
 
-				// Expect(len(updatedUserGroup.RecommendedArtists)).To(Equal(1))
-				// Expect(updatedUserGroup.RecommendedArtists[0]).To(Equal(newRecommendedArtist.Id))
+				deletedLink := models.Link{Id: newLink.Id}
+				err = db.Model(&deletedLink).
+					WherePK().
+					Select()
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(pg.ErrNoRows))
+
+				// unchanged
+				Expect(updatedUserGroup.OwnerId).To(Equal(newArtist.OwnerId))
+				Expect(updatedUserGroup.TypeId).To(Equal(newArtist.TypeId))
+			})
+			It("should update user group type from user to artist", func() {
+				userGroup := &pb.UserGroup{
+					Id: newUserProfile.Id.String(),
+					DisplayName: newUserProfile.DisplayName,
+					Description: newUserProfile.Description,
+					ShortBio: newUserProfile.ShortBio,
+					Avatar: newUserProfile.Avatar,
+					Address: &userpb.StreetAddress{Id: newAddress.Id.String(), Data: newAddress.Data},
+					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
+					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
+					OwnerId: newUserProfile.OwnerId.String(),
+				}
+				_, err := service.UpdateUserGroup(context.Background(), userGroup)
+
+				Expect(err).NotTo(HaveOccurred())
+
+				updatedUserGroup := new(models.UserGroup)
+				err = db.Model(updatedUserGroup).Where("id = ?", newUserProfile.Id).Select()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(updatedUserGroup.TypeId).To(Equal(newArtistGroupTaxonomy.Id))
 			})
 			It("should respond with not_found error if user_group does not exist", func() {
 				id := uuid.NewV4()
@@ -374,6 +403,56 @@ var _ = Describe("UserGroup server", func() {
 
 				twerr := err.(twirp.Error)
 				Expect(twerr.Code()).To(Equal(not_found_code))
+			})
+		})
+		Context("with invalid type", func() {
+			It("should not update user group from artist to user", func() {
+				userGroup := &pb.UserGroup{
+					Id: newArtist.Id.String(),
+					DisplayName: "new display name",
+					Description: "new description",
+					ShortBio: "short bio",
+					Avatar: newArtist.Avatar,
+					Publisher: map[string]string{
+						"name": "new publisher name",
+						"number": "new 1E3",
+					},
+					Pro: map[string]string{
+						"name": "new PRO name",
+						"number": "new 2BA",
+					},
+					Address: &userpb.StreetAddress{Id: artistAddress.Id.String(), Data: map[string]string{"some": "new data"}},
+					Type: &pb.GroupTaxonomy{Id: newUserGroupTaxonomy.Id.String(), Type: "user"},
+					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
+					OwnerId: newArtist.OwnerId.String(),
+				}
+				res, err := service.UpdateUserGroup(context.Background(), userGroup)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("type"))
+			})
+			It("should not update user group from label to user", func() {
+				userGroup := &pb.UserGroup{
+					Id: newLabel.Id.String(),
+					DisplayName: newLabel.DisplayName,
+					Avatar: newLabel.Avatar,
+					Address: &userpb.StreetAddress{Id: labelAddress.Id.String(), Data: labelAddress.Data},
+					Type: &pb.GroupTaxonomy{Id: newUserGroupTaxonomy.Id.String(), Type: "user"},
+					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
+					OwnerId: newLabel.OwnerId.String(),
+				}
+				res, err := service.UpdateUserGroup(context.Background(), userGroup)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("type"))
 			})
 		})
 		Context("with invalid uuid", func() {

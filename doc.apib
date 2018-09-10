@@ -424,11 +424,11 @@ To add members/memberOfGroups, refer to dedicated endpoint.
 
 ### Update UserGroup [POST /twirp/resonate.api.user.UserGroupService/UpdateUserGroup]
 
-Updatable fields are: display_name, avatar, banner, description, short_bio, links and tags.
+Updatable fields are: display_name, avatar, banner, description, short_bio, links and tags, type ("user" to "artist" or "label" only).
 If the request body doesn't contain a certain user group attribute, it will be set to its zero value (if not required).
 
 To update address or privacy, update desired fields (data for address; private, owned_track and supported_artists for privacy).
-Type and owner_id are not updatable. (TODO: make type updatable if user => artist or user => label only)
+Owner_id are not updatable.
 
 To add or remove tags or links:
 - add {...obj} to the corresponding array in the request body with info (type, name for tags; platform, uri for links).

@@ -262,9 +262,9 @@ func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
 
   trackGroupToUpdate := &TrackGroup{Id: t.Id}
   pgerr := tx.Model(trackGroupToUpdate).
-      Column("user_group_id", "label_id", "tracks").
-      WherePK().
-      Select()
+    Column("user_group_id", "label_id", "tracks").
+    WherePK().
+    Select()
   if pgerr != nil {
     return pgerr, "track_group"
   }
@@ -278,11 +278,11 @@ func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
   columns := []string{"title", "updated_at", "release_date", "cover", "display_artist", "type",
     "multiple_composers", "private", "about"}
 
-  // Update usergroup and label trackgroups array if needed
+  // Update usergroup if needed
   if trackGroupToUpdate.UserGroupId != t.UserGroupId {
     columns = append(columns, "user_group_id")
 
-    // Update release's tracks user_group_id as well
+    // Update tracks user_group_id if track group is release (lp, ep, single)
     if trackGroup.Type != "playlist" && len(trackGroupToUpdate.Tracks) > 0 {
       var tracks []Track
       _, pgerr = tx.Model(&tracks).
@@ -295,6 +295,7 @@ func (t *TrackGroup) Update(db *pg.DB, trackGroup *pb.TrackGroup) (error, string
     }
   }
 
+  // Update label if needed
   if trackGroupToUpdate.LabelId != t.LabelId {
     columns = append(columns, "label_id")
   }

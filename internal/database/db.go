@@ -7,14 +7,14 @@ import (
 )
 
 func Connect(testing bool) *pg.DB {
-	db_config := config.Config.Dev
+	dbConfig := config.Configs.Dev
 	if (testing) {
-		db_config = config.Config.Testing
+		dbConfig = config.Configs.Testing
 	}
 	return pg.Connect(&pg.Options{
-    Addr: db_config.Addr,
-    User:     db_config.User,
-    Password: db_config.Password,
-    Database: db_config.Database,
+    Addr: dbConfig.Addr,
+    User:     dbConfig.User,
+    Password: dbConfig.Password,
+    Database: dbConfig.Database,
 	})
 }

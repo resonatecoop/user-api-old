@@ -34,6 +34,7 @@ var (
 	newGenreTag *models.Tag
 	newRoleTag *models.Tag
 	newAddress *models.StreetAddress
+	labelAddress *models.StreetAddress
 	artistAddress *models.StreetAddress
 	newAlbum *models.TrackGroup
 	newTrack *models.Track
@@ -91,7 +92,7 @@ var _ = BeforeSuite(func() {
 
 		// Create user groups
 		avatar := make([]byte, 5)
-		labelAddress := &models.StreetAddress{Data: map[string]string{"some": "label data"}}
+		labelAddress = &models.StreetAddress{Data: map[string]string{"some": "label data"}}
 		err = db.Insert(labelAddress)
 		newLabel = &models.UserGroup{
 			DisplayName: "best label ever",

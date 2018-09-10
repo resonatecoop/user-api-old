@@ -506,22 +506,22 @@ func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error)
 	if err != nil {
 		return nil, err
 	}
-	typeId, err := internal.GetUuidFromString(userGroup.Type.Id)
-	if err != nil {
-		return nil, err
-	}
-	ownerId, err := internal.GetUuidFromString(userGroup.OwnerId)
-	if err != nil {
-		return nil, err
-	}
+	// typeId, err := internal.GetUuidFromString(userGroup.Type.Id)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// ownerId, err := internal.GetUuidFromString(userGroup.OwnerId)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return &models.UserGroup{
 		Id: id,
 		DisplayName: userGroup.DisplayName,
 		Description: userGroup.Description,
 		AddressId: addressId,
 		PrivacyId: privacyId,
-		TypeId: typeId,
-		OwnerId: ownerId,
+		// TypeId: typeId,
+		// OwnerId: ownerId,
 		ShortBio: userGroup.ShortBio,
 		Avatar: userGroup.Avatar,
 		Banner: userGroup.Banner,

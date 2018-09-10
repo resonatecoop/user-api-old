@@ -163,13 +163,52 @@ func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
   }
   defer tx.Rollback()
 
+  userGroupToUpdate := &UserGroup{Id: u.Id}
+  pgerr := tx.Model(userGroupToUpdate).
+    Column("user_group.links", "Type").
+    WherePK().
+    Select()
+  if pgerr != nil {
+    return pgerr, "user_group"
+  }
+
+  columns := []string{
+    "updated_at",
+    "pro",
+    "publisher",
+    "links",
+    "tags",
+    "display_name",
+    "avatar",
+    "description",
+    "short_bio",
+    "banner",
+    "group_email_address",
+  }
+
+  // User group type - changes allowed: user => artist, user => label
+  groupTaxonomy := new(GroupTaxonomy)
+  pgerr = tx.Model(groupTaxonomy).Where("type = ?", userGroup.Type.Type).First()
+  if pgerr != nil {
+    return pgerr, "group_taxonomy"
+  }
+  if userGroupToUpdate.Type.Id != groupTaxonomy.Id {
+    if userGroupToUpdate.Type.Type != "user" ||
+      (userGroupToUpdate.Type.Type == "user" && !(groupTaxonomy.Type == "artist" || groupTaxonomy.Type == "label")) {
+      twerr := twirp.InvalidArgumentError("type", "not allowed")
+      return twerr.(error), "user_group"
+    }
+    u.TypeId = groupTaxonomy.Id
+    columns = append(columns, "type_id")
+  }
+
   // Update address
   addressId, twerr := internal.GetUuidFromString(userGroup.Address.Id)
   if twerr != nil {
     return twerr, "street_address"
   }
   address := &StreetAddress{Id: addressId, Data: userGroup.Address.Data}
-  _, pgerr := tx.Model(address).Column("data").WherePK().Update()
+  _, pgerr = tx.Model(address).Column("data").WherePK().Update()
   // _, pgerr := db.Model(address).Set("data = ?", pg.Hstore(userGroup.Address.Data)).Where("id = ?id").Update()
   if pgerr != nil {
     return pgerr, "street_address"
@@ -180,7 +219,12 @@ func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
   if twerr != nil {
     return twerr, "user_group_privacy"
   }
-  privacy := &UserGroupPrivacy{Id: privacyId, Private: userGroup.Privacy.Private, OwnedTracks: userGroup.Privacy.OwnedTracks, SupportedArtists: userGroup.Privacy.SupportedArtists}
+  privacy := &UserGroupPrivacy{
+    Id: privacyId,
+    Private: userGroup.Privacy.Private,
+    OwnedTracks: userGroup.Privacy.OwnedTracks,
+    SupportedArtists: userGroup.Privacy.SupportedArtists,
+  }
   _, pgerr = tx.Model(privacy).WherePK().Returning("*").UpdateNotNull()
   if pgerr != nil {
     return pgerr, "user_group_privacy"
@@ -198,11 +242,7 @@ func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
     return pgerr, "link"
   }
   // Delete links if needed
-  pgerr = tx.Model(u).WherePK().Column("links").Select()
-  if pgerr != nil {
-    return pgerr, "user_group"
-  }
-  linkIdsToDelete := internal.Difference(u.Links, linkIds)
+  linkIdsToDelete := internal.Difference(userGroupToUpdate.Links, linkIds)
   if len(linkIdsToDelete) > 0 {
     _, pgerr = tx.Model((*Link)(nil)).
       Where("id in (?)", pg.In(linkIdsToDelete)).
@@ -218,7 +258,7 @@ func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
   // u.RecommendedArtists = recommendedArtistIds
   u.UpdatedAt = time.Now()
   _, pgerr = tx.Model(u).
-    Column("updated_at", "pro", "publisher", "links", "tags", "display_name", "avatar", "description", "short_bio", "banner", "group_email_address").
+    Column(columns...).
     WherePK().
     Returning("*").
     Update()

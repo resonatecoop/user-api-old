@@ -23,12 +23,15 @@ func CheckError(err error, table string) (twirp.Error) {
 			return twirp.NotFoundError(fmt.Sprintf("%s does not exist", table))
 		}
     twerr, ok := err.(twirp.Error)
-    if ok && twerr.Meta("argument") == "id" {
-      argument := "id"
+    if ok {
+      argument := twerr.Meta("argument")
       if table != "" {
-        argument = table + " id"
+        argument = table + " " + argument
       }
-      return twirp.InvalidArgumentError(argument, "must be a valid uuid")
+      if twerr.Meta("argument") == "id" {
+        return twirp.InvalidArgumentError(argument, "must be a valid uuid")
+      }
+      return twerr
     }
 		pgerr, ok := err.(pg.Error)
 		if ok {
