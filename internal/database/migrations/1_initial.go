@@ -5,7 +5,7 @@ import (
   "github.com/go-pg/migrations"
   "github.com/go-pg/pg/orm"
 
-  "user-api/internal/database/models"
+  "user-api/internal/database/model"
 )
 
 func init() {
@@ -30,17 +30,17 @@ func init() {
     }
 
     for _, model := range []interface{}{
-      &models.StreetAddress{},
-      &models.Tag{},
-      &models.User{},
-      &models.Link{},
-      &models.UserGroupPrivacy{},
-      &models.GroupTaxonomy{},
-      &models.UserGroup{},
-      &models.Track{},
-      &models.TrackGroup{},
-      &models.UserGroupMember{},
-      // &models.Play{},
+      &model.StreetAddress{},
+      &model.Tag{},
+      &model.User{},
+      &model.Link{},
+      &model.UserGroupPrivacy{},
+      &model.GroupTaxonomy{},
+      &model.UserGroup{},
+      &model.Track{},
+      &model.TrackGroup{},
+      &model.UserGroupMember{},
+      // &model.Play{},
     } {
       _, err := orm.CreateTable(db, model, &orm.CreateTableOptions{
         FKConstraints: true,
@@ -50,7 +50,7 @@ func init() {
         return err
       }
     }
-    orm.RegisterTable((*models.UserGroupMember)(nil))
+    orm.RegisterTable((*model.UserGroupMember)(nil))
     if _, err := db.Exec(`alter table user_group_members add foreign key (user_group_id) references user_groups(id)`); err != nil {
       return err
     }
@@ -69,17 +69,17 @@ func init() {
       return err
     }
     for _, model := range []interface{}{
-      // &models.Play{},
-      &models.Tag{},
-      &models.TrackGroup{},
-      &models.Track{},
-      &models.GroupTaxonomy{},
-      &models.UserGroupMember{},
-      &models.StreetAddress{},
-      &models.UserGroupPrivacy{},
-      &models.UserGroup{},
-      &models.User{},
-      &models.Link{},
+      // &model.Play{},
+      &model.Tag{},
+      &model.TrackGroup{},
+      &model.Track{},
+      &model.GroupTaxonomy{},
+      &model.UserGroupMember{},
+      &model.StreetAddress{},
+      &model.UserGroupPrivacy{},
+      &model.UserGroup{},
+      &model.User{},
+      &model.Link{},
       } {
       _, err := orm.DropTable(db, model, &orm.DropTableOptions{
         IfExists: true,

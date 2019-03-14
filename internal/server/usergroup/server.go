@@ -17,7 +17,7 @@ import (
 	// trackpb "user-api/rpc/track"
 	tagpb "user-api/rpc/tag"
 	"user-api/internal"
-	"user-api/internal/database/models"
+	"user-api/internal/database/model"
 )
 
 type Server struct {
@@ -39,7 +39,7 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		return nil, err
 	}
 
-	u := &models.UserGroup{
+	u := &model.UserGroup{
 		DisplayName: userGroup.DisplayName,
 		Description: userGroup.Description,
 		OwnerId: ownerId,
@@ -79,7 +79,7 @@ func (s *Server) SearchUserGroups(ctx context.Context, q *tagpb.Query) (*tagpb.S
     return nil, twirp.InvalidArgumentError("query", "must be a valid search query")
   }
 
-  searchResults, twerr := models.SearchUserGroups(q.Query, s.db)
+  searchResults, twerr := model.SearchUserGroups(q.Query, s.db)
   if twerr != nil {
     return nil, twerr
   }
@@ -92,7 +92,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	if err != nil {
 		return nil, err
 	}
-	u := &models.UserGroup{Id: id}
+	u := &model.UserGroup{Id: id}
 
 	pgerr := s.db.Model(u).
 		Column("user_group.*", "Privacy", "Type", "Address", "Members", "MemberOfGroups",
@@ -106,7 +106,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	// Get user group links
 	links := make([]*pb.Link, len(u.Links))
 	if len(links) > 0 {
-		var groupLinks []models.Link
+		var groupLinks []model.Link
 		pgerr = s.db.Model(&groupLinks).
 			Where("id in (?)", pg.In(u.Links)).
 			Select()
@@ -119,13 +119,13 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	}
 
 	// Get user group tags
-	tags, twerr := models.GetTags(u.Tags, s.db)
+	tags, twerr := model.GetTags(u.Tags, s.db)
 	if twerr != nil {
 		return nil, twerr
 	}
 
 	// Get related user groups
-	recommendedArtists, pgerr := models.GetRelatedUserGroups(u.RecommendedArtists, s.db)
+	recommendedArtists, pgerr := model.GetRelatedUserGroups(u.RecommendedArtists, s.db)
 	if pgerr != nil {
 		return nil, internal.CheckError(pgerr, "user_group")
 	}
@@ -139,16 +139,16 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	}
 
 	// Get related tracks/track groups
-	highlightedTracks, pgerr := models.GetTracks(u.HighlightedTracks, s.db, true, ctx)
+	highlightedTracks, pgerr := model.GetTracks(u.HighlightedTracks, s.db, true, ctx)
 	if pgerr != nil {
 		return nil, internal.CheckError(pgerr, "track")
 	}
 
-	trackGroups := models.GetTrackGroups(append(u.OwnerOfTrackGroups, u.LabelOfTrackGroups...))
+	trackGroups := model.GetTrackGroups(append(u.OwnerOfTrackGroups, u.LabelOfTrackGroups...))
 
 	var featuredTrackGroup *tagpb.RelatedTrackGroup
 	if (u.FeaturedTrackGroupId != uuid.UUID{}) {
-		featuredTrackGroups, pgerr := models.GetTrackGroupsFromIds([]uuid.UUID{u.FeaturedTrackGroupId}, s.db, []string{"lp", "ep", "single", "playlist"})
+		featuredTrackGroups, pgerr := model.GetTrackGroupsFromIds([]uuid.UUID{u.FeaturedTrackGroupId}, s.db, []string{"lp", "ep", "single", "playlist"})
 		if pgerr != nil {
 			return nil, internal.CheckError(pgerr, "track_group")
 		}
@@ -207,7 +207,7 @@ func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 	if twerr != nil {
 		return nil, twerr
 	}
-	u := &models.UserGroup{Id: id}
+	u := &model.UserGroup{Id: id}
 
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -228,7 +228,7 @@ func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 }
 
 func (s *Server) GetLabelUserGroups(ctx context.Context, empty *tagpb.Empty) (*pb.GroupedUserGroups, error) {
-	var labels []models.UserGroup
+	var labels []model.UserGroup
 
 	// err := s.db.Model(&labels).
 	// 	Join("LEFT JOIN group_taxonomies AS g").
@@ -237,7 +237,7 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *tagpb.Empty) (*p
 	//   Apply(orm.Pagination(ctx.Value("query").(url.Values))).
 	//   Select()
 
-	groupTaxonomy := new(models.GroupTaxonomy)
+	groupTaxonomy := new(model.GroupTaxonomy)
 	err := s.db.Model(groupTaxonomy).
 		Where("type = ?", "label").
 		First()
@@ -264,7 +264,7 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *tagpb.Empty) (*p
 }
 
 func (s *Server) GetUserGroupTypes(ctx context.Context, empty *tagpb.Empty) (*pb.GroupTaxonomies, error) {
-	var types []models.GroupTaxonomy
+	var types []model.GroupTaxonomy
 	var groupTaxonomies pb.GroupTaxonomies
 	err := s.db.Model(&types).
 		Where("group_taxonomy.type != ?", "distributor"). // except distributors, internally added by staff
@@ -306,13 +306,13 @@ func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupM
 			}
 
 			// get user_group (should exist)
-			m := &models.UserGroup{Id: memberId}
+			m := &model.UserGroup{Id: memberId}
 			pgerr := tx.Model(m).WherePK().Select()
 			if pgerr != nil {
 				return pgerr, "user_group"
 			}
 
-			userGroupMember := &models.UserGroupMember{UserGroupId: userGroupId, MemberId: memberId}
+			userGroupMember := &model.UserGroupMember{UserGroupId: userGroupId, MemberId: memberId}
 
 			// set display_name
 			// if not provided, default will be member user_group display_name
@@ -323,7 +323,7 @@ func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupM
 			}
 
 			// create tags
-			tagIds, pgerr := models.GetTagIds(member.Tags, tx)
+			tagIds, pgerr := model.GetTagIds(member.Tags, tx)
 			if pgerr != nil {
 				return pgerr, "tag"
 			}
@@ -368,7 +368,7 @@ func (s *Server) DeleteMembers(ctx context.Context, userGroupMembers *pb.UserGro
 			// delete UserGroup/Member relation
 			// we don't delete tags because they could be used for other members
 			// avoiding having multiple tags that represent the same thing
-			userGroupMember := &models.UserGroupMember{UserGroupId: userGroupId, MemberId: memberId}
+			userGroupMember := &model.UserGroupMember{UserGroupId: userGroupId, MemberId: memberId}
 			res, pgerr := tx.Model(userGroupMember).
 				Where("user_group_id = ?user_group_id").
 				Where("member_id = ?member_id").
@@ -398,7 +398,7 @@ func (s *Server) AddRecommended(ctx context.Context, userGroupRecommended *pb.Us
 	if twerr != nil {
 		return nil, twerr
 	}
-	u := &models.UserGroup{Id: userGroupId}
+	u := &model.UserGroup{Id: userGroupId}
 
 	if pgerr, table := u.AddRecommended(s.db, recommendedId); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
@@ -415,7 +415,7 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 	if twerr != nil {
 		return nil, twerr
 	}
-	u := &models.UserGroup{Id: userGroupId}
+	u := &model.UserGroup{Id: userGroupId}
 
 	if pgerr, table := u.RemoveRecommended(s.db, recommendedId); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
@@ -428,7 +428,7 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 	if err != nil {
 		return nil, err
 	}
-	u := &models.UserGroup{Id: id}
+	u := &model.UserGroup{Id: id}
 	pgerr := s.db.Model(u).
 		Column("Type").
 		WherePK().
@@ -493,7 +493,7 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 	return &pb.UserGroupTrackAnalytics{}, nil
 }*/
 
-func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error) {
+func getUserGroupModel(userGroup *pb.UserGroup) (*model.UserGroup, twirp.Error) {
 	id, err := internal.GetUuidFromString(userGroup.Id)
 	if err != nil {
 		return nil, err
@@ -514,7 +514,7 @@ func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error)
 	// if err != nil {
 	// 	return nil, err
 	// }
-	return &models.UserGroup{
+	return &model.UserGroup{
 		Id: id,
 		DisplayName: userGroup.DisplayName,
 		Description: userGroup.Description,
@@ -531,11 +531,11 @@ func getUserGroupModel(userGroup *pb.UserGroup) (*models.UserGroup, twirp.Error)
 	}, nil
 }
 
-func getUserGroupMembers(userGroupId uuid.UUID, userGroups []models.UserGroup, members bool, db *pg.DB) ([]*pb.UserGroup, error, string) {
+func getUserGroupMembers(userGroupId uuid.UUID, userGroups []model.UserGroup, members bool, db *pg.DB) ([]*pb.UserGroup, error, string) {
 	userGroupsResponse := make([]*pb.UserGroup, len(userGroups))
 	for i, userGroup := range userGroups {
 		u := &pb.UserGroup{Avatar: userGroup.Avatar}
-		userGroupMember := models.UserGroupMember{}
+		userGroupMember := model.UserGroupMember{}
 		if members { // userGroups are members of user group with userGroupId
 			userGroupMember.UserGroupId = userGroupId
 			userGroupMember.MemberId = userGroup.Id
@@ -558,7 +558,7 @@ func getUserGroupMembers(userGroupId uuid.UUID, userGroups []models.UserGroup, m
 
 		// get tags
 		if len(userGroupMember.Tags) > 0 {
-			var tags []*models.Tag
+			var tags []*model.Tag
 			err = db.Model(&tags).
 				Where("id in (?)", pg.In(userGroupMember.Tags)).
 				Select()

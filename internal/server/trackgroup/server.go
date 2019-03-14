@@ -14,7 +14,7 @@ import (
   tagpb "user-api/rpc/tag"
   pb "user-api/rpc/trackgroup"
   "user-api/internal"
-  "user-api/internal/database/models"
+  "user-api/internal/database/model"
 )
 
 type Server struct {
@@ -57,7 +57,7 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
   trackGroup.Private = t.Private
 
   // Get tags
-  tags, twerr := models.GetTags(t.Tags, s.db)
+  tags, twerr := model.GetTags(t.Tags, s.db)
   if twerr != nil {
     return nil, twerr
   }
@@ -65,14 +65,14 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
 
   // Get UserGroup and Label if exists
   if t.UserGroupId.String() != "" {
-    userGroup, pgerr := models.GetRelatedUserGroups([]uuid.UUID{t.UserGroupId}, s.db)
+    userGroup, pgerr := model.GetRelatedUserGroups([]uuid.UUID{t.UserGroupId}, s.db)
     if pgerr != nil {
       return nil, internal.CheckError(pgerr, "user_group")
     }
     trackGroup.UserGroup = userGroup[0]
   }
   if t.LabelId.String() != "" {
-    label, pgerr := models.GetRelatedUserGroups([]uuid.UUID{t.LabelId}, s.db)
+    label, pgerr := model.GetRelatedUserGroups([]uuid.UUID{t.LabelId}, s.db)
     if pgerr != nil {
       return nil, internal.CheckError(pgerr, "user_group")
     }
@@ -81,7 +81,7 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
 
   // Get tracks
   showTrackGroup := t.Type == "playlist"
-  tracks, twerr := models.GetTracks(t.Tracks, s.db, showTrackGroup, ctx)
+  tracks, twerr := model.GetTracks(t.Tracks, s.db, showTrackGroup, ctx)
   if twerr != nil {
     return nil, twerr
   }
@@ -95,7 +95,7 @@ func (s *Server) SearchTrackGroups(ctx context.Context, q *tagpb.Query) (*tagpb.
     return nil, twirp.InvalidArgumentError("query", "must be a valid search query")
   }
 
-  searchResults, twerr := models.SearchTrackGroups(q.Query, s.db)
+  searchResults, twerr := model.SearchTrackGroups(q.Query, s.db)
   if twerr != nil {
     return nil, twerr
   }
@@ -108,7 +108,7 @@ func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
     return nil, twerr
   }
 
-  t := &models.TrackGroup{
+  t := &model.TrackGroup{
     Title: trackGroup.Title,
     Type: trackGroup.Type,
     Cover: trackGroup.Cover,
@@ -181,7 +181,7 @@ func (s *Server) AddTracksToTrackGroup(ctx context.Context, tracksToTrackGroup *
   if twerr != nil {
     return nil, twerr
   }
-  t := &models.TrackGroup{Id: id}
+  t := &model.TrackGroup{Id: id}
 
   if pgerr, table := t.AddTracks(s.db, tracksToTrackGroup.Tracks); pgerr != nil {
 		return nil, internal.CheckError(pgerr, table)
@@ -194,7 +194,7 @@ func (s *Server) RemoveTracksFromTrackGroup(ctx context.Context, tracksToTrackGr
   if twerr != nil {
     return nil, twerr
   }
-  t := &models.TrackGroup{Id: id}
+  t := &model.TrackGroup{Id: id}
 
   if pgerr, table := t.RemoveTracks(s.db, tracksToTrackGroup.Tracks); pgerr != nil {
     return nil, internal.CheckError(pgerr, table)
@@ -228,12 +228,12 @@ func checkRequiredAttributes(trackGroup *pb.TrackGroup) (twirp.Error) {
   return nil
 }
 
-func getTrackGroupModel(trackGroup *pb.TrackGroup) (*models.TrackGroup, twirp.Error) {
+func getTrackGroupModel(trackGroup *pb.TrackGroup) (*model.TrackGroup, twirp.Error) {
   id, twerr := internal.GetUuidFromString(trackGroup.Id)
   if twerr != nil {
     return nil, twerr
   }
-  return &models.TrackGroup{
+  return &model.TrackGroup{
     Id: id,
     Title: trackGroup.Title,
     Type: trackGroup.Type,

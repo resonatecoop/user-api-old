@@ -10,7 +10,7 @@ import (
   // "github.com/satori/go.uuid"
 
   pb "user-api/rpc/tag"
-  // "user-api/internal/database/models"
+  // "user-api/internal/database/model"
 )
 
 var _ = Describe("Tag server", func() {

@@ -12,33 +12,33 @@ import (
 	"github.com/satori/go.uuid"
 
 	"user-api/internal/database"
-	"user-api/internal/database/models"
+	"user-api/internal/database/model"
 	usergroupserver "user-api/internal/server/usergroup"
 )
 
 var (
 	db *pg.DB
 	service *usergroupserver.Server
-	newUser *models.User
-	newArtist *models.UserGroup
-	newUserProfile *models.UserGroup
-	newRecommendedArtist *models.UserGroup
-	newLabel *models.UserGroup
-	newDistributor *models.UserGroup
-	newArtistUserGroupMember *models.UserGroupMember
-	newLabelUserGroupMember *models.UserGroupMember
-	newUserGroupTaxonomy *models.GroupTaxonomy
-	newArtistGroupTaxonomy *models.GroupTaxonomy
-	newLabelGroupTaxonomy *models.GroupTaxonomy
-	newLink *models.Link
-	newGenreTag *models.Tag
-	newRoleTag *models.Tag
-	newAddress *models.StreetAddress
-	labelAddress *models.StreetAddress
-	artistAddress *models.StreetAddress
-	newAlbum *models.TrackGroup
-	newTrack *models.Track
-	featuringTrack *models.Track
+	newUser *model.User
+	newArtist *model.UserGroup
+	newUserProfile *model.UserGroup
+	newRecommendedArtist *model.UserGroup
+	newLabel *model.UserGroup
+	newDistributor *model.UserGroup
+	newArtistUserGroupMember *model.UserGroupMember
+	newLabelUserGroupMember *model.UserGroupMember
+	newUserGroupTaxonomy *model.GroupTaxonomy
+	newArtistGroupTaxonomy *model.GroupTaxonomy
+	newLabelGroupTaxonomy *model.GroupTaxonomy
+	newLink *model.Link
+	newGenreTag *model.Tag
+	newRoleTag *model.Tag
+	newAddress *model.StreetAddress
+	labelAddress *model.StreetAddress
+	artistAddress *model.StreetAddress
+	newAlbum *model.TrackGroup
+	newTrack *model.Track
+	featuringTrack *model.Track
 )
 
 func TestUsergroup(t *testing.T) {
@@ -52,49 +52,49 @@ var _ = BeforeSuite(func() {
 		service = usergroupserver.NewServer(db)
 
 		// Create a new user (users table's empty)
-		newUser = &models.User{Username: "username", FullName: "full name", Email: "email@fake.com"}
+		newUser = &model.User{Username: "username", FullName: "full name", Email: "email@fake.com"}
 		err := db.Insert(newUser)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Create group taxonomies
-		newUserGroupTaxonomy = &models.GroupTaxonomy{Type: "user", Name: "User"}
+		newUserGroupTaxonomy = &model.GroupTaxonomy{Type: "user", Name: "User"}
 		err = db.Insert(newUserGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
 
-		newArtistGroupTaxonomy = &models.GroupTaxonomy{Type: "artist", Name: "Artist"}
+		newArtistGroupTaxonomy = &model.GroupTaxonomy{Type: "artist", Name: "Artist"}
 		err = db.Insert(newArtistGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
 
-		newLabelGroupTaxonomy = &models.GroupTaxonomy{Type: "label", Name: "Label"}
+		newLabelGroupTaxonomy = &model.GroupTaxonomy{Type: "label", Name: "Label"}
 		err = db.Insert(newLabelGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
 
-		newDistributorGroupTaxonomy := &models.GroupTaxonomy{Type: "distributor", Name: "Distributor"}
+		newDistributorGroupTaxonomy := &model.GroupTaxonomy{Type: "distributor", Name: "Distributor"}
 		err = db.Insert(newDistributorGroupTaxonomy)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Create link
-		newLink = &models.Link{Platform: "fakebook", Uri: "https://fakebook.com/bestartist"}
+		newLink = &model.Link{Platform: "fakebook", Uri: "https://fakebook.com/bestartist"}
 		err = db.Insert(newLink)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Create tags
-		newGenreTag = &models.Tag{Type: "genre", Name: "rock"}
+		newGenreTag = &model.Tag{Type: "genre", Name: "rock"}
 		err = db.Insert(newGenreTag)
 		Expect(err).NotTo(HaveOccurred())
-		newRoleTag = &models.Tag{Type: "role", Name: "bassist"}
+		newRoleTag = &model.Tag{Type: "role", Name: "bassist"}
 		err = db.Insert(newRoleTag)
 		Expect(err).NotTo(HaveOccurred())
 
-		newAddress = &models.StreetAddress{Data: map[string]string{"some": "data"}}
+		newAddress = &model.StreetAddress{Data: map[string]string{"some": "data"}}
 		err = db.Insert(newAddress)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Create user groups
 		avatar := make([]byte, 5)
-		labelAddress = &models.StreetAddress{Data: map[string]string{"some": "label data"}}
+		labelAddress = &model.StreetAddress{Data: map[string]string{"some": "label data"}}
 		err = db.Insert(labelAddress)
-		newLabel = &models.UserGroup{
+		newLabel = &model.UserGroup{
 			DisplayName: "best label ever",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
@@ -104,7 +104,7 @@ var _ = BeforeSuite(func() {
 		_, err = db.Model(newLabel).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
 
-		newUserProfile = &models.UserGroup{
+		newUserProfile = &model.UserGroup{
 			DisplayName: "DJ Best",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
@@ -116,10 +116,10 @@ var _ = BeforeSuite(func() {
 
 		links := []uuid.UUID{newLink.Id}
 		genreTags := []uuid.UUID{newGenreTag.Id}
-		artistAddress = &models.StreetAddress{Data: map[string]string{"some": "artist data"}}
+		artistAddress = &model.StreetAddress{Data: map[string]string{"some": "artist data"}}
 		err = db.Insert(artistAddress)
 		Expect(err).NotTo(HaveOccurred())
-		newArtist = &models.UserGroup{
+		newArtist = &model.UserGroup{
 			DisplayName: "best artist ever",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
@@ -141,7 +141,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		roleTags := []uuid.UUID{newRoleTag.Id}
-		newArtistUserGroupMember = &models.UserGroupMember{
+		newArtistUserGroupMember = &model.UserGroupMember{
 			UserGroupId: newArtist.Id,
 			MemberId: newUserProfile.Id,
 			DisplayName: "John Doe",
@@ -150,7 +150,7 @@ var _ = BeforeSuite(func() {
 		_, err = db.Model(newArtistUserGroupMember).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
 
-		newLabelUserGroupMember = &models.UserGroupMember{
+		newLabelUserGroupMember = &model.UserGroupMember{
 			UserGroupId: newLabel.Id,
 			MemberId: newArtist.Id,
 			DisplayName: newArtist.DisplayName,
@@ -158,7 +158,7 @@ var _ = BeforeSuite(func() {
 		_, err = db.Model(newLabelUserGroupMember).Returning("*").Insert()
 		Expect(err).NotTo(HaveOccurred())
 
-		newRecommendedArtist = &models.UserGroup{
+		newRecommendedArtist = &model.UserGroup{
 			DisplayName: "recommended",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
@@ -175,7 +175,7 @@ var _ = BeforeSuite(func() {
 			Select()
 		Expect(err).NotTo(HaveOccurred())
 
-		newDistributor = &models.UserGroup{
+		newDistributor = &model.UserGroup{
 			DisplayName: "distributor",
 			Avatar: avatar,
 			OwnerId: newUser.Id,
@@ -187,7 +187,7 @@ var _ = BeforeSuite(func() {
 
 		// Create a new track
 		tagIds := []uuid.UUID{newGenreTag.Id}
-		newTrack = &models.Track{
+		newTrack = &model.Track{
 			CreatorId: newUser.Id,
 			UserGroupId: newArtist.Id,
 			Artists: []uuid.UUID{newArtist.Id},
@@ -198,7 +198,7 @@ var _ = BeforeSuite(func() {
 		err = db.Insert(newTrack)
 		Expect(err).NotTo(HaveOccurred())
 
-		featuringTrack = &models.Track{
+		featuringTrack = &model.Track{
 			CreatorId: newUser.Id,
 			UserGroupId: newLabel.Id,
 			Artists: []uuid.UUID{newArtist.Id, newRecommendedArtist.Id},
@@ -210,7 +210,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// Create a label compilation
-		newCompilation := &models.TrackGroup{
+		newCompilation := &model.TrackGroup{
 			CreatorId: newUser.Id,
 			UserGroupId: newLabel.Id,
 			LabelId: newLabel.Id,
@@ -225,7 +225,7 @@ var _ = BeforeSuite(func() {
 
 		// Create a new album
 		tracks := []uuid.UUID{newTrack.Id}
-		newAlbum = &models.TrackGroup{
+		newAlbum = &model.TrackGroup{
 			CreatorId: newUser.Id,
 			UserGroupId: newArtist.Id,
 			LabelId: newLabel.Id,
@@ -267,7 +267,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	// Delete all tracks
-	var tracks []models.Track
+	var tracks []model.Track
 	err := db.Model(&tracks).Select()
 	Expect(err).NotTo(HaveOccurred())
 	if len(tracks) > 0 {
@@ -276,7 +276,7 @@ var _ = AfterSuite(func() {
 	}
 
 	// Delete all track groups
-	var trackGroups []models.TrackGroup
+	var trackGroups []model.TrackGroup
 	err = db.Model(&trackGroups).Select()
 	Expect(err).NotTo(HaveOccurred())
 	if len(trackGroups) > 0 {
@@ -285,7 +285,7 @@ var _ = AfterSuite(func() {
 	}
 
 	// Delete all userGroupMembers
-	var userGroupMembers []models.UserGroupMember
+	var userGroupMembers []model.UserGroupMember
 	err = db.Model(&userGroupMembers).Select()
 	Expect(err).NotTo(HaveOccurred())
 	if len(userGroupMembers) > 0 {
@@ -294,21 +294,21 @@ var _ = AfterSuite(func() {
 	}
 
 	// Delete all userGroups
-	var userGroups []models.UserGroup
+	var userGroups []model.UserGroup
 	err = db.Model(&userGroups).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&userGroups).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all streetAddresses
-	var streetAddresses []models.StreetAddress
+	var streetAddresses []model.StreetAddress
 	err = db.Model(&streetAddresses).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&streetAddresses).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all user group privacies
-	var privacies []models.UserGroupPrivacy
+	var privacies []model.UserGroupPrivacy
 	err = db.Model(&privacies).Select()
 	Expect(err).NotTo(HaveOccurred())
 	if len(privacies) > 0 {
@@ -317,21 +317,21 @@ var _ = AfterSuite(func() {
 	}
 
 	// Delete all users
-	var users []models.User
+	var users []model.User
 	err = db.Model(&users).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&users).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all groupTaxonomies
-	var groupTaxonomies []models.GroupTaxonomy
+	var groupTaxonomies []model.GroupTaxonomy
 	err = db.Model(&groupTaxonomies).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&groupTaxonomies).Delete()
 	Expect(err).NotTo(HaveOccurred())
 
 	// Delete all links
-	var links []models.Link
+	var links []model.Link
 	err = db.Model(&links).Select()
 	Expect(err).NotTo(HaveOccurred())
 	if len(links) > 0 {
@@ -340,7 +340,7 @@ var _ = AfterSuite(func() {
 	}
 
 	// Delete all tags
-	var tags []models.Tag
+	var tags []model.Tag
 	err = db.Model(&tags).Select()
 	Expect(err).NotTo(HaveOccurred())
 	_, err = db.Model(&tags).Delete()

@@ -13,7 +13,7 @@ import (
 	pb "user-api/rpc/track"
 	tagpb "user-api/rpc/tag"
 	"user-api/internal"
-	"user-api/internal/database/models"
+	"user-api/internal/database/model"
 )
 
 type Server struct {
@@ -33,7 +33,7 @@ func (s *Server) GetTracks(ctx context.Context, req *pb.TracksList) (*pb.TracksL
 		}
 		trackIds[i] = id
 	}
-	tracksResponse, twerr := models.GetTracks(trackIds, s.db, true, ctx)
+	tracksResponse, twerr := model.GetTracks(trackIds, s.db, true, ctx)
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -47,7 +47,7 @@ func (s *Server) SearchTracks(ctx context.Context, q *tagpb.Query) (*tagpb.Searc
     return nil, twirp.InvalidArgumentError("query", "must be a valid search query")
   }
 
-  searchResults, twerr := models.SearchTracks(q.Query, s.db)
+  searchResults, twerr := model.SearchTracks(q.Query, s.db)
   if twerr != nil {
     return nil, twerr
   }
@@ -61,7 +61,7 @@ func (s *Server) CreateTrack(ctx context.Context, track *pb.Track) (*pb.Track, e
     return nil, err
   }
 
-  t := &models.Track{
+  t := &model.Track{
     Title: track.Title,
     Status: track.Status,
     Enabled: track.Enabled,
@@ -115,12 +115,12 @@ func (s *Server) DeleteTrack(ctx context.Context, track *pb.Track) (*tagpb.Empty
 	return &tagpb.Empty{}, nil
 }
 
-func getTrackModel(track *pb.Track) (*models.Track, twirp.Error) {
+func getTrackModel(track *pb.Track) (*model.Track, twirp.Error) {
   id, err := internal.GetUuidFromString(track.Id)
   if err != nil {
     return nil, err
   }
-  return &models.Track{
+  return &model.Track{
     Id: id,
     Title: track.Title,
     Status: track.Status,
@@ -173,21 +173,21 @@ func checkRequiredAttributes(track *pb.Track) (twirp.Error) {
 	track.Duration = t.Duration
 
 	// Get tags
-	tags, twerr := models.GetTags(t.Tags, s.db)
+	tags, twerr := model.GetTags(t.Tags, s.db)
 	if twerr != nil {
 		return nil, twerr
 	}
 	track.Tags = tags
 
   // Get artists (id, name, avatar)
-	artists, pgerr := models.GetRelatedUserGroups(t.Artists, s.db)
+	artists, pgerr := model.GetRelatedUserGroups(t.Artists, s.db)
 	if pgerr != nil {
 		return nil, internal.CheckError(pgerr, "user_group")
 	}
 	track.Artists = artists
 
   // Get track_groups (id, title, cover) that are not playlists (i.e. LP, EP or Single)
-	trackGroups, twerr := models.GetTrackGroupsFromIds(t.TrackGroups, s.db, []string{"lp", "ep", "single"})
+	trackGroups, twerr := model.GetTrackGroupsFromIds(t.TrackGroups, s.db, []string{"lp", "ep", "single"})
 	if twerr != nil {
 		return nil, twerr
 	}

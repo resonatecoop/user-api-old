@@ -9,7 +9,7 @@ import (
 
   pb "user-api/rpc/tag"
   // "user-api/internal"
-  "user-api/internal/database/models"
+  "user-api/internal/database/model"
 )
 
 type Server struct {
@@ -24,7 +24,7 @@ func (s *Server) SearchGenres(ctx context.Context, q *pb.Query) (*pb.SearchResul
   if len(q.Query) < 3 {
     return nil, twirp.InvalidArgumentError("query", "must be a valid search query")
   }
-  tags, twerr := models.SearchTags(q.Query, "genre", s.db)
+  tags, twerr := model.SearchTags(q.Query, "genre", s.db)
   if twerr != nil {
     return nil, twerr
   }
@@ -35,17 +35,17 @@ func (s *Server) SearchGenres(ctx context.Context, q *pb.Query) (*pb.SearchResul
     tagIds = tagIds + "|" + tag.Id.String()
   }
 
-  trackGroupSearchResults, twerr := models.SearchTrackGroups(tagIds, s.db)
+  trackGroupSearchResults, twerr := model.SearchTrackGroups(tagIds, s.db)
   if twerr != nil {
     return nil, twerr
   }
 
-  trackSearchResults, twerr := models.SearchTracks(tagIds, s.db)
+  trackSearchResults, twerr := model.SearchTracks(tagIds, s.db)
   if twerr != nil {
     return nil, twerr
   }
 
-  userGroupSearchResults, twerr := models.SearchUserGroups(tagIds, s.db)
+  userGroupSearchResults, twerr := model.SearchUserGroups(tagIds, s.db)
   if twerr != nil {
     return nil, twerr
   }

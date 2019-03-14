@@ -13,7 +13,7 @@ import (
 
 	pb "user-api/rpc/track"
 	tagpb "user-api/rpc/tag"
-	"user-api/internal/database/models"
+	"user-api/internal/database/model"
 )
 
 var _ = Describe("Track server", func() {
@@ -162,7 +162,7 @@ var _ = Describe("Track server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				t := new(models.Track)
+				t := new(model.Track)
 				err = db.Model(t).Where("id = ?", newTrack.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(t.Title).To(Equal(track.Title))
@@ -172,11 +172,11 @@ var _ = Describe("Track server", func() {
 				Expect(t.TrackServerId.String()).To(Equal(track.TrackServerId))
 
 				Expect(t.UserGroupId).To(Equal(artist.Id))
-        // oldUserGroup := new(models.UserGroup)
+        // oldUserGroup := new(model.UserGroup)
         // err = db.Model(oldUserGroup).Where("id = ?", newArtistUserGroup.Id).Select()
         // Expect(err).NotTo(HaveOccurred())
         // Expect(oldUserGroup.Tracks).NotTo(ContainElement(newTrack.Id))
-        // newUserGroup := new(models.UserGroup)
+        // newUserGroup := new(model.UserGroup)
         // err = db.Model(newUserGroup).Where("id = ?", artist.Id).Select()
         // Expect(err).NotTo(HaveOccurred())
         // Expect(newUserGroup.Tracks).To(ContainElement(newTrack.Id))
@@ -184,17 +184,17 @@ var _ = Describe("Track server", func() {
 				Expect(len(t.Artists)).To(Equal(2))
 				Expect(t.Artists).To(ContainElement(artist.Id))
 				Expect(t.Artists).To(ContainElement(featuredArtist.Id))
-				newArtist := new(models.UserGroup)
+				newArtist := new(model.UserGroup)
 				err = db.Model(newArtist).Where("id = ?", artist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(newArtist.ArtistOfTracks).To(ContainElement(newTrack.Id))
-				newFeaturedArtist := new(models.UserGroup)
+				newFeaturedArtist := new(model.UserGroup)
 				err = db.Model(newFeaturedArtist).Where("id = ?", featuredArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(newFeaturedArtist.ArtistOfTracks).To(ContainElement(newTrack.Id))
 
 				Expect(len(t.Tags)).To(Equal(1))
-				addedTag := models.Tag{Id: t.Tags[0]}
+				addedTag := model.Tag{Id: t.Tags[0]}
 				err = db.Model(&addedTag).WherePK().Returning("*").Select()
 				Expect(addedTag.Type).To(Equal("genre"))
 				Expect(addedTag.Name).To(Equal("pop"))
@@ -389,7 +389,7 @@ var _ = Describe("Track server", func() {
 				Expect(resp.Artists[0].DisplayName).To(Equal(newArtistUserGroup.DisplayName))
 				Expect(resp.Artists[0].Avatar).To(Equal(newArtistUserGroup.Avatar))
 
-				artist := new(models.UserGroup)
+				artist := new(model.UserGroup)
 				err = db.Model(artist).Where("id = ?", newArtistUserGroup.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				trackId, err := uuid.FromString(resp.Id)
@@ -629,7 +629,7 @@ var _ = Describe("Track server", func() {
 			It("should delete track if it exists", func() {
 				track := &pb.Track{Id: newTrack.Id.String()}
 
-				trackToDelete := new(models.Track)
+				trackToDelete := new(model.Track)
 				err := db.Model(trackToDelete).Where("id = ?", newTrack.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 
@@ -637,12 +637,12 @@ var _ = Describe("Track server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				// owner := new(models.UserGroup)
+				// owner := new(model.UserGroup)
 				// err = db.Model(owner).Where("id = ?", trackToDelete.UserGroupId).Select()
 				// Expect(err).NotTo(HaveOccurred())
 				// Expect(owner.Tracks).NotTo(ContainElement(trackToDelete.Id))
 
-				var users []*models.User
+				var users []*model.User
 				err = db.Model(&users).
 					Where("id in (?)", pg.In(trackToDelete.FavoriteOfUsers)).
 					Select()
@@ -650,7 +650,7 @@ var _ = Describe("Track server", func() {
 					Expect(user.FavoriteTracks).NotTo(ContainElement(trackToDelete.Id))
 				}
 
-				var artists []*models.UserGroup
+				var artists []*model.UserGroup
 				err = db.Model(&artists).
 					Where("id in (?)", pg.In(trackToDelete.Artists)).
 					Select()
@@ -658,7 +658,7 @@ var _ = Describe("Track server", func() {
 					Expect(artist.ArtistOfTracks).NotTo(ContainElement(trackToDelete.Id))
 				}
 
-				var trackGroups []*models.TrackGroup
+				var trackGroups []*model.TrackGroup
 				err = db.Model(&trackGroups).
 					Where("id in (?)", pg.In(trackToDelete.TrackGroups)).
 					Select()
@@ -666,7 +666,7 @@ var _ = Describe("Track server", func() {
 					Expect(trackGroup.Tracks).NotTo(ContainElement(trackToDelete.Id))
 				}
 
-				var tracks []models.Track
+				var tracks []model.Track
 				err = db.Model(&tracks).
 					Where("id in (?)", pg.In([]uuid.UUID{trackToDelete.Id})).
 					Select()

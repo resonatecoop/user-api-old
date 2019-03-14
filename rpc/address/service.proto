@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+package resonate.api.user;
+option go_package = "address";
+
+service AddressService {
+  rpc SearchAddress(AddressQuery) returns (AddressResults);
+}
+
+// Based on https://community.algolia.com/places/rest.html#search-parameters
+message AddressQuery {
+  string query = 1;
+  string type = 2;
+  int32 hits_per_page = 3;
+  // int32 page = 4;
+}
+
+message AddressResults {
+  repeated AddressResult hits = 1;
+  int32 nb_hits = 2;
+}
+
+message AddressResult {
+  string object_id = 1;
+  map<string, string> country = 2;
+  repeated string postcode = 3;
+  repeated string administrative = 4;
+  string country_code = 5;
+  map<string, float> geoloc = 6;
+  map<string, google.protobuf.ListValue> locale_names = 7;
+  map<string, google.protobuf.ListValue> city = 8;
+}

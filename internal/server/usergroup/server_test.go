@@ -17,7 +17,7 @@ import (
 	userpb "user-api/rpc/user"
 	// trackpb "user-api/rpc/track"
 	// "user-api/internal"
-	"user-api/internal/database/models"
+	"user-api/internal/database/model"
 )
 
 var _ = Describe("UserGroup server", func() {
@@ -311,19 +311,19 @@ var _ = Describe("UserGroup server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				address := new(models.StreetAddress)
+				address := new(model.StreetAddress)
 				err = db.Model(address).Where("id = ?", artistAddress.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(address.Data).To(Equal(map[string]string{"some": "new data"}))
 
-				privacy := new(models.UserGroupPrivacy)
+				privacy := new(model.UserGroupPrivacy)
 				err = db.Model(privacy).Where("id = ?", newArtist.Privacy.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(privacy.Private).To(Equal(true))
 				Expect(privacy.OwnedTracks).To(Equal(false))
 				Expect(privacy.SupportedArtists).To(Equal(true))
 
-				updatedUserGroup := new(models.UserGroup)
+				updatedUserGroup := new(model.UserGroup)
 				err = db.Model(updatedUserGroup).Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(updatedUserGroup.DisplayName).To(Equal(userGroup.DisplayName))
@@ -336,20 +336,20 @@ var _ = Describe("UserGroup server", func() {
 				Expect(len(updatedUserGroup.Tags)).To(Equal(1))
 				Expect(updatedUserGroup.Tags[0]).NotTo(Equal(newGenreTag.Id))
 
-				addedTag := models.Tag{Id: updatedUserGroup.Tags[0]}
+				addedTag := model.Tag{Id: updatedUserGroup.Tags[0]}
 				err = db.Model(&addedTag).WherePK().Returning("*").Select()
 				Expect(addedTag.Type).To(Equal("genre"))
 				Expect(addedTag.Name).To(Equal("experimental"))
 
 				Expect(len(updatedUserGroup.Links)).To(Equal(1))
-				addedLink := models.Link{Id: updatedUserGroup.Links[0]}
+				addedLink := model.Link{Id: updatedUserGroup.Links[0]}
 				err = db.Model(&addedLink).WherePK().Returning("*").Select()
 				Expect(addedLink.Platform).To(Equal("instagram"))
 				Expect(addedLink.Uri).To(Equal("https://instagram/bestartistever"))
 				err = db.Model(newLink).WherePK().Returning("*").Select()
 				Expect(err).To(HaveOccurred())
 
-				deletedLink := models.Link{Id: newLink.Id}
+				deletedLink := model.Link{Id: newLink.Id}
 				err = db.Model(&deletedLink).
 					WherePK().
 					Select()
@@ -376,7 +376,7 @@ var _ = Describe("UserGroup server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				updatedUserGroup := new(models.UserGroup)
+				updatedUserGroup := new(model.UserGroup)
 				err = db.Model(updatedUserGroup).Where("id = ?", newUserProfile.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(updatedUserGroup.TypeId).To(Equal(newArtistGroupTaxonomy.Id))
@@ -406,7 +406,7 @@ var _ = Describe("UserGroup server", func() {
 			})
 		})
 		Context("with invalid type", func() {
-			It("should not update user group from artist to user", func() {
+			It("should not update user group type from artist to user", func() {
 				userGroup := &pb.UserGroup{
 					Id: newArtist.Id.String(),
 					DisplayName: "new display name",
@@ -435,13 +435,61 @@ var _ = Describe("UserGroup server", func() {
 				Expect(twerr.Code()).To(Equal(invalid_argument_code))
 				Expect(twerr.Meta("argument")).To(Equal("type"))
 			})
-			It("should not update user group from label to user", func() {
+			It("should not update user group type from artist to label", func() {
+				userGroup := &pb.UserGroup{
+					Id: newArtist.Id.String(),
+					DisplayName: "new display name",
+					Description: "new description",
+					ShortBio: "short bio",
+					Avatar: newArtist.Avatar,
+					Publisher: map[string]string{
+						"name": "new publisher name",
+						"number": "new 1E3",
+					},
+					Pro: map[string]string{
+						"name": "new PRO name",
+						"number": "new 2BA",
+					},
+					Address: &userpb.StreetAddress{Id: artistAddress.Id.String(), Data: map[string]string{"some": "new data"}},
+					Type: &pb.GroupTaxonomy{Id: newLabelGroupTaxonomy.Id.String(), Type: "label"},
+					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
+					OwnerId: newArtist.OwnerId.String(),
+				}
+				res, err := service.UpdateUserGroup(context.Background(), userGroup)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("type"))
+			})
+			It("should not update user group type from label to user", func() {
 				userGroup := &pb.UserGroup{
 					Id: newLabel.Id.String(),
 					DisplayName: newLabel.DisplayName,
 					Avatar: newLabel.Avatar,
 					Address: &userpb.StreetAddress{Id: labelAddress.Id.String(), Data: labelAddress.Data},
 					Type: &pb.GroupTaxonomy{Id: newUserGroupTaxonomy.Id.String(), Type: "user"},
+					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
+					OwnerId: newLabel.OwnerId.String(),
+				}
+				res, err := service.UpdateUserGroup(context.Background(), userGroup)
+
+				Expect(res).To(BeNil())
+				Expect(err).To(HaveOccurred())
+
+				twerr := err.(twirp.Error)
+				Expect(twerr.Code()).To(Equal(invalid_argument_code))
+				Expect(twerr.Meta("argument")).To(Equal("type"))
+			})
+			It("should not update user group type from label to artist", func() {
+				userGroup := &pb.UserGroup{
+					Id: newLabel.Id.String(),
+					DisplayName: newLabel.DisplayName,
+					Avatar: newLabel.Avatar,
+					Address: &userpb.StreetAddress{Id: labelAddress.Id.String(), Data: labelAddress.Data},
+					Type: &pb.GroupTaxonomy{Id: newArtistGroupTaxonomy.Id.String(), Type: "artist"},
 					Privacy: &pb.Privacy{Id: newArtist.Privacy.Id.String(), Private: true, OwnedTracks: false, SupportedArtists: true},
 					OwnerId: newLabel.OwnerId.String(),
 				}
@@ -491,13 +539,13 @@ var _ = Describe("UserGroup server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				userGroup := new(models.UserGroup)
+				userGroup := new(model.UserGroup)
 				err = db.Model(userGroup).Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(userGroup.RecommendedArtists)).To(Equal(2))
 				Expect(userGroup.RecommendedArtists).To(ContainElement(newRecommendedArtist.Id))
 
-				recommended := new(models.UserGroup)
+				recommended := new(model.UserGroup)
 				err = db.Model(recommended).Where("id = ?", newRecommendedArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(recommended.RecommendedBy)).To(Equal(1))
@@ -581,13 +629,13 @@ var _ = Describe("UserGroup server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				userGroup := new(models.UserGroup)
+				userGroup := new(model.UserGroup)
 				err = db.Model(userGroup).Where("id = ?", newArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(userGroup.RecommendedArtists)).To(Equal(1))
 				Expect(userGroup.RecommendedArtists).NotTo(ContainElement(newRecommendedArtist.Id))
 
-				recommended := new(models.UserGroup)
+				recommended := new(model.UserGroup)
 				err = db.Model(recommended).Where("id = ?", newRecommendedArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(recommended.RecommendedBy)).To(Equal(0))
@@ -687,7 +735,7 @@ var _ = Describe("UserGroup server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				artist := models.UserGroup{Id: newRecommendedArtist.Id}
+				artist := model.UserGroup{Id: newRecommendedArtist.Id}
 				err = db.Model(&artist).
 					Column("Members").
 					WherePK().
@@ -696,7 +744,7 @@ var _ = Describe("UserGroup server", func() {
 				Expect(len(artist.Members)).To(Equal(1))
 				Expect(artist.Members[0].Id).To(Equal(newUserProfile.Id))
 
-				userProfile := models.UserGroup{Id: newUserProfile.Id}
+				userProfile := model.UserGroup{Id: newUserProfile.Id}
 				err = db.Model(&userProfile).
 					Column("MemberOfGroups").
 					WherePK().
@@ -704,7 +752,7 @@ var _ = Describe("UserGroup server", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(userProfile.MemberOfGroups)).To(Equal(2))
 
-				userGroupMember := models.UserGroupMember{UserGroupId: newRecommendedArtist.Id, MemberId: newUserProfile.Id}
+				userGroupMember := model.UserGroupMember{UserGroupId: newRecommendedArtist.Id, MemberId: newUserProfile.Id}
 				err = db.Model(&userGroupMember).
 					Where("user_group_id = ?user_group_id").
 					Where("member_id = ?member_id").
@@ -727,7 +775,7 @@ var _ = Describe("UserGroup server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				label := models.UserGroup{Id: newLabel.Id}
+				label := model.UserGroup{Id: newLabel.Id}
 				err = db.Model(&label).
 					Column("MemberOfGroups").
 					WherePK().
@@ -736,7 +784,7 @@ var _ = Describe("UserGroup server", func() {
 				Expect(len(label.MemberOfGroups)).To(Equal(1))
 				Expect(label.MemberOfGroups[0].Id).To(Equal(newDistributor.Id))
 
-				userGroupMember := models.UserGroupMember{UserGroupId: newDistributor.Id, MemberId: newLabel.Id}
+				userGroupMember := model.UserGroupMember{UserGroupId: newDistributor.Id, MemberId: newLabel.Id}
 				err = db.Model(&userGroupMember).
 					Where("user_group_id = ?user_group_id").
 					Where("member_id = ?member_id").
@@ -857,7 +905,7 @@ var _ = Describe("UserGroup server", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
-				artist := models.UserGroup{Id: newRecommendedArtist.Id}
+				artist := model.UserGroup{Id: newRecommendedArtist.Id}
 				err = db.Model(&artist).
 					Column("Members").
 					WherePK().
@@ -865,7 +913,7 @@ var _ = Describe("UserGroup server", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(artist.Members)).To(Equal(0))
 
-				userProfile := models.UserGroup{Id: newUserProfile.Id}
+				userProfile := model.UserGroup{Id: newUserProfile.Id}
 				err = db.Model(&userProfile).
 					Column("MemberOfGroups").
 					WherePK().
@@ -873,7 +921,7 @@ var _ = Describe("UserGroup server", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(userProfile.MemberOfGroups)).To(Equal(1))
 
-				userGroupMember := models.UserGroupMember{UserGroupId: newRecommendedArtist.Id, MemberId: newUserProfile.Id}
+				userGroupMember := model.UserGroupMember{UserGroupId: newRecommendedArtist.Id, MemberId: newUserProfile.Id}
 				err = db.Model(&userGroupMember).
 					Where("user_group_id = ?user_group_id").
 					Where("member_id = ?member_id").
@@ -970,7 +1018,7 @@ var _ = Describe("UserGroup server", func() {
 			It("should delete user_group (artist) if it exists", func() {
 				userGroup := &pb.UserGroup{Id: newArtist.Id.String()}
 
-				userGroupToDelete := new(models.UserGroup)
+				userGroupToDelete := new(model.UserGroup)
 				err := db.Model(userGroupToDelete).
 					Column("OwnerOfTracks", "OwnerOfTrackGroups", "user_group.*").
 					Where("id = ?", newArtist.Id).Select()
@@ -979,28 +1027,28 @@ var _ = Describe("UserGroup server", func() {
 				_, err = service.DeleteUserGroup(context.Background(), userGroup)
 				Expect(err).NotTo(HaveOccurred())
 
-				var links []*models.Link
+				var links []*model.Link
 				err = db.Model(&links).
 					Where("id in (?)", pg.In(userGroupToDelete.Links)).
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(links)).To(Equal(0))
 
-				var privacies []*models.UserGroupPrivacy
+				var privacies []*model.UserGroupPrivacy
 				err = db.Model(&privacies).
 					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.PrivacyId})).
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(privacies)).To(Equal(0))
 
-				var addresses []*models.StreetAddress
+				var addresses []*model.StreetAddress
 				err = db.Model(&addresses).
 					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.AddressId})).
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(privacies)).To(Equal(0))
 
-				var userGroupMembers []models.UserGroupMember
+				var userGroupMembers []model.UserGroupMember
 				err = db.Model(&userGroupMembers).
 					Where("user_group_id = ?", newArtist.Id).
 					WhereOr("member_id = ?", newArtist.Id).
@@ -1008,7 +1056,7 @@ var _ = Describe("UserGroup server", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(userGroupMembers)).To(Equal(0))
 
-				var recommendedBy []models.UserGroup
+				var recommendedBy []model.UserGroup
 				err = db.Model(&recommendedBy).
 					Where("id in (?)", pg.In(userGroupToDelete.RecommendedBy)).
 					Select()
@@ -1017,7 +1065,7 @@ var _ = Describe("UserGroup server", func() {
 					Expect(r.RecommendedArtists).NotTo(ContainElement(userGroupToDelete.Id))
 				}
 
-				var recommendedArtists []models.UserGroup
+				var recommendedArtists []model.UserGroup
 				err = db.Model(&recommendedArtists).
 					Where("id in (?)", pg.In(userGroupToDelete.RecommendedArtists)).
 					Select()
@@ -1030,7 +1078,7 @@ var _ = Describe("UserGroup server", func() {
 				for i, trackGroup := range(userGroupToDelete.OwnerOfTrackGroups) {
 				  ownerOfTrackGroupIds[i] = trackGroup.Id
 				}
-				var ownerOfTrackGroups []models.TrackGroup
+				var ownerOfTrackGroups []model.TrackGroup
 				err = db.Model(&ownerOfTrackGroups).
 					Where("id in (?)", pg.In(ownerOfTrackGroupIds)).
 					Select()
@@ -1041,14 +1089,14 @@ var _ = Describe("UserGroup server", func() {
 				for i, track := range(userGroupToDelete.OwnerOfTracks) {
 				  ownerOfTrackIds[i] = track.Id
 				}
-				var ownerOfTracks []models.Track
+				var ownerOfTracks []model.Track
 				err = db.Model(&ownerOfTracks).
 					Where("id in (?)", pg.In(ownerOfTrackIds)).
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(ownerOfTracks)).To(Equal(0))
 
-				var artistOfTracks []models.Track
+				var artistOfTracks []model.Track
 				err = db.Model(&artistOfTracks).
 					Where("id in (?)", pg.In(userGroupToDelete.ArtistOfTracks)).
 					Select()
@@ -1057,7 +1105,7 @@ var _ = Describe("UserGroup server", func() {
 					Expect(t.Artists).NotTo(ContainElement(userGroupToDelete.Id))
 				}
 
-				var userGroups []models.UserGroup
+				var userGroups []model.UserGroup
 				err = db.Model(&userGroups).
 					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.Id})).
 					Select()
@@ -1067,7 +1115,7 @@ var _ = Describe("UserGroup server", func() {
 			It("should delete user_group (label) if it exists", func() {
 				userGroup := &pb.UserGroup{Id: newLabel.Id.String()}
 
-				userGroupToDelete := new(models.UserGroup)
+				userGroupToDelete := new(model.UserGroup)
 				err := db.Model(userGroupToDelete).
 					Column("OwnerOfTracks", "OwnerOfTrackGroups", "user_group.*", "LabelOfTrackGroups").
 					Where("id = ?", newLabel.Id).Select()
@@ -1076,21 +1124,21 @@ var _ = Describe("UserGroup server", func() {
 				_, err = service.DeleteUserGroup(context.Background(), userGroup)
 				Expect(err).NotTo(HaveOccurred())
 
-				var privacies []*models.UserGroupPrivacy
+				var privacies []*model.UserGroupPrivacy
 				err = db.Model(&privacies).
 					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.PrivacyId})).
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(privacies)).To(Equal(0))
 
-				var addresses []*models.StreetAddress
+				var addresses []*model.StreetAddress
 				err = db.Model(&addresses).
 					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.AddressId})).
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(privacies)).To(Equal(0))
 
-				var userGroupMembers []models.UserGroupMember
+				var userGroupMembers []model.UserGroupMember
 				err = db.Model(&userGroupMembers).
 					Where("user_group_id = ?", newLabel.Id).
 					WhereOr("member_id = ?", newLabel.Id).
@@ -1102,7 +1150,7 @@ var _ = Describe("UserGroup server", func() {
 				for i, trackGroup := range(userGroupToDelete.OwnerOfTrackGroups) {
 				  ownerOfTrackGroupIds[i] = trackGroup.Id
 				}
-				var ownerOfTrackGroups []models.TrackGroup
+				var ownerOfTrackGroups []model.TrackGroup
 				err = db.Model(&ownerOfTrackGroups).
 					Where("id in (?)", pg.In(ownerOfTrackGroupIds)).
 					Select()
@@ -1113,7 +1161,7 @@ var _ = Describe("UserGroup server", func() {
 				for i, trackGroup := range(userGroupToDelete.LabelOfTrackGroups) {
 					labelOfTrackGroupIds[i] = trackGroup.Id
 				}
-				var labelOfTrackGroups []models.TrackGroup
+				var labelOfTrackGroups []model.TrackGroup
 				err = db.Model(&labelOfTrackGroups).
 					Where("id in (?)", pg.In(labelOfTrackGroupIds)).
 					Select()
@@ -1124,14 +1172,14 @@ var _ = Describe("UserGroup server", func() {
 				for i, track := range(userGroupToDelete.OwnerOfTracks) {
 				  ownerOfTrackIds[i] = track.Id
 				}
-				var ownerOfTracks []models.Track
+				var ownerOfTracks []model.Track
 				err = db.Model(&ownerOfTracks).
 					Where("id in (?)", pg.In(ownerOfTrackIds)).
 					Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(len(ownerOfTracks)).To(Equal(0))
 
-				var userGroups []models.UserGroup
+				var userGroups []model.UserGroup
 				err = db.Model(&userGroups).
 					Where("id in (?)", pg.In([]uuid.UUID{userGroupToDelete.Id})).
 					Select()
@@ -1217,12 +1265,12 @@ var _ = Describe("UserGroup server", func() {
 
 				id, err := uuid.FromString(resp.Id)
 				Expect(err).NotTo(HaveOccurred())
-				createdUserGroup := new(models.UserGroup)
+				createdUserGroup := new(model.UserGroup)
 				err = db.Model(createdUserGroup).Where("id = ?", id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(createdUserGroup.RecommendedArtists).To(ContainElement(newRecommendedArtist.Id))
 
-				recommended := new(models.UserGroup)
+				recommended := new(model.UserGroup)
 				err = db.Model(recommended).Where("id = ?", newRecommendedArtist.Id).Select()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(recommended.RecommendedBy).To(ContainElement(id))
