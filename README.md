@@ -4,7 +4,7 @@ This is the main Resonate User/Track API written in Go, not yet in production.
 It uses [Twirp](https://github.com/twitchtv/twirp), a RPC framework for service-to-service communication emphasizing simplicity and minimalism. Learn more about
 Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html).
 It also uses [go-pg](https://github.com/go-pg/pg) PostgreSQL ORM.
-Its structure is based on the starter kit for [Twisk](https://github.com/ribice/twisk).
+Its structure is based on the Twirp starter kit [Twisk](https://github.com/ribice/twisk).
 
 
 ## Project Structure
@@ -13,7 +13,7 @@ The project structure mostly follows [THIS](https://github.com/golang-standards/
 
 ## Getting started
 
-## Prerequisites:
+### Prerequisites
 - [Go](https://golang.org/) 1.7 or higher.
 - [PostgreSQL](https://www.postgresql.org/) 9.4 or higher.
 
