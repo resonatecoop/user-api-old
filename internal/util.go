@@ -1,5 +1,7 @@
 package internal
 
+// TODO add to internal/pkg
+
 import (
   "fmt"
   "strings"

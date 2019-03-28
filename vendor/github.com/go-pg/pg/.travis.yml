@@ -7,6 +7,7 @@ addons:
 go:
   - 1.9.x
   - 1.10.x
+  - 1.11.x
   - tip
 
 matrix:
@@ -21,3 +22,4 @@ install:
   - go get gopkg.in/check.v1
   - go get github.com/onsi/ginkgo
   - go get github.com/onsi/gomega
+  - go get mellium.im/sasl

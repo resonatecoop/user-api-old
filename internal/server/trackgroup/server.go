@@ -14,7 +14,7 @@ import (
   tagpb "user-api/rpc/tag"
   pb "user-api/rpc/trackgroup"
   "user-api/internal"
-  "user-api/internal/database/model"
+  "user-api/internal/model"
 )
 
 type Server struct {

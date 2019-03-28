@@ -3,13 +3,16 @@ package tagserver_test
 import (
 	"testing"
 	"time"
+	"path/filepath"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/go-pg/pg"
 	"github.com/satori/go.uuid"
-
-	"user-api/internal/database/model"
-	"user-api/internal/database"
+	
+	"user-api/pkg/config"
+	"user-api/pkg/postgres"
+	"user-api/internal/model"
 	tagserver "user-api/internal/server/tag"
 )
 
@@ -35,12 +38,21 @@ func TestTrack(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	testing := true
-	db = database.Connect(testing)
+	var err error
+
+	cfgPath, err := filepath.Abs("./../../../conf.local.yaml")
+	Expect(err).NotTo(HaveOccurred())
+
+	cfg, err := config.Load(cfgPath)
+	Expect(err).NotTo(HaveOccurred())
+
+	db, err = pgsql.New(cfg.DB.Test.PSN, cfg.DB.Test.LogQueries, cfg.DB.Test.TimeoutSeconds)
+	Expect(err).NotTo(HaveOccurred())
+
 	service = tagserver.NewServer(db)
 
 	newPopGenreTag = &model.Tag{Type: "genre", Name: "pop"}
-	err := db.Insert(newPopGenreTag)
+	err = db.Insert(newPopGenreTag)
 	Expect(err).NotTo(HaveOccurred())
 
 	newRockGenreTag = &model.Tag{Type: "genre", Name: "rock"}

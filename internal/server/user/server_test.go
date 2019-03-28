@@ -4,7 +4,7 @@ import (
 	// "fmt"
 	// "reflect"
 	"context"
-	"net/url"
+	"github.com/go-pg/pg/urlvalues"
 
 	"github.com/go-pg/pg"
 	. "github.com/onsi/ginkgo"
@@ -13,7 +13,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	pb "user-api/rpc/user"
-	"user-api/internal/database/model"
+	"user-api/internal/model"
 )
 
 var _ = Describe("User server", func() {
@@ -292,11 +292,8 @@ var _ = Describe("User server", func() {
 		Context("with valid uuid", func() {
 			It("should respond with favorite tracks", func() {
 				user := &pb.User{Id: newUser.Id.String()}
-				u := url.URL{}
-				queryString := u.Query()
-				queryString.Set("page", "1")
-    		queryString.Set("limit", "50")
-				ctx := context.WithValue(context.Background(), "query", queryString)
+				query := urlvalues.Values{"limit": []string{"50"}, "page": []string{"1"}}
+				ctx := context.WithValue(context.Background(), "query", query)
 				resp, err := service.GetFavoriteTracks(ctx, user)
 
 				Expect(err).NotTo(HaveOccurred())

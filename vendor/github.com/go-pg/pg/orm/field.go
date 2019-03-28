@@ -3,6 +3,7 @@ package orm
 import (
 	"reflect"
 
+	"github.com/go-pg/pg/internal/iszero"
 	"github.com/go-pg/pg/types"
 )
 
@@ -26,13 +27,14 @@ type Field struct {
 	Index    []int
 	Default  types.Q
 	OnDelete string
+	OnUpdate string
 
 	flags uint8
 
 	append types.AppenderFunc
 	scan   types.ScannerFunc
 
-	isZero func(reflect.Value) bool
+	isZero iszero.Func
 }
 
 func indexEqual(ind1, ind2 []int) bool {
@@ -65,26 +67,25 @@ func (f *Field) Value(strct reflect.Value) reflect.Value {
 	return strct.FieldByIndex(f.Index)
 }
 
-func (f *Field) IsZero(strct reflect.Value) bool {
-	fv := f.Value(strct)
-	return f.isZero(fv)
+func (f *Field) IsZeroValue(strct reflect.Value) bool {
+	return f.isZero(f.Value(strct))
 }
 
-func (f *Field) OmitZero(strct reflect.Value) bool {
-	return (f.Default != "" || !f.HasFlag(NotNullFlag)) && f.isZero(f.Value(strct))
+func (f *Field) OmitZero() bool {
+	return !f.HasFlag(NotNullFlag)
 }
 
 func (f *Field) AppendValue(b []byte, strct reflect.Value, quote int) []byte {
 	fv := f.Value(strct)
-	if !f.HasFlag(NotNullFlag) && f.isZero(fv) {
+	if f.OmitZero() && f.isZero(fv) {
 		return types.AppendNull(b, quote)
 	}
 	return f.append(b, fv, quote)
 }
 
-func (f *Field) ScanValue(strct reflect.Value, b []byte) error {
+func (f *Field) ScanValue(strct reflect.Value, rd types.Reader, n int) error {
 	fv := fieldByIndex(strct, f.Index)
-	return f.scan(fv, b)
+	return f.scan(fv, rd, n)
 }
 
 type Method struct {

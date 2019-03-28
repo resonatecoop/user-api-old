@@ -12,7 +12,7 @@ import (
 	pb "user-api/rpc/user"
 	tagpb "user-api/rpc/tag"
 	"user-api/internal"
-	"user-api/internal/database/model"
+	"user-api/internal/model"
 )
 
 // Server implements the UserService

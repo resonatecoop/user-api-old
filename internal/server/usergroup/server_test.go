@@ -4,9 +4,10 @@ import (
 	// "fmt"
 	// "reflect"
 	"context"
-	"net/url"
+	// "net/url"
 
 	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/urlvalues"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/twitchtv/twirp"
@@ -17,7 +18,7 @@ import (
 	userpb "user-api/rpc/user"
 	// trackpb "user-api/rpc/track"
 	// "user-api/internal"
-	"user-api/internal/database/model"
+	"user-api/internal/model"
 )
 
 var _ = Describe("UserGroup server", func() {
@@ -178,11 +179,9 @@ var _ = Describe("UserGroup server", func() {
 	Describe("GetLabelUserGroups", func() {
 		It("should respond with user_groups of type label", func() {
 			emptyReq := &tagpb.Empty{}
-			u := url.URL{}
-			queryString := u.Query()
-			queryString.Set("page", "1")
-			queryString.Set("limit", "50")
-			ctx := context.WithValue(context.Background(), "query", queryString)
+
+			query := urlvalues.Values{"limit": []string{"50"}, "page": []string{"1"}}
+			ctx := context.WithValue(context.Background(), "query", query)
 			resp, err := service.GetLabelUserGroups(ctx, emptyReq)
 
 			Expect(err).NotTo(HaveOccurred())

@@ -11,7 +11,7 @@ import (
   "github.com/twitchtv/twirp"
 
   pb "user-api/rpc/address"
-  // "user-api/internal/database/model"
+  // "user-api/internal/model"
 )
 
 

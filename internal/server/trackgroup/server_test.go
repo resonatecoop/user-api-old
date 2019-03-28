@@ -14,7 +14,7 @@ import (
   pb "user-api/rpc/trackgroup"
   trackpb "user-api/rpc/track"
   tagpb "user-api/rpc/tag"
-  "user-api/internal/database/model"
+  "user-api/internal/model"
 )
 
 

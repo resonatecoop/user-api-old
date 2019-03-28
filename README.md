@@ -1,15 +1,25 @@
 # User/Track API
 
-This is the main User/Track API.
-It uses Twirp RPC framework. Learn more about
-Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html) or
-[repo](https://github.com/twitchtv/twirp).
+This is the main Resonate User/Track API written in Go, not yet in production.
+It uses [Twirp](https://github.com/twitchtv/twirp), a RPC framework for service-to-service communication emphasizing simplicity and minimalism. Learn more about
+Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html).
 It also uses [go-pg](https://github.com/go-pg/pg) PostgreSQL ORM.
+Its structure is based on the starter kit for [Twisk](https://github.com/ribice/twisk).
 
-## Dev database setup
 
-* Make sure you have latest PostgreSQL installed.
-* Create user and database as follow:
+## Project Structure
+
+The project structure mostly follows [THIS](https://github.com/golang-standards/project-layout) example repository and [Twirp best practices](https://twitchtv.github.io/twirp/docs/best_practices.html), except for the services that live in `internal/server/<service>`.
+
+## Getting started
+
+## Prerequisites:
+- [Go](https://golang.org/) 1.7 or higher.
+- [PostgreSQL](https://www.postgresql.org/) 9.4 or higher.
+
+### Dev database setup
+
+* Create user and database as follow (as found in the local config file in `./conf.local.yaml`):
 
 username = "resonate-dev-user"
 
@@ -19,18 +29,18 @@ dbname = "resonate-dev"
 
 Add following postgres extensions: "hstore" and "uuid-ossp"
 
-* Run migrations from `./internal/database/migrations`
+* Run migrations from `./cmd/migration`
 
 ```sh
 $ go run *.go
 ```
 
-## Dependencies
+### Dependencies
 
 [Dep](https://github.com/golang/dep) is used as dependency management tool.
 `vendor/` folder contains project dependencies and should be in sync with `Gopkg.toml` and `Gopkg.lock`.
 
-## Various tools installation for development
+### Various tools installation for development
 
 * [Install Protocol Buffers v3](https://developers.google.com/protocol-buffers/docs/gotutorial),
 the `protoc` compiler that is used to auto-generate code. The simplest way to do
@@ -56,56 +66,44 @@ Then, to run the `protoc` command and autogenerate Go code for the server interf
 $ retool do protoc --proto_path=$GOPATH/src:. --twirp_out=. --go_out=. ./rpc/user/service.proto
 ```
 
-## Running/building the server
+### Running/building the server
 
 First, put this repo into `$GOPATH/src`
 
 Then, run the server
 ```sh
-$ go run ./cmd/server/main.go
+$ go run ./cmd/api/main.go
 ```
 
 Alternatively, you can build and run an executable binary
 ```sh
-$ cd ./cmd/server/
+$ cd ./cmd/api/
 $ go build
-$ ./server
+$ ./api
 ```
 
-## Example curl requests
+### Implementing new services
 
-### CreateUser
-```sh
-curl --request "POST" \
-     --location "http://localhost:8080/twirp/resonate.api.user.UserService/CreateUser" \
-     --header "Content-Type:application/json" \
-     --data '{"display_name": "john", "full_name": "john doe", "email": "john@doe.com", "username": "johnd"}' \
-     --verbose
+1. Under `proto` folder, create a new one named after your service.
 
-{"id":"9ef71770-7a1b-4a11-a81e-1b6d177a3598","username":"johnd","email":"john@doe.com","display_name":"john","full_name":"john doe"}
-```
+2. Define your proto file. If you are not familiar with Protobufs, you can read more about it [here](https://developers.google.com/protocol-buffers/docs/proto3). You can use already existing proto files (eg `rpc/user/service.proto`) as a template.
 
-## Code structure
+3. Run `make twirp -B`.
 
-The protobuf definition for the service lives in
-`rpc/user/service.proto`.
-The generated Twirp and Go protobuf code is in the same directory.
+4. Implement the service interface from `service.twirp.go` in `internal/server/tenant`.
 
-The implementation of the server is in `internal/server`.
-Database related stuff (migrations, model definitions) can be found in `internal/database`.
-
-Finally, `cmd/server` and `cmd/client` wrap things together into executable main
-packages.
+5. Wire up everything in `cmd/api/main.go`.
 
 ## Documentation
 
-Check out `doc.apib` for API documentation.
+Check out `doc/` folder for API documentation.
+But we'll be transitioning to [OpenAPI Specification and Swagger](https://swagger.io/docs/specification/about/).
 
 ## Testing
 
 We use Ginkgo and Gomega for testing.
 
-At the moment, you need to create the testing database and run migrations manually before running tests.
+You need to create the testing database and run migrations manually before running tests.
 
 * Create user and database as follow:
 
@@ -117,13 +115,13 @@ dbname = "resonate-testing"
 
 Add following extensions: "hstore" and "uuid-ossp" (TODO: add them on initial migration)
 
-* Run migrations from `./internal/database/migrations`
+* Run migrations from `./cmd/migration`
 
 ```sh
 $ go run *.go testing
 ```
 
-* Run tests from `./internal/server/user` or `./internal/server/usergroup`
+* Run tests `./internal/server/<service>`
 
 ```sh
 $ go test
@@ -134,3 +132,15 @@ Or run all tests using ginkgo CLI from `./`
 ```sh
 $ ginkgo -r
 ```
+
+## Roadmap
+
+- Switch from API Blueprint to OpenAPI and autogenerated API documentation using SwaggerUI
+- Implement logging interfaces for every service
+- Add JWT based authentication and role-based access control (see `internal/iam`) to existing services
+
+## Contributing
+
+Please check out the [Contributing guide](CONTRIBUTING.md) for guidelines about how to proceed.
+
+We expect contributors to abide by our underlying [code of conduct](CODE_OF_CONDUCT.md).

@@ -5,10 +5,9 @@ import (
 	// "reflect"
 	// "time"
 	"context"
-	"net/url"
 
 	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
+	"github.com/go-pg/pg/urlvalues"
 	"github.com/twitchtv/twirp"
 	"github.com/satori/go.uuid"
 
@@ -17,7 +16,7 @@ import (
 	// trackpb "user-api/rpc/track"
 	tagpb "user-api/rpc/tag"
 	"user-api/internal"
-	"user-api/internal/database/model"
+	"user-api/internal/model"
 )
 
 type Server struct {
@@ -234,7 +233,7 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *tagpb.Empty) (*p
 	// 	Join("LEFT JOIN group_taxonomies AS g").
 	// 	JoinOn("g.id = user_group.type_id").
 	// 	Where("g.type = ?", "label").
-	//   Apply(orm.Pagination(ctx.Value("query").(url.Values))).
+	//   Apply(urlvalues.Pagination(ctx.Value("query").(urlvalues.Values))).
 	//   Select()
 
 	groupTaxonomy := new(model.GroupTaxonomy)
@@ -248,7 +247,7 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *tagpb.Empty) (*p
 
 	err = s.db.Model(&labels).
 		Where("user_group.type_id = ?", groupTaxonomy.Id).
-		Apply(orm.Pagination(ctx.Value("query").(url.Values))).
+		Apply(urlvalues.Pagination(ctx.Value("query").(urlvalues.Values))).
 		Select()
 	twerr = internal.CheckError(err, "user_group")
 	if twerr != nil {

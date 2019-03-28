@@ -3,16 +3,18 @@ package userserver_test
 import (
 	"testing"
 	"time"
+	"path/filepath"
 	// "fmt"
 
-	// pb "user-api/rpc/user"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/go-pg/pg"
 	"github.com/satori/go.uuid"
 
-	"user-api/internal/database"
-	"user-api/internal/database/model"
+	"user-api/pkg/config"
+	"user-api/pkg/postgres"
+
+	"user-api/internal/model"
 	userserver "user-api/internal/server/user"
 )
 
@@ -37,127 +39,136 @@ func TestUser(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-		testing := true
-		db = database.Connect(testing)
-		service = userserver.NewServer(db)
+	var err error
 
-		newAddress := &model.StreetAddress{Data: map[string]string{"some": "data"}}
-		err := db.Insert(newAddress)
-		Expect(err).NotTo(HaveOccurred())
+	cfgPath, err := filepath.Abs("./../../../conf.local.yaml")
+	Expect(err).NotTo(HaveOccurred())
 
-		// Create a new user
-		ownerOfFollowedUserGroup = &model.User{Username: "ownerOfFollowedUserGroup", FullName: "Owner", Email: "owner@fake.com"}
-		err = db.Insert(ownerOfFollowedUserGroup)
-		Expect(err).NotTo(HaveOccurred())
+	cfg, err := config.Load(cfgPath)
+	Expect(err).NotTo(HaveOccurred())
 
-		newGroupTaxonomy := &model.GroupTaxonomy{Type: "artist", Name: "Artist"}
-		err = db.Insert(newGroupTaxonomy)
-		Expect(err).NotTo(HaveOccurred())
+	db, err = pgsql.New(cfg.DB.Test.PSN, cfg.DB.Test.LogQueries, cfg.DB.Test.TimeoutSeconds)
+	Expect(err).NotTo(HaveOccurred())
 
-		newLabelGroupTaxonomy := &model.GroupTaxonomy{Type: "label", Name: "Label"}
-		err = db.Insert(newLabelGroupTaxonomy)
-		Expect(err).NotTo(HaveOccurred())
+	service = userserver.NewServer(db)
 
-		avatar := make([]byte, 5)
+	newAddress := &model.StreetAddress{Data: map[string]string{"some": "data"}}
+	err = db.Insert(newAddress)
+	Expect(err).NotTo(HaveOccurred())
 
-		newUser = &model.User{Username: "username", FullName: "full name", Email: "email@fake.com"}
-		err = db.Insert(newUser)
-		Expect(err).NotTo(HaveOccurred())
+	// Create a new user
+	ownerOfFollowedUserGroup = &model.User{Username: "ownerOfFollowedUserGroup", FullName: "Owner", Email: "owner@fake.com"}
+	err = db.Insert(ownerOfFollowedUserGroup)
+	Expect(err).NotTo(HaveOccurred())
 
-		followers := []uuid.UUID{newUser.Id}
-		newFollowedUserGroup = &model.UserGroup{
-			DisplayName: "followed group",
-			Avatar: avatar,
-			OwnerId: ownerOfFollowedUserGroup.Id,
-			TypeId: newGroupTaxonomy.Id,
-			Followers: followers,
-			AddressId: newAddress.Id,
-		}
-		err = db.Insert(newFollowedUserGroup)
-		Expect(err).NotTo(HaveOccurred())
+	newGroupTaxonomy := &model.GroupTaxonomy{Type: "artist", Name: "Artist"}
+	err = db.Insert(newGroupTaxonomy)
+	Expect(err).NotTo(HaveOccurred())
 
-		userGroupAddress := &model.StreetAddress{Data: map[string]string{"some": "data"}}
-		err = db.Insert(userGroupAddress)
-		Expect(err).NotTo(HaveOccurred())
-		// Create a new user_group
-		newUserGroup = &model.UserGroup{
-			DisplayName: "artist",
-			Avatar: avatar,
-			OwnerId: newUser.Id,
-			TypeId: newGroupTaxonomy.Id,
-			AddressId: userGroupAddress.Id,
-		}
-		err = db.Insert(newUserGroup)
-		Expect(err).NotTo(HaveOccurred())
+	newLabelGroupTaxonomy := &model.GroupTaxonomy{Type: "label", Name: "Label"}
+	err = db.Insert(newLabelGroupTaxonomy)
+	Expect(err).NotTo(HaveOccurred())
 
-		newFavoriteTrack = &model.Track{
-			CreatorId: ownerOfFollowedUserGroup.Id,
-			UserGroupId: newFollowedUserGroup.Id,
-			Artists: []uuid.UUID{newFollowedUserGroup.Id},
-			Title: "fav track title",
-			Status: "paid",
-			FavoriteOfUsers: []uuid.UUID{newUser.Id},
-		}
-		err = db.Insert(newFavoriteTrack)
-		Expect(err).NotTo(HaveOccurred())
+	avatar := make([]byte, 5)
 
-		newTrack = &model.Track{
-			CreatorId: ownerOfFollowedUserGroup.Id,
-			UserGroupId: newFollowedUserGroup.Id,
-			Title: "track title",
-			Status: "paid",
-			Artists: []uuid.UUID{newFollowedUserGroup.Id, newUserGroup.Id},
-		}
-		err = db.Insert(newTrack)
-		Expect(err).NotTo(HaveOccurred())
+	newUser = &model.User{Username: "username", FullName: "full name", Email: "email@fake.com"}
+	err = db.Insert(newUser)
+	Expect(err).NotTo(HaveOccurred())
 
-		albumTracks := []uuid.UUID{newFavoriteTrack.Id, newTrack.Id}
-		newAlbum = &model.TrackGroup{
-			CreatorId: ownerOfFollowedUserGroup.Id,
-			UserGroupId: newFollowedUserGroup.Id,
-			Title: "album title",
-			ReleaseDate: time.Now(),
-			Type: "lp",
-			Cover: avatar,
-			Tracks: albumTracks,
-		}
-		err = db.Insert(newAlbum)
-		Expect(err).NotTo(HaveOccurred())
+	followers := []uuid.UUID{newUser.Id}
+	newFollowedUserGroup = &model.UserGroup{
+		DisplayName: "followed group",
+		Avatar: avatar,
+		OwnerId: ownerOfFollowedUserGroup.Id,
+		TypeId: newGroupTaxonomy.Id,
+		Followers: followers,
+		AddressId: newAddress.Id,
+	}
+	err = db.Insert(newFollowedUserGroup)
+	Expect(err).NotTo(HaveOccurred())
 
-		tracks := []uuid.UUID{newTrack.Id}
-		newUserPlaylist = &model.TrackGroup{
-			CreatorId: newUser.Id,
-			Title: "user playlist",
-			ReleaseDate: time.Now(),
-			Type: "playlist",
-			Cover: avatar,
-			Tracks: tracks,
-			Private: true,
-		}
-		err = db.Insert(newUserPlaylist)
-		Expect(err).NotTo(HaveOccurred())
+	userGroupAddress := &model.StreetAddress{Data: map[string]string{"some": "data"}}
+	err = db.Insert(userGroupAddress)
+	Expect(err).NotTo(HaveOccurred())
+	// Create a new user_group
+	newUserGroup = &model.UserGroup{
+		DisplayName: "artist",
+		Avatar: avatar,
+		OwnerId: newUser.Id,
+		TypeId: newGroupTaxonomy.Id,
+		AddressId: userGroupAddress.Id,
+	}
+	err = db.Insert(newUserGroup)
+	Expect(err).NotTo(HaveOccurred())
 
-		newUser.Playlists = []uuid.UUID{newUserPlaylist.Id}
-		newUser.FollowedGroups = []uuid.UUID{newFollowedUserGroup.Id}
-		newUser.FavoriteTracks = []uuid.UUID{newFavoriteTrack.Id}
-		_, err = db.Model(newUser).Column("playlists", "followed_groups", "favorite_tracks").WherePK().Update()
-		Expect(err).NotTo(HaveOccurred())
+	newFavoriteTrack = &model.Track{
+		CreatorId: ownerOfFollowedUserGroup.Id,
+		UserGroupId: newFollowedUserGroup.Id,
+		Artists: []uuid.UUID{newFollowedUserGroup.Id},
+		Title: "fav track title",
+		Status: "paid",
+		FavoriteOfUsers: []uuid.UUID{newUser.Id},
+	}
+	err = db.Insert(newFavoriteTrack)
+	Expect(err).NotTo(HaveOccurred())
 
-		newFavoriteTrack.TrackGroups = []uuid.UUID{newAlbum.Id}
-		_, err = db.Model(newFavoriteTrack).Column("track_groups").WherePK().Update()
-		Expect(err).NotTo(HaveOccurred())
+	newTrack = &model.Track{
+		CreatorId: ownerOfFollowedUserGroup.Id,
+		UserGroupId: newFollowedUserGroup.Id,
+		Title: "track title",
+		Status: "paid",
+		Artists: []uuid.UUID{newFollowedUserGroup.Id, newUserGroup.Id},
+	}
+	err = db.Insert(newTrack)
+	Expect(err).NotTo(HaveOccurred())
 
-		newFollowedUserGroup.ArtistOfTracks = []uuid.UUID{newTrack.Id, newFavoriteTrack.Id}
-		_, err = db.Model(newFollowedUserGroup).Column("artist_of_tracks").WherePK().Update()
-		Expect(err).NotTo(HaveOccurred())
+	albumTracks := []uuid.UUID{newFavoriteTrack.Id, newTrack.Id}
+	newAlbum = &model.TrackGroup{
+		CreatorId: ownerOfFollowedUserGroup.Id,
+		UserGroupId: newFollowedUserGroup.Id,
+		Title: "album title",
+		ReleaseDate: time.Now(),
+		Type: "lp",
+		Cover: avatar,
+		Tracks: albumTracks,
+	}
+	err = db.Insert(newAlbum)
+	Expect(err).NotTo(HaveOccurred())
 
-		newUserGroup.ArtistOfTracks = []uuid.UUID{newTrack.Id}
-		_, err = db.Model(newUserGroup).Column("artist_of_tracks").WherePK().Update()
-		Expect(err).NotTo(HaveOccurred())
+	tracks := []uuid.UUID{newTrack.Id}
+	newUserPlaylist = &model.TrackGroup{
+		CreatorId: newUser.Id,
+		Title: "user playlist",
+		ReleaseDate: time.Now(),
+		Type: "playlist",
+		Cover: avatar,
+		Tracks: tracks,
+		Private: true,
+	}
+	err = db.Insert(newUserPlaylist)
+	Expect(err).NotTo(HaveOccurred())
 
-		newTrack.TrackGroups = []uuid.UUID{newAlbum.Id, newUserPlaylist.Id}
-		_, err = db.Model(newTrack).Column("track_groups").WherePK().Update()
-		Expect(err).NotTo(HaveOccurred())
+	newUser.Playlists = []uuid.UUID{newUserPlaylist.Id}
+	newUser.FollowedGroups = []uuid.UUID{newFollowedUserGroup.Id}
+	newUser.FavoriteTracks = []uuid.UUID{newFavoriteTrack.Id}
+	_, err = db.Model(newUser).Column("playlists", "followed_groups", "favorite_tracks").WherePK().Update()
+	Expect(err).NotTo(HaveOccurred())
+
+	newFavoriteTrack.TrackGroups = []uuid.UUID{newAlbum.Id}
+	_, err = db.Model(newFavoriteTrack).Column("track_groups").WherePK().Update()
+	Expect(err).NotTo(HaveOccurred())
+
+	newFollowedUserGroup.ArtistOfTracks = []uuid.UUID{newTrack.Id, newFavoriteTrack.Id}
+	_, err = db.Model(newFollowedUserGroup).Column("artist_of_tracks").WherePK().Update()
+	Expect(err).NotTo(HaveOccurred())
+
+	newUserGroup.ArtistOfTracks = []uuid.UUID{newTrack.Id}
+	_, err = db.Model(newUserGroup).Column("artist_of_tracks").WherePK().Update()
+	Expect(err).NotTo(HaveOccurred())
+
+	newTrack.TrackGroups = []uuid.UUID{newAlbum.Id, newUserPlaylist.Id}
+	_, err = db.Model(newTrack).Column("track_groups").WherePK().Update()
+	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
