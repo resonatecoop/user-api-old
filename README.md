@@ -88,7 +88,7 @@ $ ./api
 
 2. Define your proto file. If you are not familiar with Protobufs, you can read more about it [here](https://developers.google.com/protocol-buffers/docs/proto3). You can use already existing proto files (eg `rpc/user/service.proto`) as a template.
 
-3. Run `make twirp -B`.
+3. Run `retool do protoc --proto_path=$GOPATH/src:. --twirp_out=. --go_out=. ./rpc/<service>/service.proto` where `<service>` is your new service name.
 
 4. Implement the service interface from `service.twirp.go` in `internal/server/tenant`.
 

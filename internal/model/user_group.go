@@ -4,7 +4,7 @@ import (
   "time"
   "context"
   // "log"
-  // "fmt"
+  "fmt"
   "github.com/go-pg/pg"
   "github.com/go-pg/pg/orm"
   "github.com/satori/go.uuid"
@@ -88,6 +88,7 @@ func (u *UserGroup) Create(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
 
   groupTaxonomy := new(GroupTaxonomy)
   pgerr := tx.Model(groupTaxonomy).Where("type = ?", userGroup.Type.Type).First()
+
   if pgerr != nil {
     return pgerr, "group_taxonomy"
   }
@@ -123,16 +124,19 @@ func (u *UserGroup) Create(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
 
   _, pgerr = tx.Model(u).Returning("*").Insert()
   if pgerr != nil {
+    fmt.Println("insert")
     return pgerr, "user_group"
   }
 
-  _, pgerr = tx.Exec(`
-    UPDATE user_groups
-    SET recommended_by = (select array_agg(distinct e) from unnest(recommended_by || ?) e)
-    WHERE id IN (?)
-  `, pg.Array([]uuid.UUID{u.Id}), pg.In(recommendedArtistIds))
-  if pgerr != nil {
-    return pgerr, "user_group"
+  if len(recommendedArtistIds) > 0 {
+    _, pgerr = tx.Exec(`
+      UPDATE user_groups
+      SET recommended_by = (select array_agg(distinct e) from unnest(recommended_by || ?) e)
+      WHERE id IN (?)
+    `, pg.Array([]uuid.UUID{u.Id}), pg.In(recommendedArtistIds))
+    if pgerr != nil {
+      return pgerr, "user_group"
+    }
   }
 
   pgerr = tx.Model(u).
