@@ -1,4 +1,4 @@
-# User/Track API
+# Resonate User/Track API
 
 This is the main Resonate User/Track API written in Go, not yet in production.
 It uses [Twirp](https://github.com/twitchtv/twirp), a RPC framework for service-to-service communication emphasizing simplicity and minimalism. Learn more about
@@ -6,6 +6,19 @@ Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html).
 It also uses [go-pg](https://github.com/go-pg/pg) PostgreSQL ORM.
 Its structure is based on the Twirp starter kit [Twisk](https://github.com/ribice/twisk).
 
+## Table of Contents
+- [Project Structure](#project-structure)
+- [Getting started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Dev database setup](#dev-database-setup)
+    - [Dependencies](#dependencies)
+    - [Tools](#tools)
+    - [Running the server](#running-the-server)
+    - [Implementing new services](#implementing-new-services)
+- [Documentation](#documentation)
+- [Testing](#testing)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
 
 ## Project Structure
 
@@ -40,7 +53,7 @@ $ go run *.go
 [Dep](https://github.com/golang/dep) is used as dependency management tool.
 `vendor/` folder contains project dependencies and should be in sync with `Gopkg.toml` and `Gopkg.lock`.
 
-### Various tools installation for development
+### Tools
 
 * [Install Protocol Buffers v3](https://developers.google.com/protocol-buffers/docs/gotutorial),
 the `protoc` compiler that is used to auto-generate code. The simplest way to do
@@ -66,7 +79,7 @@ Then, to run the `protoc` command and autogenerate Go code for the server interf
 $ retool do protoc --proto_path=$GOPATH/src:. --twirp_out=. --go_out=. ./rpc/user/service.proto
 ```
 
-### Running/building the server
+### Running the server
 
 First, put this repo into `$GOPATH/src`
 
