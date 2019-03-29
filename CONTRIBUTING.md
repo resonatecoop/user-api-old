@@ -5,11 +5,11 @@ Thanks for your interest in contributing!
 There are many ways to contribute:
 - Refactoring code
 - Fixing bugs, after reporting them
-- Building new features, based on the roadmap in [README](README.md) and related Github issues.
+- Building new features, based on the roadmap in [README](README.md#roadmap) and related Github issues.
 
 ## Guidelines
 
-1. Fork the project and clone locally. Follow "Getting Started" in  [README](README.md)
+1. Fork the project and clone locally. Follow "Getting Started" in  [README](README.md#getting-started)
 2. Create a branch
 3. Code and commit your changes. [Good commit messages](https://chris.beams.io/posts/git-commit/) are always appreciated!
 4. Push to the branch
@@ -27,7 +27,7 @@ When filing an issue, make sure to follow this template:
 
 ### Testing
 
-Tests are required for contributions. Please refer to "Testing" section in [README](README.md) to write and run tests.
+Tests are required for contributions. Please refer to "Testing" section in [README](README.md#testing) to write and run tests.
 
 ### Creating a pull request
 
