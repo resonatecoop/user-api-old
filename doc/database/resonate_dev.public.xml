@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<database name="resonate_dev" schema="public" type="PostgreSQL - 10.3">
+   <tables>
+      <table name="gopg_migrations" numRows="59" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('gopg_migrations_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="10" type="serial"/>
+         <column autoUpdated="false" digits="0" id="1" name="version" nullable="true" remarks="" size="19" type="int8"/>
+         <column autoUpdated="false" digits="6" id="2" name="created_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+      </table>
+      <table name="group_taxonomies" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <child column="type_id" foreignKey="user_groups_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_groups"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="1" name="type" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="2" name="name" nullable="false" remarks="" size="2147483647" type="text"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="group_taxonomies_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table name="links" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid"/>
+         <column autoUpdated="false" digits="0" id="1" name="uri" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="2" name="type" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="3" name="platform" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="4" name="personal_data" nullable="false" remarks="" size="1" type="bool"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="links_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table name="street_addresses" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <child column="address_id" foreignKey="user_groups_address_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_groups"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="1" name="personal_data" nullable="false" remarks="" size="1" type="bool"/>
+         <column autoUpdated="false" digits="0" id="2" name="data" nullable="true" remarks="" size="2147483647" type="hstore"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="street_addresses_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table name="tags" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid"/>
+         <column autoUpdated="false" digits="0" id="1" name="type" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="2" name="name" nullable="false" remarks="" size="2147483647" type="text"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="tags_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="tags_gin_idx" unique="false"/>
+      </table>
+      <table name="track_groups" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="created_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="6" id="2" name="updated_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="0" id="3" name="title" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="6" id="4" name="release_date" nullable="false" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="0" id="5" name="type" nullable="false" remarks="" size="2147483647" type="track_group_type"/>
+         <column autoUpdated="false" digits="0" id="6" name="cover" nullable="false" remarks="" size="2147483647" type="bytea"/>
+         <column autoUpdated="false" digits="0" id="7" name="display_artist" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="8" name="multiple_composers" nullable="false" remarks="" size="1" type="bool"/>
+         <column autoUpdated="false" digits="0" id="9" name="private" nullable="false" remarks="" size="1" type="bool"/>
+         <column autoUpdated="false" digits="0" id="10" name="about" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="11" name="creator_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="track_groups_creator_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="users"/>
+         </column>
+         <column autoUpdated="false" defaultValue="uuid_nil()" digits="0" id="12" name="user_group_id" nullable="true" remarks="" size="2147483647" type="uuid"/>
+         <column autoUpdated="false" defaultValue="uuid_nil()" digits="0" id="13" name="label_id" nullable="true" remarks="" size="2147483647" type="uuid"/>
+         <column autoUpdated="false" digits="0" id="14" name="tracks" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="15" name="tags" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="track_groups_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="track_groups_gin_idx" unique="false"/>
+      </table>
+      <table name="tracks" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="created_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="6" id="2" name="updated_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="0" id="3" name="title" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="4" name="status" nullable="false" remarks="" size="2147483647" type="track_status"/>
+         <column autoUpdated="false" digits="0" id="5" name="enabled" nullable="false" remarks="" size="1" type="bool"/>
+         <column autoUpdated="false" digits="0" id="6" name="track_number" nullable="false" remarks="" size="10" type="int4"/>
+         <column autoUpdated="false" digits="8" id="7" name="duration" nullable="true" remarks="" size="8" type="float4"/>
+         <column autoUpdated="false" digits="0" id="8" name="track_groups" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="9" name="favorite_of_users" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="10" name="track_server_id" nullable="false" remarks="" size="2147483647" type="uuid"/>
+         <column autoUpdated="false" digits="0" id="11" name="creator_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="tracks_creator_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="users"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="12" name="user_group_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="tracks_user_group_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_groups"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="13" name="artists" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="14" name="tags" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="15" name="composers" nullable="true" remarks="" size="2147483647" type="hstore"/>
+         <column autoUpdated="false" digits="0" id="16" name="performers" nullable="true" remarks="" size="2147483647" type="hstore"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="tracks_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="tracks_gin_idx" unique="false"/>
+      </table>
+      <table name="user_group_members" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="0" name="created_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="6" id="1" name="updated_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="0" id="2" name="user_group_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="user_group_members_user_group_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_groups"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="3" name="member_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="user_group_members_member_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_groups"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="4" name="display_name" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="5" name="tags" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <primaryKey column="user_group_id" sequenceNumberInPK="1"/>
+         <primaryKey column="member_id" sequenceNumberInPK="2"/>
+         <index name="user_group_members_pkey" unique="true">
+            <column ascending="true" name="user_group_id"/>
+            <column ascending="true" name="member_id"/>
+         </index>
+      </table>
+      <table name="user_group_privacies" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <child column="privacy_id" foreignKey="user_groups_privacy_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_groups"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="1" name="private" nullable="false" remarks="" size="1" type="bool"/>
+         <column autoUpdated="false" digits="0" id="2" name="owned_tracks" nullable="false" remarks="" size="1" type="bool"/>
+         <column autoUpdated="false" digits="0" id="3" name="supported_artists" nullable="false" remarks="" size="1" type="bool"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="user_group_privacies_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table name="user_groups" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <child column="user_group_id" foreignKey="tracks_user_group_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="tracks"/>
+            <child column="member_id" foreignKey="user_group_members_member_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_group_members"/>
+            <child column="user_group_id" foreignKey="user_group_members_user_group_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_group_members"/>
+         </column>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="created_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="6" id="2" name="updated_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="0" id="3" name="display_name" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="4" name="description" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="5" name="short_bio" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="6" name="avatar" nullable="false" remarks="" size="2147483647" type="bytea"/>
+         <column autoUpdated="false" digits="0" id="7" name="banner" nullable="true" remarks="" size="2147483647" type="bytea"/>
+         <column autoUpdated="false" digits="0" id="8" name="group_email_address" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="9" name="privacy_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="user_groups_privacy_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_group_privacies"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="10" name="address_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="user_groups_address_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="street_addresses"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="11" name="type_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="user_groups_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="group_taxonomies"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="12" name="owner_id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <parent column="id" foreignKey="user_groups_owner_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="users"/>
+         </column>
+         <column autoUpdated="false" digits="0" id="13" name="links" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="14" name="tags" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="15" name="recommended_artists" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="16" name="recommended_by" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="17" name="highlighted_tracks" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" defaultValue="uuid_nil()" digits="0" id="18" name="featured_track_group_id" nullable="true" remarks="" size="2147483647" type="uuid"/>
+         <column autoUpdated="false" digits="0" id="19" name="followers" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="20" name="admin_users" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="21" name="artist_of_tracks" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="22" name="kvstore" nullable="true" remarks="" size="2147483647" type="hstore"/>
+         <column autoUpdated="false" digits="0" id="23" name="publisher" nullable="true" remarks="" size="2147483647" type="hstore"/>
+         <column autoUpdated="false" digits="0" id="24" name="pro" nullable="true" remarks="" size="2147483647" type="hstore"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="user_groups_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="user_groups_display_name_key" unique="true">
+            <column ascending="true" name="display_name"/>
+         </index>
+         <index name="user_groups_gin_idx" unique="false"/>
+      </table>
+      <table name="users" numRows="0" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid">
+            <child column="creator_id" foreignKey="track_groups_creator_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="track_groups"/>
+            <child column="creator_id" foreignKey="tracks_creator_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="tracks"/>
+            <child column="owner_id" foreignKey="user_groups_owner_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="user_groups"/>
+         </column>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="created_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="6" id="2" name="updated_at" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="0" id="3" name="username" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="4" name="full_name" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="5" name="first_name" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="6" name="last_name" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="7" name="email" nullable="false" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="8" name="member" nullable="false" remarks="" size="1" type="bool"/>
+         <column autoUpdated="false" digits="0" id="9" name="newsletter_notification" nullable="true" remarks="" size="1" type="bool"/>
+         <column autoUpdated="false" digits="0" id="10" name="favorite_tracks" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="11" name="followed_groups" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="12" name="playlists" nullable="true" remarks="" size="2147483647" type="_uuid"/>
+         <column autoUpdated="false" digits="0" id="13" name="tenant_id" nullable="true" remarks="" size="10" type="int4"/>
+         <column autoUpdated="false" digits="0" id="14" name="role_id" nullable="true" remarks="" size="10" type="int4"/>
+         <column autoUpdated="false" digits="6" id="15" name="last_login" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="6" id="16" name="last_password_change" nullable="true" remarks="" size="35" type="timestamptz"/>
+         <column autoUpdated="false" digits="0" id="17" name="password" nullable="true" remarks="" size="2147483647" type="text"/>
+         <column autoUpdated="false" digits="0" id="18" name="token" nullable="true" remarks="" size="2147483647" type="text"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="users_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="users_email_key" unique="true">
+            <column ascending="true" name="email"/>
+         </index>
+         <index name="users_username_key" unique="true">
+            <column ascending="true" name="username"/>
+         </index>
+      </table>
+   </tables>
+   <routines>
+      <routine dataAccess="MODIFIES" deterministic="true" name="akeys" returnType="ARRAY" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="avals" returnType="ARRAY" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="defined" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="delete" returnType="hstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="each" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="exist" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="exists_all" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="exists_any" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="f_arr2str" returnType="text" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="SQL"><![CDATA[SELECT array_to_string($1, ',')]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="fetchval" returnType="text" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_compress" returnType="internal" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_consistent" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_decompress" returnType="internal" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_in" returnType="ghstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_out" returnType="cstring" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_penalty" returnType="internal" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_picksplit" returnType="internal" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_same" returnType="internal" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="ghstore_union" returnType="ghstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="gin_consistent_hstore" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="gin_extract_hstore" returnType="internal" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="gin_extract_hstore_query" returnType="internal" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hs_concat" returnType="hstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hs_contained" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hs_contains" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore" returnType="hstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_cmp" returnType="integer" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_eq" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_ge" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_gt" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_hash" returnType="integer" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_in" returnType="hstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_le" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_lt" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_ne" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_out" returnType="cstring" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_recv" returnType="hstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_send" returnType="bytea" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_to_array" returnType="ARRAY" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_to_json" returnType="json" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_to_json_loose" returnType="json" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_to_jsonb" returnType="jsonb" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_to_jsonb_loose" returnType="jsonb" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_to_matrix" returnType="ARRAY" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="hstore_version_diag" returnType="integer" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="isdefined" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="isexists" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="populate_record" returnType="anyelement" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="skeys" returnType="SETOF text" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="slice" returnType="hstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="slice_array" returnType="ARRAY" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="svals" returnType="SETOF text" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="tconvert" returnType="hstore" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="uuid_generate_v1" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="uuid_generate_v1mc" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="uuid_generate_v3" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="uuid_generate_v4" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="uuid_generate_v5" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="uuid_nil" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="uuid_ns_dns" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="uuid_ns_oid" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="uuid_ns_url" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="true" name="uuid_ns_x500" returnType="uuid" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="C"/>
+      </routine>
+   </routines>
+</database>
