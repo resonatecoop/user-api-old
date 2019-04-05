@@ -201,7 +201,8 @@ Used for signup.
 
         {
             "email": "john@doe.com",
-            "username": "johnd"
+            "username": "johnd",
+            "full_name": "john doe"
         }
 
 + Response 201 (application/json)
@@ -210,7 +211,9 @@ Used for signup.
 
             {
                 "id": "b09cd642-9df8-4f44-bb5a-169829043110",
-                "email": "john@doe.com"
+                "email": "john@doe.com",
+                "full_name": "john doe",
+                "username": "johnd"
             }
 
 ### Update a User [POST /twirp/resonate.api.user.UserService/UpdateUser]

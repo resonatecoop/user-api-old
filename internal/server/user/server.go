@@ -11,8 +11,9 @@ import (
 
 	pb "user-api/rpc/user"
 	tagpb "user-api/rpc/tag"
-	"user-api/internal"
 	"user-api/internal/model"
+	uuidpkg "user-api/internal/pkg/uuid"
+	errorpkg "user-api/internal/pkg/error"
 )
 
 // Server implements the UserService
@@ -35,7 +36,7 @@ func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
       Column("user.*", "OwnerOfGroups").
 			Where("id = ?", u.Id).
       Select()
-	twerr := internal.CheckError(pgerr, "user")
+	twerr := errorpkg.CheckError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -50,8 +51,8 @@ func (s *Server) GetUser(ctx context.Context, user *pb.User) (*pb.User, error) {
 		LastName: u.LastName,
 		Member: u.Member,
 		NewsletterNotification: u.NewsletterNotification,
-		FavoriteTracks: internal.ConvertUuidToStrArray(u.FavoriteTracks),
-		FollowedGroups: internal.ConvertUuidToStrArray(u.FollowedGroups),
+		FavoriteTracks: uuidpkg.ConvertUuidToStrArray(u.FavoriteTracks),
+		FollowedGroups: uuidpkg.ConvertUuidToStrArray(u.FollowedGroups),
 		OwnerOfGroups: getUserGroupResponse(u.OwnerOfGroups),
 	}, nil
 }
@@ -64,7 +65,7 @@ func (s *Server) GetPlaylists(ctx context.Context, user *pb.User) (*pb.Playlists
 
 	pgerr := s.db.Model(u).Column("user.playlists", "OwnerOfGroups").WherePK().Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user")
+		return nil, errorpkg.CheckError(pgerr, "user")
 	}
 
 	userPlaylists, twerr := model.GetTrackGroupsFromIds(u.Playlists, s.db, []string{"playlist"})
@@ -86,7 +87,7 @@ func (s *Server) GetFavoriteTracks(ctx context.Context, user *pb.User) (*pb.Trac
 
 	pgerr := s.db.Model(u).Column("user.favorite_tracks").WherePK().Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user")
+		return nil, errorpkg.CheckError(pgerr, "user")
 	}
 
 	favoriteTracks, twerr := model.GetTracks(u.FavoriteTracks, s.db, true, ctx) // will return release info (to display cover)
@@ -113,7 +114,7 @@ func (s *Server) CreateUser(ctx context.Context, user *pb.User) (*pb.User, error
 	}
 	_, err := s.db.Model(newUser).Returning("*").Insert()
 
-	twerr := internal.CheckError(err, "user")
+	twerr := errorpkg.CheckError(err, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -145,7 +146,7 @@ func (s *Server) UpdateUser(ctx context.Context, user *pb.User) (*tagpb.Empty, e
 		WherePK().
 		Returning("*").
 		Update()
-	twerr := internal.CheckError(pgerr, "user")
+	twerr := errorpkg.CheckError(pgerr, "user")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -160,88 +161,88 @@ func (s *Server) DeleteUser(ctx context.Context, user *pb.User) (*tagpb.Empty, e
 
 	tx, err := s.db.Begin()
 	if err != nil {
-		return nil, internal.CheckError(err, "")
+		return nil, errorpkg.CheckError(err, "")
 	}
 	defer tx.Rollback()
 
 	if pgerr, table := u.Delete(tx); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, internal.CheckError(err, "")
+		return nil, errorpkg.CheckError(err, "")
 	}
 
 	return &tagpb.Empty{}, nil
 }
 
 func (s *Server) FollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*tagpb.Empty, error) {
-	userId, err := internal.GetUuidFromString(userToUserGroup.UserId)
+	userId, err := uuidpkg.GetUuidFromString(userToUserGroup.UserId)
 	if err != nil {
 		return nil, err
 	}
-	userGroupId, err := internal.GetUuidFromString(userToUserGroup.UserGroupId)
+	userGroupId, err := uuidpkg.GetUuidFromString(userToUserGroup.UserGroupId)
 	if err != nil {
 		return nil, err
 	}
 
 	u := &model.User{Id: userId}
 	if pgerr, table := u.FollowGroup(s.db, userGroupId); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 
 	return &tagpb.Empty{}, nil
 }
 
 func (s *Server) UnfollowGroup(ctx context.Context, userToUserGroup *pb.UserToUserGroup) (*tagpb.Empty, error) {
-	userId, err := internal.GetUuidFromString(userToUserGroup.UserId)
+	userId, err := uuidpkg.GetUuidFromString(userToUserGroup.UserId)
 	if err != nil {
 		return nil, err
 	}
-	userGroupId, err := internal.GetUuidFromString(userToUserGroup.UserGroupId)
+	userGroupId, err := uuidpkg.GetUuidFromString(userToUserGroup.UserGroupId)
 	if err != nil {
 		return nil, err
 	}
 
 	u := &model.User{Id: userId}
 	if pgerr, table := u.UnfollowGroup(s.db, userGroupId); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 	return &tagpb.Empty{}, nil
 }
 
 func (s *Server) AddFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*tagpb.Empty, error) {
-	userId, err := internal.GetUuidFromString(userToTrack.UserId)
+	userId, err := uuidpkg.GetUuidFromString(userToTrack.UserId)
 	if err != nil {
 		return nil, err
 	}
-	trackId, err := internal.GetUuidFromString(userToTrack.TrackId)
+	trackId, err := uuidpkg.GetUuidFromString(userToTrack.TrackId)
 	if err != nil {
 		return nil, err
 	}
 
 	u := &model.User{Id: userId}
 	if pgerr, table := u.AddFavoriteTrack(s.db, trackId); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 
 	return &tagpb.Empty{}, nil
 }
 
 func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserToTrack) (*tagpb.Empty, error) {
-	userId, err := internal.GetUuidFromString(userToTrack.UserId)
+	userId, err := uuidpkg.GetUuidFromString(userToTrack.UserId)
 	if err != nil {
 		return nil, err
 	}
-	trackId, err := internal.GetUuidFromString(userToTrack.TrackId)
+	trackId, err := uuidpkg.GetUuidFromString(userToTrack.TrackId)
 	if err != nil {
 		return nil, err
 	}
 
 	u := &model.User{Id: userId}
 	if pgerr, table := u.RemoveFavoriteTrack(s.db, trackId); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 	return &tagpb.Empty{}, nil
 }
@@ -249,7 +250,7 @@ func (s *Server) RemoveFavoriteTrack(ctx context.Context, userToTrack *pb.UserTo
 
 
 func getUserModel(user *pb.User) (*model.User, twirp.Error) {
-	id, err := internal.GetUuidFromString(user.Id)
+	id, err := uuidpkg.GetUuidFromString(user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -304,23 +305,23 @@ func getUserGroupResponse(ownerOfGroup []model.UserGroup) ([]*tagpb.RelatedUserG
 		return nil, twirp.RequiredArgumentError("type")
 	}
 
-	userId, twerr := internal.GetUuidFromString(playRequest.Play.UserId)
+	userId, twerr := uuidpkg.GetUuidFromString(playRequest.Play.UserId)
 	if twerr != nil {
 		return nil, twerr
 	}
 	user := &model.User{Id: userId}
 	pgerr := s.db.Model(user).WherePK().Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user")
+		return nil, errorpkg.CheckError(pgerr, "user")
 	}
-	trackId, twerr := internal.GetUuidFromString(playRequest.Play.TrackId)
+	trackId, twerr := uuidpkg.GetUuidFromString(playRequest.Play.TrackId)
 	if twerr != nil {
 		return nil, twerr
 	}
 	track := &model.Track{Id: trackId}
 	pgerr = s.db.Model(track).WherePK().Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "track")
+		return nil, errorpkg.CheckError(pgerr, "track")
 	}
 
 	newPlay := &model.Play{
@@ -332,12 +333,12 @@ func getUserGroupResponse(ownerOfGroup []model.UserGroup) ([]*tagpb.RelatedUserG
 
 	_, pgerr = s.db.Model(newPlay).Returning("*").Insert()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "play")
+		return nil, errorpkg.CheckError(pgerr, "play")
 	}
 
 	updatedPlayCount, pgerr := model.CountPlays(trackId, userId, s.db)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "play")
+		return nil, errorpkg.CheckError(pgerr, "play")
 	}
 	return &pb.CreatePlayResponse{
 		UpdatedPlayCount: updatedPlayCount,
@@ -353,7 +354,7 @@ func getUserGroupResponse(ownerOfGroup []model.UserGroup) ([]*tagpb.RelatedUserG
 	}
 	pgerr := s.db.Model(u).WherePK().Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user")
+		return nil, errorpkg.CheckError(pgerr, "user")
 	}
 
 	var ownedTrackIds []uuid.UUID
@@ -365,7 +366,7 @@ func getUserGroupResponse(ownerOfGroup []model.UserGroup) ([]*tagpb.RelatedUserG
 		ORDER BY max(created_at) desc
 	`, u.Id)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "play")
+		return nil, errorpkg.CheckError(pgerr, "play")
 	}
 
 	ownedTracks, twerr := model.GetTracks(ownedTrackIds, s.db, true, ctx)
@@ -385,7 +386,7 @@ func (s *Server) GetTrackHistory(ctx context.Context, user *pb.User) (*pb.Tracks
 	}
 	pgerr := s.db.Model(u).WherePK().Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user")
+		return nil, errorpkg.CheckError(pgerr, "user")
 	}
 
 	var trackIds []uuid.UUID
@@ -396,7 +397,7 @@ func (s *Server) GetTrackHistory(ctx context.Context, user *pb.User) (*pb.Tracks
 		ORDER BY max(created_at) desc
 	`, u.Id)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "play")
+		return nil, errorpkg.CheckError(pgerr, "play")
 	}
 
 
@@ -417,7 +418,7 @@ func (s *Server) GetSupportedArtists(ctx context.Context, user *pb.User) (*pb.Ar
 	}
 	pgerr := s.db.Model(u).WherePK().Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user")
+		return nil, errorpkg.CheckError(pgerr, "user")
 	}
 
 	// JOIN plays AS play ON (play.track_id = track.id AND play.user_id = ? AND play.type = 'paid')
@@ -442,11 +443,11 @@ func (s *Server) GetSupportedArtists(ctx context.Context, user *pb.User) (*pb.Ar
 	`, u.Id)
 
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "")
+		return nil, errorpkg.CheckError(pgerr, "")
 	}
 	artists, pgerr := model.GetRelatedUserGroups(userGroupIds, s.db)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user_group")
+		return nil, errorpkg.CheckError(pgerr, "user_group")
 	}
 	return &pb.Artists{
 		Artists: artists,

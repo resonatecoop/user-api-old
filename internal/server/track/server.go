@@ -12,7 +12,10 @@ import (
 	// userpb "user-api/rpc/user"
 	pb "user-api/rpc/track"
 	tagpb "user-api/rpc/tag"
-	"user-api/internal"
+
+	uuidpkg "user-api/internal/pkg/uuid"
+	errorpkg "user-api/internal/pkg/error"
+
 	"user-api/internal/model"
 )
 
@@ -27,7 +30,7 @@ func NewServer(db *pg.DB) *Server {
 func (s *Server) GetTracks(ctx context.Context, req *pb.TracksList) (*pb.TracksList, error) {
 	trackIds := make([]uuid.UUID, len(req.Tracks))
 	for i, track := range req.Tracks {
-		id, twerr := internal.GetUuidFromString(track.Id)
+		id, twerr := uuidpkg.GetUuidFromString(track.Id)
 		if twerr != nil {
 			return nil, twerr
 		}
@@ -70,7 +73,7 @@ func (s *Server) CreateTrack(ctx context.Context, track *pb.Track) (*pb.Track, e
   }
 
   if pgerr, table := t.Create(s.db, track); pgerr != nil {
-    return nil, internal.CheckError(pgerr, table)
+    return nil, errorpkg.CheckError(pgerr, table)
   }
 
   return track, nil
@@ -88,7 +91,7 @@ func (s *Server) UpdateTrack(ctx context.Context, track *pb.Track) (*tagpb.Empty
 	}
 
 	if pgerr, table := t.Update(s.db, track); pgerr != nil {
-    return nil, internal.CheckError(pgerr, table)
+    return nil, errorpkg.CheckError(pgerr, table)
   }
   return &tagpb.Empty{}, nil
 }
@@ -101,22 +104,22 @@ func (s *Server) DeleteTrack(ctx context.Context, track *pb.Track) (*tagpb.Empty
 
 	tx, err := s.db.Begin()
 	if err != nil {
-		return nil, internal.CheckError(err, "")
+		return nil, errorpkg.CheckError(err, "")
 	}
 	defer tx.Rollback()
 
 	if pgerr, table := t.Delete(tx); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 	err = tx.Commit()
   if err != nil {
-    return nil, internal.CheckError(err, "")
+    return nil, errorpkg.CheckError(err, "")
   }
 	return &tagpb.Empty{}, nil
 }
 
 func getTrackModel(track *pb.Track) (*model.Track, twirp.Error) {
-  id, err := internal.GetUuidFromString(track.Id)
+  id, err := uuidpkg.GetUuidFromString(track.Id)
   if err != nil {
     return nil, err
   }
@@ -161,7 +164,7 @@ func checkRequiredAttributes(track *pb.Track) (twirp.Error) {
 			WherePK().
 			Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "track")
+		return nil, errorpkg.CheckError(pgerr, "track")
 	}
 	track.UserGroupId = t.UserGroupId.String()
 	track.CreatorId = t.CreatorId.String()
@@ -182,7 +185,7 @@ func checkRequiredAttributes(track *pb.Track) (twirp.Error) {
   // Get artists (id, name, avatar)
 	artists, pgerr := model.GetRelatedUserGroups(t.Artists, s.db)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user_group")
+		return nil, errorpkg.CheckError(pgerr, "user_group")
 	}
 	track.Artists = artists
 

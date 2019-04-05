@@ -14,7 +14,8 @@ import (
   // trackpb "user-api/rpc/track"
   tagpb "user-api/rpc/tag"
 
-  "user-api/internal"
+  uuidpkg "user-api/internal/pkg/uuid"
+  errorpkg "user-api/internal/pkg/error"
 )
 
 type UserGroup struct {
@@ -208,7 +209,7 @@ func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
   }
 
   // Update address
-  addressId, twerr := internal.GetUuidFromString(userGroup.Address.Id)
+  addressId, twerr := uuidpkg.GetUuidFromString(userGroup.Address.Id)
   if twerr != nil {
     return twerr, "street_address"
   }
@@ -220,7 +221,7 @@ func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
   }
 
   // Update privacy
-  privacyId, twerr := internal.GetUuidFromString(userGroup.Privacy.Id)
+  privacyId, twerr := uuidpkg.GetUuidFromString(userGroup.Privacy.Id)
   if twerr != nil {
     return twerr, "user_group_privacy"
   }
@@ -247,7 +248,7 @@ func (u *UserGroup) Update(db *pg.DB, userGroup *pb.UserGroup) (error, string) {
     return pgerr, "link"
   }
   // Delete links if needed
-  linkIdsToDelete := internal.Difference(userGroupToUpdate.Links, linkIds)
+  linkIdsToDelete := uuidpkg.Difference(userGroupToUpdate.Links, linkIds)
   if len(linkIdsToDelete) > 0 {
     _, pgerr = tx.Model((*Link)(nil)).
       Where("id in (?)", pg.In(linkIdsToDelete)).
@@ -283,7 +284,7 @@ func SearchUserGroups(query string, db *pg.DB) (*tagpb.SearchResults, twirp.Erro
     Where("privacy.private = false").
     Select()
   if pgerr != nil {
-    return nil, internal.CheckError(pgerr, "user_group")
+    return nil, errorpkg.CheckError(pgerr, "user_group")
   }
 
   var people []*tagpb.RelatedUserGroup
@@ -525,7 +526,7 @@ func GetRelatedUserGroupIds(userGroups []*tagpb.RelatedUserGroup, db *pg.Tx) ([]
 	relatedUserGroups := make([]*UserGroup, len(userGroups))
 	relatedUserGroupIds := make([]uuid.UUID, len(userGroups))
 	for i, userGroup := range userGroups {
-		id, twerr := internal.GetUuidFromString(userGroup.Id)
+		id, twerr := uuidpkg.GetUuidFromString(userGroup.Id)
 		if twerr != nil {
 			return nil, twerr.(error)
 		}
@@ -557,7 +558,7 @@ func getLinkIds(l []*pb.Link, db *pg.Tx) ([]uuid.UUID, error) {
 			linkIds[i] = links[i].Id
 			link.Id = links[i].Id.String()
 		} else {
-			linkId, twerr := internal.GetUuidFromString(link.Id)
+			linkId, twerr := uuidpkg.GetUuidFromString(link.Id)
 			if twerr != nil {
 				return nil, twerr.(error)
 			}
@@ -582,7 +583,7 @@ func (u *UserGroup) GetUserGroupTrackAnalytics(db *pg.DB) ([]*pb.TrackAnalytics,
     WherePK().
     Select()
   if pgerr != nil {
-    return nil, internal.CheckError(pgerr, "user_group")
+    return nil, errorpkg.CheckError(pgerr, "user_group")
   }
   tracks := make([]TrackAnalytics, len(u.OwnerOfTracks))
   trackIds := make([]uuid.UUID, len(u.OwnerOfTracks))
@@ -605,7 +606,7 @@ func (u *UserGroup) GetUserGroupTrackAnalytics(db *pg.DB) ([]*pb.TrackAnalytics,
       GROUP BY play.track_id
     `, pg.In(trackIds))
     if pgerr != nil {
-      return nil, internal.CheckError(pgerr, "play")
+      return nil, errorpkg.CheckError(pgerr, "play")
     }
     for i, track := range(tracks) {
       artistTrackAnalytics[i] = &pb.TrackAnalytics{

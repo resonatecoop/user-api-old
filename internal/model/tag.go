@@ -1,11 +1,13 @@
 package model
 
 import (
-  "user-api/internal"
   "github.com/satori/go.uuid"
   pb "user-api/rpc/tag"
   "github.com/go-pg/pg"
   "github.com/twitchtv/twirp"
+
+  uuidpkg "user-api/internal/pkg/uuid"
+  errorpkg "user-api/internal/pkg/error"
 )
 
 type Tag struct {
@@ -23,7 +25,7 @@ func SearchTags(query string, tagType string, db *pg.DB,) ([]*Tag, twirp.Error) 
     Where("type = ?", tagType).
     Select()
   if pgerr != nil {
-    return nil, internal.CheckError(pgerr, "tag")
+    return nil, errorpkg.CheckError(pgerr, "tag")
   }
   return tags, nil
 }
@@ -36,7 +38,7 @@ func GetTags(tagIds []uuid.UUID, db *pg.DB) ([]*pb.Tag, twirp.Error) {
       Where("id in (?)", pg.In(tagIds)).
       Select()
     if pgerr != nil {
-      return nil, internal.CheckError(pgerr, "tag")
+      return nil, errorpkg.CheckError(pgerr, "tag")
     }
     for i, tag := range t {
       tags[i] = &pb.Tag{Id: tag.Id.String(), Type: tag.Type, Name: tag.Name}
@@ -62,7 +64,7 @@ func GetTagIds(t []*pb.Tag, db *pg.Tx) ([]uuid.UUID, error) {
 			tagIds[i] = tags[i].Id
 			tag.Id = tags[i].Id.String()
 		} else {
-			tagId, twerr := internal.GetUuidFromString(tag.Id)
+			tagId, twerr := uuidpkg.GetUuidFromString(tag.Id)
 			if twerr != nil {
 				return nil, twerr.(error)
 			}

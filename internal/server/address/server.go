@@ -10,7 +10,7 @@ import (
   "github.com/twitchtv/twirp"
 
   pb "user-api/rpc/address"
-  "user-api/internal"
+  mapspkg "user-api/internal/pkg/maps"
 )
 
 type Server struct {
@@ -96,8 +96,8 @@ func (s *Server) SearchAddress(ctx context.Context, q *pb.AddressQuery) (*pb.Add
       Administrative: hit.Administrative,
       CountryCode: hit.CountryCode,
       Geoloc: hit.Geoloc,
-      City: internal.GetMapListValue(hit.City),
-      LocaleNames: internal.GetMapListValue(hit.LocaleNames),
+      City: mapspkg.GetMapListValue(hit.City),
+      LocaleNames: mapspkg.GetMapListValue(hit.LocaleNames),
     }
   }
 

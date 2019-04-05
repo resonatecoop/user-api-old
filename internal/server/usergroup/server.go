@@ -15,8 +15,9 @@ import (
 	pb "user-api/rpc/usergroup"
 	// trackpb "user-api/rpc/track"
 	tagpb "user-api/rpc/tag"
-	"user-api/internal"
 	"user-api/internal/model"
+	uuidpkg "user-api/internal/pkg/uuid"
+	errorpkg "user-api/internal/pkg/error"
 )
 
 type Server struct {
@@ -33,7 +34,7 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 		return nil, requiredErr
 	}
 
-	ownerId, err := internal.GetUuidFromString(userGroup.OwnerId)
+	ownerId, err := uuidpkg.GetUuidFromString(userGroup.OwnerId)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (s *Server) CreateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 
 	pgerr, table := u.Create(s.db, userGroup)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 
   return &pb.UserGroup{
@@ -87,7 +88,7 @@ func (s *Server) SearchUserGroups(ctx context.Context, q *tagpb.Query) (*tagpb.S
 
 // TODO handle privacy settings
 func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb.UserGroup, error) {
-	id, err := internal.GetUuidFromString(userGroup.Id)
+	id, err := uuidpkg.GetUuidFromString(userGroup.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +100,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 		WherePK().
 		Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user_group")
+		return nil, errorpkg.CheckError(pgerr, "user_group")
 	}
 
 	// Get user group links
@@ -110,7 +111,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 			Where("id in (?)", pg.In(u.Links)).
 			Select()
 		if pgerr != nil {
-			return nil, internal.CheckError(pgerr, "link")
+			return nil, errorpkg.CheckError(pgerr, "link")
 		}
 		for i, link := range groupLinks {
 			links[i] = &pb.Link{Id: link.Id.String(), Platform: link.Platform, Uri: link.Uri}
@@ -126,21 +127,21 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	// Get related user groups
 	recommendedArtists, pgerr := model.GetRelatedUserGroups(u.RecommendedArtists, s.db)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user_group")
+		return nil, errorpkg.CheckError(pgerr, "user_group")
 	}
 	members, pgerr, table := getUserGroupMembers(id, u.Members, true, s.db)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 	memberOfGroups, pgerr, table := getUserGroupMembers(id, u.MemberOfGroups, false, s.db)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 
 	// Get related tracks/track groups
 	highlightedTracks, pgerr := model.GetTracks(u.HighlightedTracks, s.db, true, ctx)
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "track")
+		return nil, errorpkg.CheckError(pgerr, "track")
 	}
 
 	trackGroups := model.GetTrackGroups(append(u.OwnerOfTrackGroups, u.LabelOfTrackGroups...))
@@ -149,7 +150,7 @@ func (s *Server) GetUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*pb
 	if (u.FeaturedTrackGroupId != uuid.UUID{}) {
 		featuredTrackGroups, pgerr := model.GetTrackGroupsFromIds([]uuid.UUID{u.FeaturedTrackGroupId}, s.db, []string{"lp", "ep", "single", "playlist"})
 		if pgerr != nil {
-			return nil, internal.CheckError(pgerr, "track_group")
+			return nil, errorpkg.CheckError(pgerr, "track_group")
 		}
 		featuredTrackGroup = featuredTrackGroups[0]
 	}
@@ -195,14 +196,14 @@ func (s *Server) UpdateUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 	}
 
 	if pgerr, table := u.Update(s.db, userGroup); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 
   return &tagpb.Empty{}, nil
 }
 
 func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (*tagpb.Empty, error) {
-	id, twerr := internal.GetUuidFromString(userGroup.Id)
+	id, twerr := uuidpkg.GetUuidFromString(userGroup.Id)
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -210,17 +211,17 @@ func (s *Server) DeleteUserGroup(ctx context.Context, userGroup *pb.UserGroup) (
 
 	tx, err := s.db.Begin()
 	if err != nil {
-		return nil, internal.CheckError(err, "")
+		return nil, errorpkg.CheckError(err, "")
 	}
 	defer tx.Rollback()
 
 	if pgerr, table := u.Delete(tx); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, internal.CheckError(err, "")
+		return nil, errorpkg.CheckError(err, "")
 	}
 
 	return &tagpb.Empty{}, nil
@@ -240,7 +241,7 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *tagpb.Empty) (*p
 	err := s.db.Model(groupTaxonomy).
 		Where("type = ?", "label").
 		First()
-	twerr := internal.CheckError(err, "group_taxonomy")
+	twerr := errorpkg.CheckError(err, "group_taxonomy")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -249,7 +250,7 @@ func (s *Server) GetLabelUserGroups(ctx context.Context, empty *tagpb.Empty) (*p
 		Where("user_group.type_id = ?", groupTaxonomy.Id).
 		Apply(urlvalues.Pagination(ctx.Value("query").(urlvalues.Values))).
 		Select()
-	twerr = internal.CheckError(err, "user_group")
+	twerr = errorpkg.CheckError(err, "user_group")
 	if twerr != nil {
 		return nil, twerr
 	}
@@ -269,7 +270,7 @@ func (s *Server) GetUserGroupTypes(ctx context.Context, empty *tagpb.Empty) (*pb
 		Where("group_taxonomy.type != ?", "distributor"). // except distributors, internally added by staff
 		Select()
 	if err != nil {
-		return nil, internal.CheckError(err, "group_taxonomy")
+		return nil, errorpkg.CheckError(err, "group_taxonomy")
 	}
 
 	for _, groupType := range(types) {
@@ -292,14 +293,14 @@ func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupM
 		}
 		defer tx.Rollback()
 
-		userGroupId, err := internal.GetUuidFromString(userGroupMembers.UserGroupId)
+		userGroupId, err := uuidpkg.GetUuidFromString(userGroupMembers.UserGroupId)
 		if err != nil {
 			return err, "user_group"
 		}
 
 		for _, member := range(userGroupMembers.Members) {
 			// verify uuid
-			memberId, err := internal.GetUuidFromString(member.Id)
+			memberId, err := uuidpkg.GetUuidFromString(member.Id)
 			if err != nil {
 				return err, "member"
 			}
@@ -338,7 +339,7 @@ func (s *Server) AddMembers(ctx context.Context, userGroupMembers *pb.UserGroupM
 		return tx.Commit(), table
 	}
 	if err, table := addMembers(); err != nil {
-		return nil, internal.CheckError(err, table)
+		return nil, errorpkg.CheckError(err, table)
 	}
 	return &tagpb.Empty{}, nil
 }
@@ -352,14 +353,14 @@ func (s *Server) DeleteMembers(ctx context.Context, userGroupMembers *pb.UserGro
 		}
 		defer tx.Rollback()
 
-		userGroupId, err := internal.GetUuidFromString(userGroupMembers.UserGroupId)
+		userGroupId, err := uuidpkg.GetUuidFromString(userGroupMembers.UserGroupId)
 		if err != nil {
 			return err, "user_group"
 		}
 
 		for _, member := range(userGroupMembers.Members) {
 			// verify uuid
-			memberId, err := internal.GetUuidFromString(member.Id)
+			memberId, err := uuidpkg.GetUuidFromString(member.Id)
 			if err != nil {
 				return err, "member"
 			}
@@ -383,47 +384,47 @@ func (s *Server) DeleteMembers(ctx context.Context, userGroupMembers *pb.UserGro
 		return tx.Commit(), table
 	}
 	if err, table := deleteMembers(); err != nil {
-		return nil, internal.CheckError(err, table)
+		return nil, errorpkg.CheckError(err, table)
 	}
 	return &tagpb.Empty{}, nil
 }
 
 func (s *Server) AddRecommended(ctx context.Context, userGroupRecommended *pb.UserGroupRecommended) (*tagpb.Empty, error) {
-	userGroupId, twerr := internal.GetUuidFromString(userGroupRecommended.UserGroupId)
+	userGroupId, twerr := uuidpkg.GetUuidFromString(userGroupRecommended.UserGroupId)
 	if twerr != nil {
 		return nil, twerr
 	}
-	recommendedId, twerr := internal.GetUuidFromString(userGroupRecommended.RecommendedId)
+	recommendedId, twerr := uuidpkg.GetUuidFromString(userGroupRecommended.RecommendedId)
 	if twerr != nil {
 		return nil, twerr
 	}
 	u := &model.UserGroup{Id: userGroupId}
 
 	if pgerr, table := u.AddRecommended(s.db, recommendedId); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 	return &tagpb.Empty{}, nil
 }
 
 func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb.UserGroupRecommended) (*tagpb.Empty, error) {
-	userGroupId, twerr := internal.GetUuidFromString(userGroupRecommended.UserGroupId)
+	userGroupId, twerr := uuidpkg.GetUuidFromString(userGroupRecommended.UserGroupId)
 	if twerr != nil {
 		return nil, twerr
 	}
-	recommendedId, twerr := internal.GetUuidFromString(userGroupRecommended.RecommendedId)
+	recommendedId, twerr := uuidpkg.GetUuidFromString(userGroupRecommended.RecommendedId)
 	if twerr != nil {
 		return nil, twerr
 	}
 	u := &model.UserGroup{Id: userGroupId}
 
 	if pgerr, table := u.RemoveRecommended(s.db, recommendedId); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 	return &tagpb.Empty{}, nil
 }
 
 /*func (s *Server) GetTrackAnalytics(ctx context.Context, userGroup *pb.UserGroup) (*pb.UserGroupTrackAnalytics, error) {
-	id, err := internal.GetUuidFromString(userGroup.Id)
+	id, err := uuidpkg.GetUuidFromString(userGroup.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +434,7 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 		WherePK().
 		Select()
 	if pgerr != nil {
-		return nil, internal.CheckError(pgerr, "user_group")
+		return nil, errorpkg.CheckError(pgerr, "user_group")
 	}
 
 	if u.Type.Type == "artist" {
@@ -450,7 +451,7 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 			WherePK().
 			Select()
 		if pgerr != nil {
-			return nil, internal.CheckError(pgerr, "user_group")
+			return nil, errorpkg.CheckError(pgerr, "user_group")
 		}
 		userGroups := make([]*pb.LabelTrackAnalytics, len(u.Members)+1)
 
@@ -493,23 +494,23 @@ func (s *Server) RemoveRecommended(ctx context.Context, userGroupRecommended *pb
 }*/
 
 func getUserGroupModel(userGroup *pb.UserGroup) (*model.UserGroup, twirp.Error) {
-	id, err := internal.GetUuidFromString(userGroup.Id)
+	id, err := uuidpkg.GetUuidFromString(userGroup.Id)
 	if err != nil {
 		return nil, err
 	}
-	addressId, err := internal.GetUuidFromString(userGroup.Address.Id)
+	addressId, err := uuidpkg.GetUuidFromString(userGroup.Address.Id)
 	if err != nil {
 		return nil, err
 	}
-	privacyId, err := internal.GetUuidFromString(userGroup.Privacy.Id)
+	privacyId, err := uuidpkg.GetUuidFromString(userGroup.Privacy.Id)
 	if err != nil {
 		return nil, err
 	}
-	// typeId, err := internal.GetUuidFromString(userGroup.Type.Id)
+	// typeId, err := uuidpkg.GetUuidFromString(userGroup.Type.Id)
 	// if err != nil {
 	// 	return nil, err
 	// }
-	// ownerId, err := internal.GetUuidFromString(userGroup.OwnerId)
+	// ownerId, err := uuidpkg.GetUuidFromString(userGroup.OwnerId)
 	// if err != nil {
 	// 	return nil, err
 	// }

@@ -12,7 +12,8 @@ import (
   // "github.com/go-pg/pg/urlvalues"
   "github.com/twitchtv/twirp"
 
-  "user-api/internal"
+  uuidpkg "user-api/internal/pkg/uuid"
+  errorpkg "user-api/internal/pkg/error"
 )
 
 
@@ -55,14 +56,14 @@ func SearchTracks(query string, db *pg.DB,) (*tagpb.SearchResults, twirp.Error) 
     Where("to_tsvector('english'::regconfig, COALESCE(title, '') || ' ' || COALESCE(f_arr2str(tags), '')) @@ (plainto_tsquery('english'::regconfig, ?)) = true", query).
     Select()
   if pgerr != nil {
-    return nil, internal.CheckError(pgerr, "track")
+    return nil, errorpkg.CheckError(pgerr, "track")
   }
 
   var searchTracks []*tagpb.SearchTrack
   for _, track := range tracks {
     artists, err := GetRelatedUserGroups(track.Artists, db)
     if err != nil {
-      return nil, internal.CheckError(err, "user_group")
+      return nil, errorpkg.CheckError(err, "user_group")
     }
     trackGroups, twerr := GetTrackGroupsFromIds(track.TrackGroups, db, []string{"lp", "ep", "single"})
     if twerr != nil {
@@ -111,7 +112,7 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, showTrackGroup bool, ctx context.Cont
       // Apply(pagination).
 			Select()
 		if pgerr != nil {
-			return nil, internal.CheckError(pgerr, "track")
+			return nil, errorpkg.CheckError(pgerr, "track")
 		}
 		for _, track := range t {
       trackResponse := &pb.Track{
@@ -124,7 +125,7 @@ func GetTracks(ids []uuid.UUID, db *pg.DB, showTrackGroup bool, ctx context.Cont
       }
       artists, pgerr := GetRelatedUserGroups(track.Artists, db)
       if pgerr != nil {
-        return  nil, internal.CheckError(pgerr, "user_group")
+        return  nil, errorpkg.CheckError(pgerr, "user_group")
       }
       trackResponse.Artists = artists
       if showTrackGroup == true {
@@ -145,7 +146,7 @@ func GetTrackIds(t []*pb.Track, tx *pg.Tx) ([]uuid.UUID, error, string) {
   tracks := make([]*Track, len(t))
   trackIds := make([]uuid.UUID, len(t))
   for i, track := range t {
-    id, twerr := internal.GetUuidFromString(track.Id)
+    id, twerr := uuidpkg.GetUuidFromString(track.Id)
     if twerr != nil {
       return nil, twerr.(error), "track"
     }
@@ -203,7 +204,7 @@ func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
   if pgerr != nil {
     return pgerr, "tag"
   }
-  if !internal.Equal(trackToUpdate.Tags, tagIds) {
+  if !uuidpkg.Equal(trackToUpdate.Tags, tagIds) {
     t.Tags = tagIds
     columns = append(columns, "tags")
   }
@@ -224,8 +225,8 @@ func (t *Track) Update(db *pg.DB, track *pb.Track) (error, string) {
   if pgerr != nil {
     return pgerr, "user_group"
   }
-  artistsToAddIds := internal.Difference(artistIds, trackToUpdate.Artists)
-  artistsToRemoveIds := internal.Difference(trackToUpdate.Artists, artistIds)
+  artistsToAddIds := uuidpkg.Difference(artistIds, trackToUpdate.Artists)
+  artistsToRemoveIds := uuidpkg.Difference(trackToUpdate.Artists, artistIds)
   if len(artistsToAddIds) > 0 || len(artistsToRemoveIds) > 0 {
     t.Artists = artistIds
     columns = append(columns, "artists")
@@ -368,18 +369,18 @@ func (t *Track) Delete(tx *pg.Tx) (error, string) {
 
 // Get track OwnerId, UserGroupId and TrackServerId as UUID
 func (t *Track) GetIds(track *pb.Track) (error, string) {
-  creatorId, err := internal.GetUuidFromString(track.CreatorId)
+  creatorId, err := uuidpkg.GetUuidFromString(track.CreatorId)
   if err != nil {
     return err, "owner"
   }
 
-  userGroupId, err := internal.GetUuidFromString(track.UserGroupId)
+  userGroupId, err := uuidpkg.GetUuidFromString(track.UserGroupId)
   if err != nil {
     return err, "user_group"
   }
 
   if track.TrackServerId != "" {
-    trackServerId, err := internal.GetUuidFromString(track.TrackServerId)
+    trackServerId, err := uuidpkg.GetUuidFromString(track.TrackServerId)
     if err != nil {
       return err, "track_server"
     }

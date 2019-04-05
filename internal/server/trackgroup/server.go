@@ -13,8 +13,10 @@ import (
   // trackpb "user-api/rpc/track"
   tagpb "user-api/rpc/tag"
   pb "user-api/rpc/trackgroup"
-  "user-api/internal"
   "user-api/internal/model"
+
+  uuidpkg "user-api/internal/pkg/uuid"
+  errorpkg "user-api/internal/pkg/error"
 )
 
 type Server struct {
@@ -36,7 +38,7 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
       WherePK().
       Select()
   if pgerr != nil {
-    return nil, internal.CheckError(pgerr, "track_group")
+    return nil, errorpkg.CheckError(pgerr, "track_group")
   }
 
   releaseDate, err := ptypes.TimestampProto(t.ReleaseDate)
@@ -67,14 +69,14 @@ func (s *Server) GetTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup) (
   if t.UserGroupId.String() != "" {
     userGroup, pgerr := model.GetRelatedUserGroups([]uuid.UUID{t.UserGroupId}, s.db)
     if pgerr != nil {
-      return nil, internal.CheckError(pgerr, "user_group")
+      return nil, errorpkg.CheckError(pgerr, "user_group")
     }
     trackGroup.UserGroup = userGroup[0]
   }
   if t.LabelId.String() != "" {
     label, pgerr := model.GetRelatedUserGroups([]uuid.UUID{t.LabelId}, s.db)
     if pgerr != nil {
-      return nil, internal.CheckError(pgerr, "user_group")
+      return nil, errorpkg.CheckError(pgerr, "user_group")
     }
     trackGroup.Label = label[0]
   }
@@ -125,7 +127,7 @@ func (s *Server) CreateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
   t.ReleaseDate = releaseDate
 
   if pgerr, table := t.Create(s.db, trackGroup); pgerr != nil {
-    return nil, internal.CheckError(pgerr, table)
+    return nil, errorpkg.CheckError(pgerr, table)
   }
 
   return trackGroup, nil
@@ -148,7 +150,7 @@ func (s *Server) UpdateTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
   t.ReleaseDate = releaseDate
 
 	if pgerr, table := t.Update(s.db, trackGroup); pgerr != nil {
-    return nil, internal.CheckError(pgerr, table)
+    return nil, errorpkg.CheckError(pgerr, table)
   }
   return &tagpb.Empty{}, nil
 }
@@ -161,43 +163,43 @@ func (s *Server) DeleteTrackGroup(ctx context.Context, trackGroup *pb.TrackGroup
 
   tx, err := s.db.Begin()
   if err != nil {
-    return nil, internal.CheckError(err, "")
+    return nil, errorpkg.CheckError(err, "")
   }
   defer tx.Rollback()
 
 	if pgerr, table := t.Delete(tx); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
 
   err = tx.Commit()
   if err != nil {
-    return nil, internal.CheckError(err, "")
+    return nil, errorpkg.CheckError(err, "")
   }
   return &tagpb.Empty{}, nil
 }
 
 func (s *Server) AddTracksToTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*tagpb.Empty, error) {
-  id, twerr := internal.GetUuidFromString(tracksToTrackGroup.TrackGroupId)
+  id, twerr := uuidpkg.GetUuidFromString(tracksToTrackGroup.TrackGroupId)
   if twerr != nil {
     return nil, twerr
   }
   t := &model.TrackGroup{Id: id}
 
   if pgerr, table := t.AddTracks(s.db, tracksToTrackGroup.Tracks); pgerr != nil {
-		return nil, internal.CheckError(pgerr, table)
+		return nil, errorpkg.CheckError(pgerr, table)
 	}
   return &tagpb.Empty{}, nil
 }
 
 func (s *Server) RemoveTracksFromTrackGroup(ctx context.Context, tracksToTrackGroup *pb.TracksToTrackGroup) (*tagpb.Empty, error) {
-  id, twerr := internal.GetUuidFromString(tracksToTrackGroup.TrackGroupId)
+  id, twerr := uuidpkg.GetUuidFromString(tracksToTrackGroup.TrackGroupId)
   if twerr != nil {
     return nil, twerr
   }
   t := &model.TrackGroup{Id: id}
 
   if pgerr, table := t.RemoveTracks(s.db, tracksToTrackGroup.Tracks); pgerr != nil {
-    return nil, internal.CheckError(pgerr, table)
+    return nil, errorpkg.CheckError(pgerr, table)
   }
   return &tagpb.Empty{}, nil
 }
@@ -229,7 +231,7 @@ func checkRequiredAttributes(trackGroup *pb.TrackGroup) (twirp.Error) {
 }
 
 func getTrackGroupModel(trackGroup *pb.TrackGroup) (*model.TrackGroup, twirp.Error) {
-  id, twerr := internal.GetUuidFromString(trackGroup.Id)
+  id, twerr := uuidpkg.GetUuidFromString(trackGroup.Id)
   if twerr != nil {
     return nil, twerr
   }
