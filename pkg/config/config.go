@@ -1,6 +1,7 @@
 package config
 
 import (
+	"time"
 	"fmt"
 	"io/ioutil"
 
@@ -29,6 +30,7 @@ type Configuration struct {
 	JWT     JWT         `yaml:"jwt,omitempty"`
 	App     Application `yaml:"application,omitempty"`
 	OpenAPI OpenAPI     `yaml:"openapi,omitempty"`
+	Storage Storage     `yaml:"storage,omitempty"`
 }
 
 // DatabaseEnv holds dev and test database data
@@ -67,4 +69,15 @@ type Application struct {
 type OpenAPI struct {
 	Username string `yaml:"username,omitempty"`
 	Password string `yaml:"password,omitempty"`
+}
+
+// Storage holds data necessary for backblaze configuration in track-server-api
+type Storage struct {
+	AccountId string `yaml:"account_id,omitempty"`
+	Key string `yaml:"key,omitempty"`
+	AuthEndpoint string `yaml:"auth_endpoint,omitempty"`
+	FileEndpoint string `yaml:"file_endpoint,omitempty"`
+	UploadEndpoint string `yaml:"upload_endpoint,omitempty"`
+	BucketId string `yaml:"bucket_id,omitempty"`
+	Timeout time.Duration `yaml:"timeout,omitempty"`
 }

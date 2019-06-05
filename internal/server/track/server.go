@@ -13,8 +13,8 @@ import (
 	pb "user-api/rpc/track"
 	tagpb "user-api/rpc/tag"
 
-	uuidpkg "user-api/internal/pkg/uuid"
-	errorpkg "user-api/internal/pkg/error"
+	uuidpkg "user-api/pkg/uuid"
+	errorpkg "user-api/pkg/error"
 
 	"user-api/internal/model"
 )
