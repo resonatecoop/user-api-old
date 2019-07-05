@@ -34,11 +34,11 @@ The project structure mostly follows [THIS](https://github.com/golang-standards/
 
 * Create user and database as follow (as found in the local config file in `./conf.local.yaml`):
 
-username = "resonate-dev-user"
+username = "resonate_dev_user"
 
 password = "password"
 
-dbname = "resonate-dev"
+dbname = "resonate_dev"
 
 Add following postgres extensions: "hstore" and "uuid-ossp"
 
@@ -121,11 +121,11 @@ You need to create the testing database and run migrations manually before runni
 
 * Create user and database as follow:
 
-username = "resonate-testing-user"
+username = "resonate_testing_user"
 
 password = ""
 
-dbname = "resonate-testing"
+dbname = "resonate_testing"
 
 Add following extensions: "hstore" and "uuid-ossp" (TODO: add them on initial migration)
 
