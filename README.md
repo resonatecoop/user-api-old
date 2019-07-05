@@ -140,6 +140,7 @@ Add following extensions: "hstore" and "uuid-ossp" (TODO: add them on initial mi
 * Run migrations from `./cmd/migration`
 
 ```sh
+$ go run *.go init testing
 $ go run *.go testing
 ```
 
