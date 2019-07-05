@@ -42,7 +42,15 @@ dbname = "resonate_dev"
 
 Add following postgres extensions: "hstore" and "uuid-ossp"
 
-* Run migrations from `./cmd/migration`
+From `./cmd/migration`:
+
+* Init migrations
+
+```sh
+$ go run *.go init
+```
+
+* Run migrations
 
 ```sh
 $ go run *.go
