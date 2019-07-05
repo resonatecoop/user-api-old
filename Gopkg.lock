@@ -34,7 +34,7 @@
   version = "v6.7.2"
 
 [[projects]]
-  digest = "1:92c2d57d6acd613d34e7998eac1f820fd72b8cf00365ed3939f5852568020622"
+  digest = "1:01700fee66fd615d2aebaf04ec8f8630b944ec5a7a43062c6daf1560ec7065c6"
   name = "github.com/go-pg/pg"
   packages = [
     ".",
@@ -49,8 +49,8 @@
     "urlvalues",
   ]
   pruneopts = "UT"
-  revision = "3aa3c0bd0a7e1567ffe8735b10fb012759870261"
-  version = "v8.0.2"
+  revision = "11cb265cd96c769490bea4cdc3634ea2049197f6"
+  version = "v8.0.4"
 
 [[projects]]
   digest = "1:22d0b70cacd4a931abcaa1cc9abee71c933ddc0f2b5f4c15e5040a40ee90497c"

@@ -75,19 +75,21 @@ func (db *baseDB) conn() (*pool.Conn, error) {
 		return nil, err
 	}
 
-	if cn.InitedAt.IsZero() {
-		cn.InitedAt = time.Now()
-		err = db.initConn(cn)
-		if err != nil {
-			db.pool.Remove(cn)
-			return nil, err
-		}
+	err = db.initConn(cn)
+	if err != nil {
+		db.pool.Remove(cn)
+		return nil, err
 	}
 
 	return cn, nil
 }
 
 func (db *baseDB) initConn(cn *pool.Conn) error {
+	if cn.Inited {
+		return nil
+	}
+	cn.Inited = true
+
 	if db.opt.TLSConfig != nil {
 		err := db.enableSSL(cn, db.opt.TLSConfig)
 		if err != nil {
@@ -128,16 +130,21 @@ func (db *baseDB) withConn(c context.Context, fn func(cn *pool.Conn) error) erro
 		fnDone = make(chan struct{})
 		go func() {
 			select {
-			case <-fnDone:
+			case <-fnDone: // fn has finished, skip cancel
 			case <-c.Done():
 				_ = db.cancelRequest(cn.ProcessId, cn.SecretKey)
+				// Indicate end of conn use
+				fnDone <- struct{}{}
 			}
 		}()
 	}
 
 	defer func() {
 		if fnDone != nil {
-			close(fnDone)
+			select {
+			case <-fnDone: // Wait for cancel to finish request
+			case fnDone <- struct{}{}: // Indicate fn finish, skip cancel goroutine
+			}
 		}
 		db.freeConn(cn, err)
 	}()
@@ -185,7 +192,7 @@ func (db *baseDB) ExecContext(c context.Context, query interface{}, params ...in
 
 func (db *baseDB) exec(c context.Context, query interface{}, params ...interface{}) (res Result, err error) {
 	for attempt := 0; attempt <= db.opt.MaxRetries; attempt++ {
-		if attempt >= 1 {
+		if attempt > 0 {
 			time.Sleep(db.retryBackoff(attempt - 1))
 		}
 
@@ -237,7 +244,7 @@ func (db *baseDB) QueryContext(c context.Context, model, query interface{}, para
 
 func (db *baseDB) query(c context.Context, model, query interface{}, params ...interface{}) (res Result, err error) {
 	for attempt := 0; attempt <= db.opt.MaxRetries; attempt++ {
-		if attempt >= 1 {
+		if attempt > 0 {
 			time.Sleep(db.retryBackoff(attempt - 1))
 		}
 

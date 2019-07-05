@@ -68,6 +68,7 @@ func NewQueryContext(c context.Context, db DB, model ...interface{}) *Query {
 // New returns new zero Query binded to the current db.
 func (q *Query) New() *Query {
 	cp := &Query{
+		ctx:           q.ctx,
 		db:            q.db,
 		model:         q.model,
 		implicitModel: true,
@@ -170,7 +171,7 @@ func (q *Query) GetModel() TableModel {
 	return q.model
 }
 
-func (q *Query) softDelete() bool {
+func (q *Query) isSoftDelete() bool {
 	if q.model != nil {
 		return q.model.Table().SoftDeleteField != nil
 	}
@@ -435,11 +436,14 @@ func (q *Query) whereGroup(conj string, fn func(*Query) (*Query, error)) *Query 
 	return newq
 }
 
-// WhereIn is a shortcut for Where and pg.In to work with IN operator:
-//
-//    WhereIn("id IN (?)", 1, 2, 3)
-func (q *Query) WhereIn(where string, values ...interface{}) *Query {
-	return q.Where(where, types.InSlice(values))
+// WhereIn is a shortcut for Where and pg.In:
+func (q *Query) WhereIn(where string, slice interface{}) *Query {
+	return q.Where(where, types.InSlice(slice))
+}
+
+// WhereInMulti is a shortcut for Where and pg.InMulti:
+func (q *Query) WhereInMulti(where string, values ...interface{}) *Query {
+	return q.Where(where, types.InMulti(values...))
 }
 
 func (q *Query) addWhere(f sepFormatAppender) {
@@ -1120,10 +1124,10 @@ func (q *Query) AppendFormat(b []byte, fmter QueryFormatter) []byte {
 // Exists returns true or false depending if there are any rows matching the query.
 func (q *Query) Exists() (bool, error) {
 	cp := q.Copy() // copy to not change original query
-	cp.columns = []FormatAppender{fieldAppender{"1"}}
+	cp.columns = []FormatAppender{Q("1")}
 	cp.order = nil
 	cp.limit = 1
-	res, err := q.db.ExecContext(q.ctx, &selectQuery{q: q})
+	res, err := q.db.ExecContext(q.ctx, &selectQuery{q: cp})
 	if err != nil {
 		return false, err
 	}
@@ -1212,7 +1216,7 @@ func (q *Query) appendColumns(b []byte) []byte {
 }
 
 func (q *Query) hasWhere() bool {
-	return len(q.where) > 0 || q.softDelete()
+	return len(q.where) > 0 || q.isSoftDelete()
 }
 
 func (q *Query) mustAppendWhere(b []byte) ([]byte, error) {
@@ -1227,14 +1231,26 @@ func (q *Query) mustAppendWhere(b []byte) ([]byte, error) {
 }
 
 func (q *Query) appendWhere(b []byte) []byte {
-	b = q._appendWhere(b, q.where)
-	if q.softDelete() {
+	isSoftDelete := q.isSoftDelete()
+
+	if len(q.where) > 0 {
+		if isSoftDelete {
+			b = append(b, '(')
+		}
+		b = q._appendWhere(b, q.where)
+		if isSoftDelete {
+			b = append(b, ')')
+		}
+	}
+
+	if isSoftDelete {
 		if len(q.where) > 0 {
 			b = append(b, " AND "...)
 		}
 		b = append(b, q.model.Table().Alias...)
 		b = q.appendSoftDelete(b)
 	}
+
 	return b
 }
 
