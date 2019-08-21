@@ -1,7 +1,9 @@
 # Resonate User/Track API
 
-This is the main Resonate User/Track API written in Go, not yet in production.
-It uses [Twirp](https://github.com/twitchtv/twirp), a RPC framework for service-to-service communication emphasizing simplicity and minimalism. Learn more about
+This is the main Resonate User/Track API written in Go, still WIP and not yet in production. If you're looking for the API that is currently running with http://beta.resonate.is, please check its [documentation here](https://github.com/resonatecoop/stream2own/blob/master/docs/api.md).
+
+
+The User/Track API uses [Twirp](https://github.com/twitchtv/twirp), a RPC framework for service-to-service communication emphasizing simplicity and minimalism. Learn more about
 Twirp at its [website](https://twitchtv.github.io/twirp/docs/intro.html).
 It also uses [go-pg](https://github.com/go-pg/pg) PostgreSQL ORM.
 Its structure is based on the Twirp starter kit [Twisk](https://github.com/ribice/twisk).
